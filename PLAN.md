@@ -109,6 +109,22 @@ gopenjpeg/               public API: Decode/Encode, options, image.Image interop
   per-codeblock T1, DWT row-parallel), allocation reduction. Target: within
   ~1.5× of C single-threaded, beat C on multi-core decode.
 
+## Future work
+
+- SIMD kernels for the 9/7 DWT lifting and ICT (mirroring C's v4dwt
+  lane structure, which is bit-identical to scalar): adopt the stdlib
+  `simd` package once it stabilizes AND the module's minimum Go
+  version reaches a release that carries it (experimental in 1.26 as
+  simd/archsimd behind GOEXPERIMENT=simd; API changes again in 1.27;
+  we are pinned to go 1.25). Expected win ~10-15% on 9/7 content
+  only — the MQ coder (70-90% of decode) is inherently serial. Gate
+  behind the goexperiment build tag with the scalar path as fallback
+  and the byte-identity gates as verifier. Hand-written assembly
+  (Avo/vek) rejected: same ceiling, cuts against the pure-Go
+  security posture.
+- ICC color management (colr meth 2): needs a CMS engine; the only
+  remaining gate exclusion.
+
 ## Status log
 
 - 2026-07-22: Phase 0 complete. Oracle = openjpeg@402ef586 (2.5.4).
