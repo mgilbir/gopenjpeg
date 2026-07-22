@@ -162,3 +162,10 @@ gopenjpeg/               public API: Decode/Encode, options, image.Image interop
   in the landed encode-side packages. Deferred to W13 (in flight):
   jp2 encode wiring + public Encode API + gopj-compress CLI,
   cinema/IMF profiles, PLT emission, Part-2 custom MCT markers.
+- 2026-07-22: W12 landed: decode gate now has ZERO exclusions.
+  Root cause of LSB deviations: C release build uses -ffast-math and
+  the shipped .so reassociates the ICT green term; our DecodeReal
+  now matches the shipped binary. Follow-ups: apply the same
+  -ffast-math analysis to root-package CMYK conversion (re-enable
+  the excluded jp2-gate CMYK files) and audit the encode-side ICT
+  (encode gate passed byte-identical, but add noisier inputs).
