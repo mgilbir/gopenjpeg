@@ -1,0 +1,709 @@
+{
+  "147af3f1083de4393666b7d99b01b58b_signal_sigsegv_130c531_6155_5136.jp2": {
+    "ihdr": [
+      1650,
+      2551,
+      1,
+      7,
+      7,
+      1,
+      0
+    ],
+    "comp_bpcc": [
+      0
+    ],
+    "colr": [
+      1,
+      2,
+      1,
+      12
+    ],
+    "has_colr": true,
+    "icc_len": 0,
+    "icc_buf_bytes": 0,
+    "pclr": [
+      139,
+      4
+    ],
+    "cmap_n": 4,
+    "cdef_n": 0,
+    "img_state_unknown": false
+  },
+  "4149.pdf.SIGSEGV.cf7.3501.jp2": {
+    "ihdr": [
+      32,
+      56,
+      4,
+      7,
+      7,
+      1,
+      0
+    ],
+    "comp_bpcc": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "colr": [
+      1,
+      0,
+      0,
+      16
+    ],
+    "has_colr": true,
+    "icc_len": 0,
+    "icc_buf_bytes": 0,
+    "cmap_n": 0,
+    "cdef_n": 4,
+    "img_state_unknown": false
+  },
+  "451.pdf.SIGSEGV.f4c.3723.jp2": {
+    "ihdr": [
+      139,
+      179,
+      1,
+      7,
+      7,
+      1,
+      0
+    ],
+    "comp_bpcc": [
+      0
+    ],
+    "colr": [
+      1,
+      2,
+      1,
+      16
+    ],
+    "has_colr": true,
+    "icc_len": 0,
+    "icc_buf_bytes": 0,
+    "pclr": [
+      34,
+      3
+    ],
+    "cmap_n": 3,
+    "cdef_n": 0,
+    "img_state_unknown": false
+  },
+  "Marrin.jp2": {
+    "ihdr": [
+      135,
+      135,
+      2,
+      7,
+      7,
+      1,
+      0
+    ],
+    "comp_bpcc": [
+      0,
+      0
+    ],
+    "colr": [
+      1,
+      0,
+      0,
+      17
+    ],
+    "has_colr": true,
+    "icc_len": 0,
+    "icc_buf_bytes": 0,
+    "cmap_n": 0,
+    "cdef_n": 2,
+    "img_state_unknown": true
+  },
+  "dwt_interleave_h.gsr105.jp2": {
+    "ihdr": [
+      34,
+      34,
+      3,
+      7,
+      7,
+      0,
+      0
+    ],
+    "comp_bpcc": [
+      0,
+      0,
+      0
+    ],
+    "colr": [
+      1,
+      0,
+      0,
+      16
+    ],
+    "has_colr": true,
+    "icc_len": 0,
+    "icc_buf_bytes": 0,
+    "cmap_n": 0,
+    "cdef_n": 0,
+    "img_state_unknown": false
+  },
+  "file409752.jp2": {
+    "ihdr": [
+      243,
+      720,
+      3,
+      7,
+      7,
+      0,
+      0
+    ],
+    "comp_bpcc": [
+      0,
+      0,
+      0
+    ],
+    "colr": [
+      1,
+      0,
+      0,
+      18
+    ],
+    "has_colr": true,
+    "icc_len": 0,
+    "icc_buf_bytes": 0,
+    "cmap_n": 0,
+    "cdef_n": 0,
+    "img_state_unknown": false
+  },
+  "issue134.jp2": {
+    "ihdr": [
+      243,
+      720,
+      3,
+      7,
+      7,
+      0,
+      0
+    ],
+    "comp_bpcc": [
+      0,
+      0,
+      0
+    ],
+    "colr": [
+      1,
+      0,
+      0,
+      18
+    ],
+    "has_colr": true,
+    "icc_len": 0,
+    "icc_buf_bytes": 0,
+    "cmap_n": 0,
+    "cdef_n": 0,
+    "img_state_unknown": false
+  },
+  "issue165.jp2": {
+    "ihdr": [
+      576,
+      766,
+      3,
+      7,
+      7,
+      0,
+      0
+    ],
+    "comp_bpcc": [
+      0,
+      0,
+      0
+    ],
+    "colr": [
+      1,
+      0,
+      0,
+      18
+    ],
+    "has_colr": true,
+    "icc_len": 0,
+    "icc_buf_bytes": 0,
+    "cmap_n": 0,
+    "cdef_n": 0,
+    "img_state_unknown": false
+  },
+  "issue206_image-000.jp2": {
+    "ihdr": [
+      326,
+      431,
+      3,
+      7,
+      7,
+      1,
+      0
+    ],
+    "comp_bpcc": [
+      0,
+      0,
+      0
+    ],
+    "colr": [
+      1,
+      2,
+      1,
+      16
+    ],
+    "has_colr": true,
+    "icc_len": 0,
+    "icc_buf_bytes": 0,
+    "cmap_n": 0,
+    "cdef_n": 0,
+    "img_state_unknown": false
+  },
+  "issue211.jp2": {
+    "ihdr": [
+      236,
+      355,
+      2,
+      7,
+      7,
+      1,
+      0
+    ],
+    "comp_bpcc": [
+      0,
+      0
+    ],
+    "colr": [
+      4,
+      2,
+      1,
+      0
+    ],
+    "has_colr": false,
+    "icc_len": 0,
+    "icc_buf_bytes": 0,
+    "cmap_n": 0,
+    "cdef_n": 0,
+    "img_state_unknown": false
+  },
+  "issue390.jp2": {
+    "ihdr": [
+      286,
+      270,
+      1,
+      7,
+      7,
+      1,
+      0
+    ],
+    "comp_bpcc": [
+      0
+    ],
+    "colr": [
+      1,
+      2,
+      1,
+      17
+    ],
+    "has_colr": true,
+    "icc_len": 0,
+    "icc_buf_bytes": 0,
+    "cmap_n": 0,
+    "cdef_n": 0,
+    "img_state_unknown": false
+  },
+  "issue408.jp2": {
+    "ihdr": [
+      480,
+      640,
+      3,
+      7,
+      7,
+      0,
+      0
+    ],
+    "comp_bpcc": [
+      0,
+      0,
+      0
+    ],
+    "colr": [
+      1,
+      0,
+      0,
+      16
+    ],
+    "has_colr": true,
+    "icc_len": 0,
+    "icc_buf_bytes": 0,
+    "cmap_n": 0,
+    "cdef_n": 0,
+    "img_state_unknown": false
+  },
+  "issue411-ycc420.jp2": {
+    "ihdr": [
+      33,
+      33,
+      3,
+      7,
+      7,
+      1,
+      0
+    ],
+    "comp_bpcc": [
+      0,
+      0,
+      0
+    ],
+    "colr": [
+      1,
+      0,
+      0,
+      18
+    ],
+    "has_colr": true,
+    "icc_len": 0,
+    "icc_buf_bytes": 0,
+    "cmap_n": 0,
+    "cdef_n": 0,
+    "img_state_unknown": false
+  },
+  "issue411-ycc422.jp2": {
+    "ihdr": [
+      33,
+      33,
+      3,
+      7,
+      7,
+      1,
+      0
+    ],
+    "comp_bpcc": [
+      0,
+      0,
+      0
+    ],
+    "colr": [
+      1,
+      0,
+      0,
+      18
+    ],
+    "has_colr": true,
+    "icc_len": 0,
+    "icc_buf_bytes": 0,
+    "cmap_n": 0,
+    "cdef_n": 0,
+    "img_state_unknown": false
+  },
+  "issue411-ycc444.jp2": {
+    "ihdr": [
+      33,
+      33,
+      3,
+      7,
+      7,
+      1,
+      0
+    ],
+    "comp_bpcc": [
+      0,
+      0,
+      0
+    ],
+    "colr": [
+      1,
+      0,
+      0,
+      18
+    ],
+    "has_colr": true,
+    "icc_len": 0,
+    "icc_buf_bytes": 0,
+    "cmap_n": 0,
+    "cdef_n": 0,
+    "img_state_unknown": false
+  },
+  "issue412.jp2": {
+    "ihdr": [
+      100,
+      256,
+      1,
+      7,
+      7,
+      1,
+      0
+    ],
+    "comp_bpcc": [
+      0
+    ],
+    "colr": [
+      1,
+      0,
+      0,
+      16
+    ],
+    "has_colr": true,
+    "icc_len": 0,
+    "icc_buf_bytes": 0,
+    "pclr": [
+      256,
+      3
+    ],
+    "cmap_n": 3,
+    "cdef_n": 3,
+    "img_state_unknown": true
+  },
+  "issue458.jp2": {
+    "ihdr": [
+      32,
+      32,
+      4,
+      255,
+      7,
+      0,
+      0
+    ],
+    "comp_bpcc": [
+      4,
+      4,
+      4,
+      0
+    ],
+    "colr": [
+      1,
+      0,
+      0,
+      16
+    ],
+    "has_colr": true,
+    "icc_len": 0,
+    "icc_buf_bytes": 0,
+    "cmap_n": 0,
+    "cdef_n": 4,
+    "img_state_unknown": false
+  },
+  "issue559-eci-090-CIELab.jp2": {
+    "ihdr": [
+      212,
+      424,
+      3,
+      15,
+      7,
+      1,
+      0
+    ],
+    "comp_bpcc": [
+      0,
+      0,
+      0
+    ],
+    "colr": [
+      1,
+      2,
+      1,
+      14
+    ],
+    "has_colr": true,
+    "icc_len": 0,
+    "icc_buf_bytes": 36,
+    "cmap_n": 0,
+    "cdef_n": 0,
+    "img_state_unknown": false
+  },
+  "issue653-zero-unknownbox.jp2": {
+    "ihdr": [
+      32,
+      32,
+      2,
+      7,
+      7,
+      1,
+      0
+    ],
+    "comp_bpcc": [
+      0,
+      0
+    ],
+    "colr": [
+      1,
+      0,
+      0,
+      17
+    ],
+    "has_colr": true,
+    "icc_len": 0,
+    "icc_buf_bytes": 0,
+    "cmap_n": 0,
+    "cdef_n": 2,
+    "img_state_unknown": false
+  },
+  "issue725.jp2": {
+    "ihdr": [
+      32,
+      32,
+      4,
+      255,
+      7,
+      0,
+      0
+    ],
+    "comp_bpcc": [
+      4,
+      4,
+      4,
+      0
+    ],
+    "colr": [
+      1,
+      0,
+      0,
+      24
+    ],
+    "has_colr": true,
+    "icc_len": 0,
+    "icc_buf_bytes": 0,
+    "cmap_n": 0,
+    "cdef_n": 4,
+    "img_state_unknown": false
+  },
+  "issue733.jp2": {
+    "ihdr": [
+      32,
+      32,
+      4,
+      255,
+      7,
+      0,
+      0
+    ],
+    "comp_bpcc": [
+      4,
+      4,
+      4,
+      0
+    ],
+    "colr": [
+      1,
+      0,
+      0,
+      16
+    ],
+    "has_colr": true,
+    "icc_len": 0,
+    "icc_buf_bytes": 0,
+    "cmap_n": 0,
+    "cdef_n": 4,
+    "img_state_unknown": false
+  },
+  "issue774.jp2": {
+    "ihdr": [
+      32,
+      32,
+      4,
+      255,
+      7,
+      0,
+      0
+    ],
+    "comp_bpcc": [
+      4,
+      4,
+      4,
+      0
+    ],
+    "colr": [
+      1,
+      0,
+      0,
+      12
+    ],
+    "has_colr": true,
+    "icc_len": 0,
+    "icc_buf_bytes": 0,
+    "cmap_n": 0,
+    "cdef_n": 4,
+    "img_state_unknown": false
+  },
+  "merged.jp2": {
+    "ihdr": [
+      576,
+      766,
+      3,
+      7,
+      7,
+      0,
+      0
+    ],
+    "comp_bpcc": [
+      0,
+      0,
+      0
+    ],
+    "colr": [
+      1,
+      0,
+      0,
+      18
+    ],
+    "has_colr": true,
+    "icc_len": 0,
+    "icc_buf_bytes": 0,
+    "cmap_n": 0,
+    "cdef_n": 0,
+    "img_state_unknown": false
+  },
+  "orb-blue10-lin-jp2.jp2": {
+    "ihdr": [
+      117,
+      117,
+      4,
+      7,
+      7,
+      0,
+      0
+    ],
+    "comp_bpcc": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "colr": [
+      2,
+      0,
+      0,
+      0
+    ],
+    "has_colr": true,
+    "icc_len": 1,
+    "icc_buf_bytes": 1,
+    "cmap_n": 0,
+    "cdef_n": 0,
+    "img_state_unknown": false
+  },
+  "relax.jp2": {
+    "ihdr": [
+      300,
+      400,
+      3,
+      7,
+      7,
+      1,
+      0
+    ],
+    "comp_bpcc": [
+      0,
+      0,
+      0
+    ],
+    "colr": [
+      2,
+      0,
+      0,
+      0
+    ],
+    "has_colr": true,
+    "icc_len": 278,
+    "icc_buf_bytes": 278,
+    "cmap_n": 0,
+    "cdef_n": 0,
+    "img_state_unknown": true
+  }
+}
