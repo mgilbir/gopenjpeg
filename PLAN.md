@@ -188,3 +188,10 @@ gopenjpeg/               public API: Decode/Encode, options, image.Image interop
   remaining exclusion anywhere: embedded ICC profiles (needs CMS).
   Remaining roadmap: hardening (corpus fuzz + no-panic audit),
   deferred perf items above.
+- 2026-07-22: go.mod lowered to go 1.25 (user requirement); verify
+  with GOTOOLCHAIN=go1.25.5.
+- 2026-07-22: W17 landed: MQ register inlining in t1 decode passes
+  (single-thread 1.53-1.79x of C on codec files), parallel tier-1
+  encode with deterministic distortion order (byte-identical at any
+  thread count). Deferred: encode-side MQ inlining, in-place 9/7
+  floats (~2-5%). Next: hardening wave.
