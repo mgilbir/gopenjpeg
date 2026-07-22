@@ -16,8 +16,8 @@ package tcd
 import (
 	"github.com/mgilbir/gopenjpeg/internal/cparams"
 	"github.com/mgilbir/gopenjpeg/internal/event"
+	"github.com/mgilbir/gopenjpeg/internal/ht"
 	"github.com/mgilbir/gopenjpeg/internal/image"
-	"github.com/mgilbir/gopenjpeg/internal/t1"
 	"github.com/mgilbir/gopenjpeg/internal/tile"
 )
 
@@ -27,15 +27,6 @@ const (
 	sizeofCblkDec = 88
 	sizeofCblkEnc = 88
 )
-
-// HTDecodeCblk is the hook for HTJ2K (High Throughput) code-block decoding. The
-// internal/ht package is developed separately; the coordinator wires this hook
-// once it lands. When nil, tcd returns an error for HT-styled code-blocks.
-//
-// The signature mirrors what tcd needs, paralleling t1's DecodeCblk: it must
-// decode the code-block into t1State (updating its w/h/data) or into
-// cblk.DecodedData, exactly as opj_t1_ht_decode_cblk does.
-var HTDecodeCblk func(t1State *t1.T1, cblk *t1.CodeBlockDec, orient, roishift, cblksty uint32, checkPterm bool) (bool, error)
 
 // TCD ports opj_tcd_t: the tile coder/decoder state.
 type TCD struct {
@@ -63,6 +54,10 @@ type TCD struct {
 	// UsedComponent ports used_component: nil if all components are decoded,
 	// otherwise len == image.Numcomps with true for components to decode.
 	UsedComponent []bool
+
+	// htState is the lazily created HTJ2K block decoder, reused across
+	// code-blocks (mirrors the reusable t1.T1 handle).
+	htState *ht.Decoder
 }
 
 // Create ports opj_tcd_create.

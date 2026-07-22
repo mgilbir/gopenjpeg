@@ -56,6 +56,9 @@ var nonregPass = []string{
 	"orb-blue10-win-j2k.j2k",
 	"pacs.ge.j2k",
 	"test_lossless.j2k",
+	// HTJ2K (ITU-T T.814) codestreams, decoded via internal/ht.
+	"htj2k/Bretagne1_ht.j2k",
+	"htj2k/Bretagne1_ht_lossy.j2k",
 }
 
 // nonregBothError are files that opj_decompress rejects; we must reject too.

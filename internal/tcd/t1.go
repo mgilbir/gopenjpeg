@@ -5,6 +5,7 @@ import (
 
 	"github.com/mgilbir/gopenjpeg/internal/cparams"
 	"github.com/mgilbir/gopenjpeg/internal/event"
+	"github.com/mgilbir/gopenjpeg/internal/ht"
 	"github.com/mgilbir/gopenjpeg/internal/t1"
 	"github.com/mgilbir/gopenjpeg/internal/tile"
 )
@@ -99,17 +100,23 @@ func (t *TCD) t1DecodeBlock(state *t1.T1, resno uint32, tilec *tile.TileComp,
 	t1cblk := mapCblkDec(cblk)
 
 	roishift := uint32(tccp.Roishift)
+	// srcData/srcW/srcH mirror the C convention of reading the decoder
+	// working buffer when the code-block has no decoded_data of its own.
+	var srcData []int32
+	var srcW, srcH uint32
 	if (tccp.Cblksty & cparams.CCPCblkStyHT) != 0 {
-		if HTDecodeCblk == nil {
-			mgr.Errorf("HTJ2K support not wired\n")
-			return errHTNotWired
+		// Port of the opj_t1_ht_decode_cblk dispatch in t1.c; mb is
+		// band->numbps, set on the cblk by t2 in the C reference.
+		if t.htState == nil {
+			t.htState = ht.New()
 		}
-		if ok, err := HTDecodeCblk(state, t1cblk, band.Bandno, roishift, tccp.Cblksty, checkPterm); err != nil || !ok {
+		if ok, err := t.htState.DecodeCblk(t1cblk, band.Bandno, roishift, tccp.Cblksty, uint32(band.Numbps), mgr); err != nil || !ok {
 			if err != nil {
 				return err
 			}
 			return errTierDecode
 		}
+		srcData, srcW, srcH = t.htState.Data(), t.htState.W(), t.htState.H()
 	} else {
 		if ok, err := state.DecodeCblk(t1cblk, band.Bandno, roishift, tccp.Cblksty, checkPterm); err != nil || !ok {
 			if err != nil {
@@ -117,8 +124,9 @@ func (t *TCD) t1DecodeBlock(state *t1.T1, resno uint32, tilec *tile.TileComp,
 			}
 			return errTierDecode
 		}
+		srcData, srcW, srcH = state.Data(), state.W(), state.H()
 	}
-	// Propagate any decoded_data buffer the t1 state populated.
+	// Propagate any decoded_data buffer the tier-1 decoder populated.
 	cblk.DecodedData = t1cblk.DecodedData
 
 	x := cblk.X0 - band.X0
@@ -136,10 +144,10 @@ func (t *TCD) t1DecodeBlock(state *t1.T1, resno uint32, tilec *tile.TileComp,
 	if cblk.DecodedData != nil {
 		datap = cblk.DecodedData
 	} else {
-		datap = state.Data()
+		datap = srcData
 	}
-	cblkW := state.W()
-	cblkH := state.H()
+	cblkW := srcW
+	cblkH := srcH
 
 	// ROI de-scaling.
 	if tccp.Roishift != 0 {
