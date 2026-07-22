@@ -96,16 +96,33 @@ func EncodeReal(c0, c1, c2 []float32, n int) {
 	}
 }
 
-// DecodeReal is a port of opj_mct_decode_real (the scalar path). It applies the
-// inverse irreversible (float) color transform in place over the first n
-// samples. All intermediates are float32, matching the C order of operations.
+// DecodeReal is a port of opj_mct_decode_real. It applies the inverse
+// irreversible (float) color transform in place over the first n samples. All
+// intermediates are float32.
+//
+// Green is computed as y - (u*0.34413 + v*0.71414), i.e. the two chroma
+// products are summed before the single subtraction. The C source of
+// opj_mct_decode_real (both the __SSE__ intrinsic and scalar paths) writes it
+// as (y - u*0.34413) - v*0.71414 — two separate subtractions. However, the
+// STOCK OpenJPEG shared library shipped on x86-64 (libopenjp2.so, which
+// opj_decompress links against — our parity target) is compiled with gcc's
+// reassociating float optimizations, and gcc folds the two subtractions into
+// add-then-subtract in the SSE code it emits (verified in the .so disassembly:
+// `addps` of the two products, then one `subps`). The static libopenjp2.a and
+// the literal source order both use the two-subtraction form and differ from
+// the shipped binary by <=1 LSB on a handful of green samples (4/2.07M on
+// _00042.j2k, 73/3.19M on issue135.j2k) — exactly the samples where the two
+// associations round to different integers. We reproduce the shipped binary's
+// arithmetic here so whole-image decodes are bit-exact with opj_decompress.
+// (r and b are single multiply-adds with no reassociation freedom, so they are
+// identical under either build and need no adjustment.)
 func DecodeReal(c0, c1, c2 []float32, n int) {
 	for i := 0; i < n; i++ {
 		y := c0[i]
 		u := c1[i]
 		v := c2[i]
 		r := y + (v * 1.402)
-		g := y - (u * 0.34413) - (v * 0.71414)
+		g := y - (u*0.34413 + v*0.71414)
 		b := y + (u * 1.772)
 		c0[i] = r
 		c1[i] = g
