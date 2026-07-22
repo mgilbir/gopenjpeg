@@ -106,3 +106,11 @@ gopenjpeg/               public API: Decode/Encode, options, image.Image interop
 ## Status log
 
 - 2026-07-22: Phase 0 complete. Oracle = openjpeg@402ef586 (2.5.4).
+- 2026-07-22: W4 landed: internal/image, internal/mct (+invert). Open
+  follow-ups: image.CompHeaderUpdateParams is a stand-in for opj_cp
+  fields (reconcile when j2k lands); image_math.go and mct.intFixMul
+  carry TODOs to switch to internal/opjmath once W1 lands.
+- 2026-07-22: W2 landed (internal/mqc; note the 2-scratch-byte buffer
+  contract for tcd). W1 landed (opjmath/cio/bio/tgt/event); W4's local
+  math helpers reconciled to opjmath. In flight: W3 (dwt+sparse),
+  W5 (t1), W6 (pi+t2+cparams+tile shared type packages).
