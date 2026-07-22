@@ -169,3 +169,10 @@ gopenjpeg/               public API: Decode/Encode, options, image.Image interop
   -ffast-math analysis to root-package CMYK conversion (re-enable
   the excluded jp2-gate CMYK files) and audit the encode-side ICT
   (encode gate passed byte-identical, but add noisier inputs).
+- 2026-07-22: W13 landed (jp2 encode, gopj-compress, cinema/IMF,
+  PLT, custom MCT). Zero-pass code-block panic in mqc fixed (Bytes
+  nil guard; NumBytes keeps the C uint32 wraparound that t1 rate
+  clamping needs — the encode gate caught the over-correction).
+  In flight: W14 (cinema t2 full-stream parity, CMYK/CIELab color
+  parity), W15 (Phase 7 performance: concurrency mirroring the C
+  thread-pool sites, profile-driven optimization, benchmarks vs C).
