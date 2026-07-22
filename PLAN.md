@@ -55,6 +55,12 @@ gopenjpeg/               public API: Decode/Encode, options, image.Image interop
 
 ## Porting rules
 
+- **The library never panics.** Every failure — malformed input,
+  violated internal contract, impossible geometry — is returned as an
+  error and bubbles up to the caller. No `panic()` in library code, no
+  reliance on runtime bounds-check panics as control flow: validate
+  explicitly before indexing when the index derives from untrusted
+  input. Fuzz targets enforce this (any panic is a bug).
 - Port semantics faithfully, including integer overflow guards and every
   bounds/error check in the C code — those checks are the security surface
   (many CVEs in this codebase were missing-bounds bugs). Do not "simplify
