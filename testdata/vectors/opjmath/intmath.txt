@@ -1,0 +1,3848 @@
+int_min -2147483648 -2147483648 -2147483648
+int_max -2147483648 -2147483648 -2147483648
+int_fix_mul -2147483648 -2147483648 0
+int_fix_mul_t1 -2147483648 -2147483648 0
+int_add_no_overflow -2147483648 -2147483648 0
+int_sub_no_overflow -2147483648 -2147483648 0
+int_ceildiv -2147483648 -2147483648 2
+int_min -2147483648 -2147483647 -2147483648
+int_max -2147483648 -2147483647 -2147483647
+int_fix_mul -2147483648 -2147483647 -262144
+int_fix_mul_t1 -2147483648 -2147483647 -8192
+int_add_no_overflow -2147483648 -2147483647 1
+int_sub_no_overflow -2147483648 -2147483647 -1
+int_ceildiv -2147483648 -2147483647 2
+int_min -2147483648 -65536 -2147483648
+int_max -2147483648 -65536 -65536
+int_fix_mul -2147483648 -65536 0
+int_fix_mul_t1 -2147483648 -65536 536870912
+int_add_no_overflow -2147483648 -65536 2147418112
+int_sub_no_overflow -2147483648 -65536 -2147418112
+int_ceildiv -2147483648 -65536 32769
+int_min -2147483648 -4097 -2147483648
+int_max -2147483648 -4097 -4097
+int_fix_mul -2147483648 -4097 1074003968
+int_fix_mul_t1 -2147483648 -4097 33562624
+int_add_no_overflow -2147483648 -4097 2147479551
+int_sub_no_overflow -2147483648 -4097 -2147479551
+int_ceildiv -2147483648 -4097 524161
+int_min -2147483648 -4096 -2147483648
+int_max -2147483648 -4096 -4096
+int_fix_mul -2147483648 -4096 1073741824
+int_fix_mul_t1 -2147483648 -4096 33554432
+int_add_no_overflow -2147483648 -4096 2147479552
+int_sub_no_overflow -2147483648 -4096 -2147479552
+int_ceildiv -2147483648 -4096 524289
+int_min -2147483648 -3 -2147483648
+int_max -2147483648 -3 -3
+int_fix_mul -2147483648 -3 786432
+int_fix_mul_t1 -2147483648 -3 24576
+int_add_no_overflow -2147483648 -3 2147483645
+int_sub_no_overflow -2147483648 -3 -2147483645
+int_ceildiv -2147483648 -3 715827884
+int_min -2147483648 -2 -2147483648
+int_max -2147483648 -2 -2
+int_fix_mul -2147483648 -2 524288
+int_fix_mul_t1 -2147483648 -2 16384
+int_add_no_overflow -2147483648 -2 2147483646
+int_sub_no_overflow -2147483648 -2 -2147483646
+int_ceildiv -2147483648 -2 1073741825
+int_min -2147483648 -1 -2147483648
+int_max -2147483648 -1 -1
+int_fix_mul -2147483648 -1 262144
+int_fix_mul_t1 -2147483648 -1 8192
+int_add_no_overflow -2147483648 -1 2147483647
+int_sub_no_overflow -2147483648 -1 -2147483647
+int_ceildiv -2147483648 -1 -2147483646
+int_min -2147483648 0 -2147483648
+int_max -2147483648 0 0
+int_fix_mul -2147483648 0 0
+int_fix_mul_t1 -2147483648 0 0
+int_add_no_overflow -2147483648 0 -2147483648
+int_sub_no_overflow -2147483648 0 -2147483648
+int_min -2147483648 1 -2147483648
+int_max -2147483648 1 1
+int_fix_mul -2147483648 1 -262144
+int_fix_mul_t1 -2147483648 1 -8192
+int_add_no_overflow -2147483648 1 -2147483647
+int_sub_no_overflow -2147483648 1 2147483647
+int_ceildiv -2147483648 1 -2147483648
+int_min -2147483648 2 -2147483648
+int_max -2147483648 2 2
+int_fix_mul -2147483648 2 -524288
+int_fix_mul_t1 -2147483648 2 -16384
+int_add_no_overflow -2147483648 2 -2147483646
+int_sub_no_overflow -2147483648 2 2147483646
+int_ceildiv -2147483648 2 -1073741823
+int_min -2147483648 3 -2147483648
+int_max -2147483648 3 3
+int_fix_mul -2147483648 3 -786432
+int_fix_mul_t1 -2147483648 3 -24576
+int_add_no_overflow -2147483648 3 -2147483645
+int_sub_no_overflow -2147483648 3 2147483645
+int_ceildiv -2147483648 3 -715827882
+int_min -2147483648 4096 -2147483648
+int_max -2147483648 4096 4096
+int_fix_mul -2147483648 4096 -1073741824
+int_fix_mul_t1 -2147483648 4096 -33554432
+int_add_no_overflow -2147483648 4096 -2147479552
+int_sub_no_overflow -2147483648 4096 2147479552
+int_ceildiv -2147483648 4096 -524287
+int_min -2147483648 65536 -2147483648
+int_max -2147483648 65536 65536
+int_fix_mul -2147483648 65536 0
+int_fix_mul_t1 -2147483648 65536 -536870912
+int_add_no_overflow -2147483648 65536 -2147418112
+int_sub_no_overflow -2147483648 65536 2147418112
+int_ceildiv -2147483648 65536 -32767
+int_min -2147483648 2147483646 -2147483648
+int_max -2147483648 2147483646 2147483646
+int_fix_mul -2147483648 2147483646 524288
+int_fix_mul_t1 -2147483648 2147483646 16384
+int_add_no_overflow -2147483648 2147483646 -2
+int_sub_no_overflow -2147483648 2147483646 2
+int_ceildiv -2147483648 2147483646 0
+int_min -2147483648 2147483647 -2147483648
+int_max -2147483648 2147483647 2147483647
+int_fix_mul -2147483648 2147483647 262144
+int_fix_mul_t1 -2147483648 2147483647 8192
+int_add_no_overflow -2147483648 2147483647 -1
+int_sub_no_overflow -2147483648 2147483647 1
+int_ceildiv -2147483648 2147483647 0
+int_min -2147483647 -2147483648 -2147483648
+int_max -2147483647 -2147483648 -2147483647
+int_fix_mul -2147483647 -2147483648 -262144
+int_fix_mul_t1 -2147483647 -2147483648 -8192
+int_add_no_overflow -2147483647 -2147483648 1
+int_sub_no_overflow -2147483647 -2147483648 1
+int_ceildiv -2147483647 -2147483648 2
+int_min -2147483647 -2147483647 -2147483647
+int_max -2147483647 -2147483647 -2147483647
+int_fix_mul -2147483647 -2147483647 -524288
+int_fix_mul_t1 -2147483647 -2147483647 -16384
+int_add_no_overflow -2147483647 -2147483647 2
+int_sub_no_overflow -2147483647 -2147483647 0
+int_ceildiv -2147483647 -2147483647 2
+int_min -2147483647 -65536 -2147483647
+int_max -2147483647 -65536 -65536
+int_fix_mul -2147483647 -65536 -8
+int_fix_mul_t1 -2147483647 -65536 536870911
+int_add_no_overflow -2147483647 -65536 2147418113
+int_sub_no_overflow -2147483647 -65536 -2147418111
+int_ceildiv -2147483647 -65536 32769
+int_min -2147483647 -4097 -2147483647
+int_max -2147483647 -4097 -4097
+int_fix_mul -2147483647 -4097 1074003967
+int_fix_mul_t1 -2147483647 -4097 33562623
+int_add_no_overflow -2147483647 -4097 2147479552
+int_sub_no_overflow -2147483647 -4097 -2147479550
+int_ceildiv -2147483647 -4097 524161
+int_min -2147483647 -4096 -2147483647
+int_max -2147483647 -4096 -4096
+int_fix_mul -2147483647 -4096 1073741824
+int_fix_mul_t1 -2147483647 -4096 33554432
+int_add_no_overflow -2147483647 -4096 2147479553
+int_sub_no_overflow -2147483647 -4096 -2147479551
+int_ceildiv -2147483647 -4096 524289
+int_min -2147483647 -3 -2147483647
+int_max -2147483647 -3 -3
+int_fix_mul -2147483647 -3 786432
+int_fix_mul_t1 -2147483647 -3 24576
+int_add_no_overflow -2147483647 -3 2147483646
+int_sub_no_overflow -2147483647 -3 -2147483644
+int_ceildiv -2147483647 -3 715827883
+int_min -2147483647 -2 -2147483647
+int_max -2147483647 -2 -2
+int_fix_mul -2147483647 -2 524288
+int_fix_mul_t1 -2147483647 -2 16384
+int_add_no_overflow -2147483647 -2 2147483647
+int_sub_no_overflow -2147483647 -2 -2147483645
+int_ceildiv -2147483647 -2 1073741825
+int_min -2147483647 -1 -2147483647
+int_max -2147483647 -1 -1
+int_fix_mul -2147483647 -1 262144
+int_fix_mul_t1 -2147483647 -1 8192
+int_add_no_overflow -2147483647 -1 -2147483648
+int_sub_no_overflow -2147483647 -1 -2147483646
+int_ceildiv -2147483647 -1 -2147483647
+int_min -2147483647 0 -2147483647
+int_max -2147483647 0 0
+int_fix_mul -2147483647 0 0
+int_fix_mul_t1 -2147483647 0 0
+int_add_no_overflow -2147483647 0 -2147483647
+int_sub_no_overflow -2147483647 0 -2147483647
+int_min -2147483647 1 -2147483647
+int_max -2147483647 1 1
+int_fix_mul -2147483647 1 -262144
+int_fix_mul_t1 -2147483647 1 -8192
+int_add_no_overflow -2147483647 1 -2147483646
+int_sub_no_overflow -2147483647 1 -2147483648
+int_ceildiv -2147483647 1 -2147483647
+int_min -2147483647 2 -2147483647
+int_max -2147483647 2 2
+int_fix_mul -2147483647 2 -524288
+int_fix_mul_t1 -2147483647 2 -16384
+int_add_no_overflow -2147483647 2 -2147483645
+int_sub_no_overflow -2147483647 2 2147483647
+int_ceildiv -2147483647 2 -1073741823
+int_min -2147483647 3 -2147483647
+int_max -2147483647 3 3
+int_fix_mul -2147483647 3 -786432
+int_fix_mul_t1 -2147483647 3 -24576
+int_add_no_overflow -2147483647 3 -2147483644
+int_sub_no_overflow -2147483647 3 2147483646
+int_ceildiv -2147483647 3 -715827881
+int_min -2147483647 4096 -2147483647
+int_max -2147483647 4096 4096
+int_fix_mul -2147483647 4096 -1073741823
+int_fix_mul_t1 -2147483647 4096 -33554432
+int_add_no_overflow -2147483647 4096 -2147479551
+int_sub_no_overflow -2147483647 4096 2147479553
+int_ceildiv -2147483647 4096 -524287
+int_min -2147483647 65536 -2147483647
+int_max -2147483647 65536 65536
+int_fix_mul -2147483647 65536 8
+int_fix_mul_t1 -2147483647 65536 -536870912
+int_add_no_overflow -2147483647 65536 -2147418111
+int_sub_no_overflow -2147483647 65536 2147418113
+int_ceildiv -2147483647 65536 -32767
+int_min -2147483647 2147483646 -2147483647
+int_max -2147483647 2147483646 2147483646
+int_fix_mul -2147483647 2147483646 786432
+int_fix_mul_t1 -2147483647 2147483646 24576
+int_add_no_overflow -2147483647 2147483646 -1
+int_sub_no_overflow -2147483647 2147483646 3
+int_ceildiv -2147483647 2147483646 0
+int_min -2147483647 2147483647 -2147483647
+int_max -2147483647 2147483647 2147483647
+int_fix_mul -2147483647 2147483647 524288
+int_fix_mul_t1 -2147483647 2147483647 16384
+int_add_no_overflow -2147483647 2147483647 0
+int_sub_no_overflow -2147483647 2147483647 2
+int_ceildiv -2147483647 2147483647 0
+int_min -65536 -2147483648 -2147483648
+int_max -65536 -2147483648 -65536
+int_fix_mul -65536 -2147483648 0
+int_fix_mul_t1 -65536 -2147483648 536870912
+int_add_no_overflow -65536 -2147483648 2147418112
+int_sub_no_overflow -65536 -2147483648 2147418112
+int_ceildiv -65536 -2147483648 1
+int_min -65536 -2147483647 -2147483647
+int_max -65536 -2147483647 -65536
+int_fix_mul -65536 -2147483647 -8
+int_fix_mul_t1 -65536 -2147483647 536870911
+int_add_no_overflow -65536 -2147483647 2147418113
+int_sub_no_overflow -65536 -2147483647 2147418111
+int_ceildiv -65536 -2147483647 1
+int_min -65536 -65536 -65536
+int_max -65536 -65536 -65536
+int_fix_mul -65536 -65536 524288
+int_fix_mul_t1 -65536 -65536 16384
+int_add_no_overflow -65536 -65536 -131072
+int_sub_no_overflow -65536 -65536 0
+int_ceildiv -65536 -65536 2
+int_min -65536 -4097 -65536
+int_max -65536 -4097 -4097
+int_fix_mul -65536 -4097 32776
+int_fix_mul_t1 -65536 -4097 1024
+int_add_no_overflow -65536 -4097 -69633
+int_sub_no_overflow -65536 -4097 -61439
+int_ceildiv -65536 -4097 16
+int_min -65536 -4096 -65536
+int_max -65536 -4096 -4096
+int_fix_mul -65536 -4096 32768
+int_fix_mul_t1 -65536 -4096 1024
+int_add_no_overflow -65536 -4096 -69632
+int_sub_no_overflow -65536 -4096 -61440
+int_ceildiv -65536 -4096 17
+int_min -65536 -3 -65536
+int_max -65536 -3 -3
+int_fix_mul -65536 -3 24
+int_fix_mul_t1 -65536 -3 0
+int_add_no_overflow -65536 -3 -65539
+int_sub_no_overflow -65536 -3 -65533
+int_ceildiv -65536 -3 21846
+int_min -65536 -2 -65536
+int_max -65536 -2 -2
+int_fix_mul -65536 -2 16
+int_fix_mul_t1 -65536 -2 0
+int_add_no_overflow -65536 -2 -65538
+int_sub_no_overflow -65536 -2 -65534
+int_ceildiv -65536 -2 32769
+int_min -65536 -1 -65536
+int_max -65536 -1 -1
+int_fix_mul -65536 -1 8
+int_fix_mul_t1 -65536 -1 0
+int_add_no_overflow -65536 -1 -65537
+int_sub_no_overflow -65536 -1 -65535
+int_ceildiv -65536 -1 65538
+int_min -65536 0 -65536
+int_max -65536 0 0
+int_fix_mul -65536 0 0
+int_fix_mul_t1 -65536 0 0
+int_add_no_overflow -65536 0 -65536
+int_sub_no_overflow -65536 0 -65536
+int_min -65536 1 -65536
+int_max -65536 1 1
+int_fix_mul -65536 1 -8
+int_fix_mul_t1 -65536 1 -1
+int_add_no_overflow -65536 1 -65535
+int_sub_no_overflow -65536 1 -65537
+int_ceildiv -65536 1 -65536
+int_min -65536 2 -65536
+int_max -65536 2 2
+int_fix_mul -65536 2 -16
+int_fix_mul_t1 -65536 2 -1
+int_add_no_overflow -65536 2 -65534
+int_sub_no_overflow -65536 2 -65538
+int_ceildiv -65536 2 -32767
+int_min -65536 3 -65536
+int_max -65536 3 3
+int_fix_mul -65536 3 -24
+int_fix_mul_t1 -65536 3 -1
+int_add_no_overflow -65536 3 -65533
+int_sub_no_overflow -65536 3 -65539
+int_ceildiv -65536 3 -21844
+int_min -65536 4096 -65536
+int_max -65536 4096 4096
+int_fix_mul -65536 4096 -32768
+int_fix_mul_t1 -65536 4096 -1024
+int_add_no_overflow -65536 4096 -61440
+int_sub_no_overflow -65536 4096 -69632
+int_ceildiv -65536 4096 -15
+int_min -65536 65536 -65536
+int_max -65536 65536 65536
+int_fix_mul -65536 65536 -524288
+int_fix_mul_t1 -65536 65536 -16384
+int_add_no_overflow -65536 65536 0
+int_sub_no_overflow -65536 65536 -131072
+int_ceildiv -65536 65536 0
+int_min -65536 2147483646 -65536
+int_max -65536 2147483646 2147483646
+int_fix_mul -65536 2147483646 16
+int_fix_mul_t1 -65536 2147483646 -536870912
+int_add_no_overflow -65536 2147483646 2147418110
+int_sub_no_overflow -65536 2147483646 2147418114
+int_ceildiv -65536 2147483646 0
+int_min -65536 2147483647 -65536
+int_max -65536 2147483647 2147483647
+int_fix_mul -65536 2147483647 8
+int_fix_mul_t1 -65536 2147483647 -536870912
+int_add_no_overflow -65536 2147483647 2147418111
+int_sub_no_overflow -65536 2147483647 2147418113
+int_ceildiv -65536 2147483647 0
+int_min -4097 -2147483648 -2147483648
+int_max -4097 -2147483648 -4097
+int_fix_mul -4097 -2147483648 1074003968
+int_fix_mul_t1 -4097 -2147483648 33562624
+int_add_no_overflow -4097 -2147483648 2147479551
+int_sub_no_overflow -4097 -2147483648 2147479551
+int_ceildiv -4097 -2147483648 1
+int_min -4097 -2147483647 -2147483647
+int_max -4097 -2147483647 -4097
+int_fix_mul -4097 -2147483647 1074003967
+int_fix_mul_t1 -4097 -2147483647 33562623
+int_add_no_overflow -4097 -2147483647 2147479552
+int_sub_no_overflow -4097 -2147483647 2147479550
+int_ceildiv -4097 -2147483647 1
+int_min -4097 -65536 -65536
+int_max -4097 -65536 -4097
+int_fix_mul -4097 -65536 32776
+int_fix_mul_t1 -4097 -65536 1024
+int_add_no_overflow -4097 -65536 -69633
+int_sub_no_overflow -4097 -65536 61439
+int_ceildiv -4097 -65536 1
+int_min -4097 -4097 -4097
+int_max -4097 -4097 -4097
+int_fix_mul -4097 -4097 2049
+int_fix_mul_t1 -4097 -4097 64
+int_add_no_overflow -4097 -4097 -8194
+int_sub_no_overflow -4097 -4097 0
+int_ceildiv -4097 -4097 2
+int_min -4097 -4096 -4097
+int_max -4097 -4096 -4096
+int_fix_mul -4097 -4096 2049
+int_fix_mul_t1 -4097 -4096 64
+int_add_no_overflow -4097 -4096 -8193
+int_sub_no_overflow -4097 -4096 -1
+int_ceildiv -4097 -4096 2
+int_min -4097 -3 -4097
+int_max -4097 -3 -3
+int_fix_mul -4097 -3 2
+int_fix_mul_t1 -4097 -3 0
+int_add_no_overflow -4097 -3 -4100
+int_sub_no_overflow -4097 -3 -4094
+int_ceildiv -4097 -3 1367
+int_min -4097 -2 -4097
+int_max -4097 -2 -2
+int_fix_mul -4097 -2 1
+int_fix_mul_t1 -4097 -2 0
+int_add_no_overflow -4097 -2 -4099
+int_sub_no_overflow -4097 -2 -4095
+int_ceildiv -4097 -2 2050
+int_min -4097 -1 -4097
+int_max -4097 -1 -1
+int_fix_mul -4097 -1 1
+int_fix_mul_t1 -4097 -1 0
+int_add_no_overflow -4097 -1 -4098
+int_sub_no_overflow -4097 -1 -4096
+int_ceildiv -4097 -1 4099
+int_min -4097 0 -4097
+int_max -4097 0 0
+int_fix_mul -4097 0 0
+int_fix_mul_t1 -4097 0 0
+int_add_no_overflow -4097 0 -4097
+int_sub_no_overflow -4097 0 -4097
+int_min -4097 1 -4097
+int_max -4097 1 1
+int_fix_mul -4097 1 -1
+int_fix_mul_t1 -4097 1 -1
+int_add_no_overflow -4097 1 -4096
+int_sub_no_overflow -4097 1 -4098
+int_ceildiv -4097 1 -4097
+int_min -4097 2 -4097
+int_max -4097 2 2
+int_fix_mul -4097 2 -1
+int_fix_mul_t1 -4097 2 -1
+int_add_no_overflow -4097 2 -4095
+int_sub_no_overflow -4097 2 -4099
+int_ceildiv -4097 2 -2048
+int_min -4097 3 -4097
+int_max -4097 3 3
+int_fix_mul -4097 3 -2
+int_fix_mul_t1 -4097 3 -1
+int_add_no_overflow -4097 3 -4094
+int_sub_no_overflow -4097 3 -4100
+int_ceildiv -4097 3 -1365
+int_min -4097 4096 -4097
+int_max -4097 4096 4096
+int_fix_mul -4097 4096 -2048
+int_fix_mul_t1 -4097 4096 -64
+int_add_no_overflow -4097 4096 -1
+int_sub_no_overflow -4097 4096 -8193
+int_ceildiv -4097 4096 0
+int_min -4097 65536 -4097
+int_max -4097 65536 65536
+int_fix_mul -4097 65536 -32776
+int_fix_mul_t1 -4097 65536 -1025
+int_add_no_overflow -4097 65536 61439
+int_sub_no_overflow -4097 65536 -69633
+int_ceildiv -4097 65536 0
+int_min -4097 2147483646 -4097
+int_max -4097 2147483646 2147483646
+int_fix_mul -4097 2147483646 -1074003967
+int_fix_mul_t1 -4097 2147483646 -33562624
+int_add_no_overflow -4097 2147483646 2147479549
+int_sub_no_overflow -4097 2147483646 2147479553
+int_ceildiv -4097 2147483646 0
+int_min -4097 2147483647 -4097
+int_max -4097 2147483647 2147483647
+int_fix_mul -4097 2147483647 -1074003967
+int_fix_mul_t1 -4097 2147483647 -33562624
+int_add_no_overflow -4097 2147483647 2147479550
+int_sub_no_overflow -4097 2147483647 2147479552
+int_ceildiv -4097 2147483647 0
+int_min -4096 -2147483648 -2147483648
+int_max -4096 -2147483648 -4096
+int_fix_mul -4096 -2147483648 1073741824
+int_fix_mul_t1 -4096 -2147483648 33554432
+int_add_no_overflow -4096 -2147483648 2147479552
+int_sub_no_overflow -4096 -2147483648 2147479552
+int_ceildiv -4096 -2147483648 1
+int_min -4096 -2147483647 -2147483647
+int_max -4096 -2147483647 -4096
+int_fix_mul -4096 -2147483647 1073741824
+int_fix_mul_t1 -4096 -2147483647 33554432
+int_add_no_overflow -4096 -2147483647 2147479553
+int_sub_no_overflow -4096 -2147483647 2147479551
+int_ceildiv -4096 -2147483647 1
+int_min -4096 -65536 -65536
+int_max -4096 -65536 -4096
+int_fix_mul -4096 -65536 32768
+int_fix_mul_t1 -4096 -65536 1024
+int_add_no_overflow -4096 -65536 -69632
+int_sub_no_overflow -4096 -65536 61440
+int_ceildiv -4096 -65536 1
+int_min -4096 -4097 -4097
+int_max -4096 -4097 -4096
+int_fix_mul -4096 -4097 2049
+int_fix_mul_t1 -4096 -4097 64
+int_add_no_overflow -4096 -4097 -8193
+int_sub_no_overflow -4096 -4097 1
+int_ceildiv -4096 -4097 2
+int_min -4096 -4096 -4096
+int_max -4096 -4096 -4096
+int_fix_mul -4096 -4096 2048
+int_fix_mul_t1 -4096 -4096 64
+int_add_no_overflow -4096 -4096 -8192
+int_sub_no_overflow -4096 -4096 0
+int_ceildiv -4096 -4096 2
+int_min -4096 -3 -4096
+int_max -4096 -3 -3
+int_fix_mul -4096 -3 2
+int_fix_mul_t1 -4096 -3 0
+int_add_no_overflow -4096 -3 -4099
+int_sub_no_overflow -4096 -3 -4093
+int_ceildiv -4096 -3 1366
+int_min -4096 -2 -4096
+int_max -4096 -2 -2
+int_fix_mul -4096 -2 1
+int_fix_mul_t1 -4096 -2 0
+int_add_no_overflow -4096 -2 -4098
+int_sub_no_overflow -4096 -2 -4094
+int_ceildiv -4096 -2 2049
+int_min -4096 -1 -4096
+int_max -4096 -1 -1
+int_fix_mul -4096 -1 1
+int_fix_mul_t1 -4096 -1 0
+int_add_no_overflow -4096 -1 -4097
+int_sub_no_overflow -4096 -1 -4095
+int_ceildiv -4096 -1 4098
+int_min -4096 0 -4096
+int_max -4096 0 0
+int_fix_mul -4096 0 0
+int_fix_mul_t1 -4096 0 0
+int_add_no_overflow -4096 0 -4096
+int_sub_no_overflow -4096 0 -4096
+int_min -4096 1 -4096
+int_max -4096 1 1
+int_fix_mul -4096 1 0
+int_fix_mul_t1 -4096 1 0
+int_add_no_overflow -4096 1 -4095
+int_sub_no_overflow -4096 1 -4097
+int_ceildiv -4096 1 -4096
+int_min -4096 2 -4096
+int_max -4096 2 2
+int_fix_mul -4096 2 -1
+int_fix_mul_t1 -4096 2 -1
+int_add_no_overflow -4096 2 -4094
+int_sub_no_overflow -4096 2 -4098
+int_ceildiv -4096 2 -2047
+int_min -4096 3 -4096
+int_max -4096 3 3
+int_fix_mul -4096 3 -1
+int_fix_mul_t1 -4096 3 -1
+int_add_no_overflow -4096 3 -4093
+int_sub_no_overflow -4096 3 -4099
+int_ceildiv -4096 3 -1364
+int_min -4096 4096 -4096
+int_max -4096 4096 4096
+int_fix_mul -4096 4096 -2048
+int_fix_mul_t1 -4096 4096 -64
+int_add_no_overflow -4096 4096 0
+int_sub_no_overflow -4096 4096 -8192
+int_ceildiv -4096 4096 0
+int_min -4096 65536 -4096
+int_max -4096 65536 65536
+int_fix_mul -4096 65536 -32768
+int_fix_mul_t1 -4096 65536 -1024
+int_add_no_overflow -4096 65536 61440
+int_sub_no_overflow -4096 65536 -69632
+int_ceildiv -4096 65536 0
+int_min -4096 2147483646 -4096
+int_max -4096 2147483646 2147483646
+int_fix_mul -4096 2147483646 -1073741823
+int_fix_mul_t1 -4096 2147483646 -33554432
+int_add_no_overflow -4096 2147483646 2147479550
+int_sub_no_overflow -4096 2147483646 2147479554
+int_ceildiv -4096 2147483646 0
+int_min -4096 2147483647 -4096
+int_max -4096 2147483647 2147483647
+int_fix_mul -4096 2147483647 -1073741823
+int_fix_mul_t1 -4096 2147483647 -33554432
+int_add_no_overflow -4096 2147483647 2147479551
+int_sub_no_overflow -4096 2147483647 2147479553
+int_ceildiv -4096 2147483647 0
+int_min -3 -2147483648 -2147483648
+int_max -3 -2147483648 -3
+int_fix_mul -3 -2147483648 786432
+int_fix_mul_t1 -3 -2147483648 24576
+int_add_no_overflow -3 -2147483648 2147483645
+int_sub_no_overflow -3 -2147483648 2147483645
+int_ceildiv -3 -2147483648 1
+int_min -3 -2147483647 -2147483647
+int_max -3 -2147483647 -3
+int_fix_mul -3 -2147483647 786432
+int_fix_mul_t1 -3 -2147483647 24576
+int_add_no_overflow -3 -2147483647 2147483646
+int_sub_no_overflow -3 -2147483647 2147483644
+int_ceildiv -3 -2147483647 1
+int_min -3 -65536 -65536
+int_max -3 -65536 -3
+int_fix_mul -3 -65536 24
+int_fix_mul_t1 -3 -65536 0
+int_add_no_overflow -3 -65536 -65539
+int_sub_no_overflow -3 -65536 65533
+int_ceildiv -3 -65536 1
+int_min -3 -4097 -4097
+int_max -3 -4097 -3
+int_fix_mul -3 -4097 2
+int_fix_mul_t1 -3 -4097 0
+int_add_no_overflow -3 -4097 -4100
+int_sub_no_overflow -3 -4097 4094
+int_ceildiv -3 -4097 1
+int_min -3 -4096 -4096
+int_max -3 -4096 -3
+int_fix_mul -3 -4096 2
+int_fix_mul_t1 -3 -4096 0
+int_add_no_overflow -3 -4096 -4099
+int_sub_no_overflow -3 -4096 4093
+int_ceildiv -3 -4096 1
+int_min -3 -3 -3
+int_max -3 -3 -3
+int_fix_mul -3 -3 0
+int_fix_mul_t1 -3 -3 0
+int_add_no_overflow -3 -3 -6
+int_sub_no_overflow -3 -3 0
+int_ceildiv -3 -3 2
+int_min -3 -2 -3
+int_max -3 -2 -2
+int_fix_mul -3 -2 0
+int_fix_mul_t1 -3 -2 0
+int_add_no_overflow -3 -2 -5
+int_sub_no_overflow -3 -2 -1
+int_ceildiv -3 -2 3
+int_min -3 -1 -3
+int_max -3 -1 -1
+int_fix_mul -3 -1 0
+int_fix_mul_t1 -3 -1 0
+int_add_no_overflow -3 -1 -4
+int_sub_no_overflow -3 -1 -2
+int_ceildiv -3 -1 5
+int_min -3 0 -3
+int_max -3 0 0
+int_fix_mul -3 0 0
+int_fix_mul_t1 -3 0 0
+int_add_no_overflow -3 0 -3
+int_sub_no_overflow -3 0 -3
+int_min -3 1 -3
+int_max -3 1 1
+int_fix_mul -3 1 0
+int_fix_mul_t1 -3 1 0
+int_add_no_overflow -3 1 -2
+int_sub_no_overflow -3 1 -4
+int_ceildiv -3 1 -3
+int_min -3 2 -3
+int_max -3 2 2
+int_fix_mul -3 2 0
+int_fix_mul_t1 -3 2 0
+int_add_no_overflow -3 2 -1
+int_sub_no_overflow -3 2 -5
+int_ceildiv -3 2 -1
+int_min -3 3 -3
+int_max -3 3 3
+int_fix_mul -3 3 0
+int_fix_mul_t1 -3 3 0
+int_add_no_overflow -3 3 0
+int_sub_no_overflow -3 3 -6
+int_ceildiv -3 3 0
+int_min -3 4096 -3
+int_max -3 4096 4096
+int_fix_mul -3 4096 -1
+int_fix_mul_t1 -3 4096 -1
+int_add_no_overflow -3 4096 4093
+int_sub_no_overflow -3 4096 -4099
+int_ceildiv -3 4096 0
+int_min -3 65536 -3
+int_max -3 65536 65536
+int_fix_mul -3 65536 -24
+int_fix_mul_t1 -3 65536 -1
+int_add_no_overflow -3 65536 65533
+int_sub_no_overflow -3 65536 -65539
+int_ceildiv -3 65536 0
+int_min -3 2147483646 -3
+int_max -3 2147483646 2147483646
+int_fix_mul -3 2147483646 -786432
+int_fix_mul_t1 -3 2147483646 -24576
+int_add_no_overflow -3 2147483646 2147483643
+int_sub_no_overflow -3 2147483646 2147483647
+int_ceildiv -3 2147483646 0
+int_min -3 2147483647 -3
+int_max -3 2147483647 2147483647
+int_fix_mul -3 2147483647 -786432
+int_fix_mul_t1 -3 2147483647 -24576
+int_add_no_overflow -3 2147483647 2147483644
+int_sub_no_overflow -3 2147483647 2147483646
+int_ceildiv -3 2147483647 0
+int_min -2 -2147483648 -2147483648
+int_max -2 -2147483648 -2
+int_fix_mul -2 -2147483648 524288
+int_fix_mul_t1 -2 -2147483648 16384
+int_add_no_overflow -2 -2147483648 2147483646
+int_sub_no_overflow -2 -2147483648 2147483646
+int_ceildiv -2 -2147483648 1
+int_min -2 -2147483647 -2147483647
+int_max -2 -2147483647 -2
+int_fix_mul -2 -2147483647 524288
+int_fix_mul_t1 -2 -2147483647 16384
+int_add_no_overflow -2 -2147483647 2147483647
+int_sub_no_overflow -2 -2147483647 2147483645
+int_ceildiv -2 -2147483647 1
+int_min -2 -65536 -65536
+int_max -2 -65536 -2
+int_fix_mul -2 -65536 16
+int_fix_mul_t1 -2 -65536 0
+int_add_no_overflow -2 -65536 -65538
+int_sub_no_overflow -2 -65536 65534
+int_ceildiv -2 -65536 1
+int_min -2 -4097 -4097
+int_max -2 -4097 -2
+int_fix_mul -2 -4097 1
+int_fix_mul_t1 -2 -4097 0
+int_add_no_overflow -2 -4097 -4099
+int_sub_no_overflow -2 -4097 4095
+int_ceildiv -2 -4097 1
+int_min -2 -4096 -4096
+int_max -2 -4096 -2
+int_fix_mul -2 -4096 1
+int_fix_mul_t1 -2 -4096 0
+int_add_no_overflow -2 -4096 -4098
+int_sub_no_overflow -2 -4096 4094
+int_ceildiv -2 -4096 1
+int_min -2 -3 -3
+int_max -2 -3 -2
+int_fix_mul -2 -3 0
+int_fix_mul_t1 -2 -3 0
+int_add_no_overflow -2 -3 -5
+int_sub_no_overflow -2 -3 1
+int_ceildiv -2 -3 2
+int_min -2 -2 -2
+int_max -2 -2 -2
+int_fix_mul -2 -2 0
+int_fix_mul_t1 -2 -2 0
+int_add_no_overflow -2 -2 -4
+int_sub_no_overflow -2 -2 0
+int_ceildiv -2 -2 2
+int_min -2 -1 -2
+int_max -2 -1 -1
+int_fix_mul -2 -1 0
+int_fix_mul_t1 -2 -1 0
+int_add_no_overflow -2 -1 -3
+int_sub_no_overflow -2 -1 -1
+int_ceildiv -2 -1 4
+int_min -2 0 -2
+int_max -2 0 0
+int_fix_mul -2 0 0
+int_fix_mul_t1 -2 0 0
+int_add_no_overflow -2 0 -2
+int_sub_no_overflow -2 0 -2
+int_min -2 1 -2
+int_max -2 1 1
+int_fix_mul -2 1 0
+int_fix_mul_t1 -2 1 0
+int_add_no_overflow -2 1 -1
+int_sub_no_overflow -2 1 -3
+int_ceildiv -2 1 -2
+int_min -2 2 -2
+int_max -2 2 2
+int_fix_mul -2 2 0
+int_fix_mul_t1 -2 2 0
+int_add_no_overflow -2 2 0
+int_sub_no_overflow -2 2 -4
+int_ceildiv -2 2 0
+int_min -2 3 -2
+int_max -2 3 3
+int_fix_mul -2 3 0
+int_fix_mul_t1 -2 3 0
+int_add_no_overflow -2 3 1
+int_sub_no_overflow -2 3 -5
+int_ceildiv -2 3 0
+int_min -2 4096 -2
+int_max -2 4096 4096
+int_fix_mul -2 4096 -1
+int_fix_mul_t1 -2 4096 -1
+int_add_no_overflow -2 4096 4094
+int_sub_no_overflow -2 4096 -4098
+int_ceildiv -2 4096 0
+int_min -2 65536 -2
+int_max -2 65536 65536
+int_fix_mul -2 65536 -16
+int_fix_mul_t1 -2 65536 -1
+int_add_no_overflow -2 65536 65534
+int_sub_no_overflow -2 65536 -65538
+int_ceildiv -2 65536 0
+int_min -2 2147483646 -2
+int_max -2 2147483646 2147483646
+int_fix_mul -2 2147483646 -524288
+int_fix_mul_t1 -2 2147483646 -16384
+int_add_no_overflow -2 2147483646 2147483644
+int_sub_no_overflow -2 2147483646 -2147483648
+int_ceildiv -2 2147483646 0
+int_min -2 2147483647 -2
+int_max -2 2147483647 2147483647
+int_fix_mul -2 2147483647 -524288
+int_fix_mul_t1 -2 2147483647 -16384
+int_add_no_overflow -2 2147483647 2147483645
+int_sub_no_overflow -2 2147483647 2147483647
+int_ceildiv -2 2147483647 0
+int_min -1 -2147483648 -2147483648
+int_max -1 -2147483648 -1
+int_fix_mul -1 -2147483648 262144
+int_fix_mul_t1 -1 -2147483648 8192
+int_add_no_overflow -1 -2147483648 2147483647
+int_sub_no_overflow -1 -2147483648 2147483647
+int_ceildiv -1 -2147483648 1
+int_min -1 -2147483647 -2147483647
+int_max -1 -2147483647 -1
+int_fix_mul -1 -2147483647 262144
+int_fix_mul_t1 -1 -2147483647 8192
+int_add_no_overflow -1 -2147483647 -2147483648
+int_sub_no_overflow -1 -2147483647 2147483646
+int_ceildiv -1 -2147483647 1
+int_min -1 -65536 -65536
+int_max -1 -65536 -1
+int_fix_mul -1 -65536 8
+int_fix_mul_t1 -1 -65536 0
+int_add_no_overflow -1 -65536 -65537
+int_sub_no_overflow -1 -65536 65535
+int_ceildiv -1 -65536 1
+int_min -1 -4097 -4097
+int_max -1 -4097 -1
+int_fix_mul -1 -4097 1
+int_fix_mul_t1 -1 -4097 0
+int_add_no_overflow -1 -4097 -4098
+int_sub_no_overflow -1 -4097 4096
+int_ceildiv -1 -4097 1
+int_min -1 -4096 -4096
+int_max -1 -4096 -1
+int_fix_mul -1 -4096 1
+int_fix_mul_t1 -1 -4096 0
+int_add_no_overflow -1 -4096 -4097
+int_sub_no_overflow -1 -4096 4095
+int_ceildiv -1 -4096 1
+int_min -1 -3 -3
+int_max -1 -3 -1
+int_fix_mul -1 -3 0
+int_fix_mul_t1 -1 -3 0
+int_add_no_overflow -1 -3 -4
+int_sub_no_overflow -1 -3 2
+int_ceildiv -1 -3 1
+int_min -1 -2 -2
+int_max -1 -2 -1
+int_fix_mul -1 -2 0
+int_fix_mul_t1 -1 -2 0
+int_add_no_overflow -1 -2 -3
+int_sub_no_overflow -1 -2 1
+int_ceildiv -1 -2 2
+int_min -1 -1 -1
+int_max -1 -1 -1
+int_fix_mul -1 -1 0
+int_fix_mul_t1 -1 -1 0
+int_add_no_overflow -1 -1 -2
+int_sub_no_overflow -1 -1 0
+int_ceildiv -1 -1 3
+int_min -1 0 -1
+int_max -1 0 0
+int_fix_mul -1 0 0
+int_fix_mul_t1 -1 0 0
+int_add_no_overflow -1 0 -1
+int_sub_no_overflow -1 0 -1
+int_min -1 1 -1
+int_max -1 1 1
+int_fix_mul -1 1 0
+int_fix_mul_t1 -1 1 0
+int_add_no_overflow -1 1 0
+int_sub_no_overflow -1 1 -2
+int_ceildiv -1 1 -1
+int_min -1 2 -1
+int_max -1 2 2
+int_fix_mul -1 2 0
+int_fix_mul_t1 -1 2 0
+int_add_no_overflow -1 2 1
+int_sub_no_overflow -1 2 -3
+int_ceildiv -1 2 0
+int_min -1 3 -1
+int_max -1 3 3
+int_fix_mul -1 3 0
+int_fix_mul_t1 -1 3 0
+int_add_no_overflow -1 3 2
+int_sub_no_overflow -1 3 -4
+int_ceildiv -1 3 0
+int_min -1 4096 -1
+int_max -1 4096 4096
+int_fix_mul -1 4096 0
+int_fix_mul_t1 -1 4096 0
+int_add_no_overflow -1 4096 4095
+int_sub_no_overflow -1 4096 -4097
+int_ceildiv -1 4096 0
+int_min -1 65536 -1
+int_max -1 65536 65536
+int_fix_mul -1 65536 -8
+int_fix_mul_t1 -1 65536 -1
+int_add_no_overflow -1 65536 65535
+int_sub_no_overflow -1 65536 -65537
+int_ceildiv -1 65536 0
+int_min -1 2147483646 -1
+int_max -1 2147483646 2147483646
+int_fix_mul -1 2147483646 -262144
+int_fix_mul_t1 -1 2147483646 -8192
+int_add_no_overflow -1 2147483646 2147483645
+int_sub_no_overflow -1 2147483646 -2147483647
+int_ceildiv -1 2147483646 0
+int_min -1 2147483647 -1
+int_max -1 2147483647 2147483647
+int_fix_mul -1 2147483647 -262144
+int_fix_mul_t1 -1 2147483647 -8192
+int_add_no_overflow -1 2147483647 2147483646
+int_sub_no_overflow -1 2147483647 -2147483648
+int_ceildiv -1 2147483647 0
+int_min 0 -2147483648 -2147483648
+int_max 0 -2147483648 0
+int_fix_mul 0 -2147483648 0
+int_fix_mul_t1 0 -2147483648 0
+int_add_no_overflow 0 -2147483648 -2147483648
+int_sub_no_overflow 0 -2147483648 -2147483648
+int_ceildiv 0 -2147483648 1
+int_min 0 -2147483647 -2147483647
+int_max 0 -2147483647 0
+int_fix_mul 0 -2147483647 0
+int_fix_mul_t1 0 -2147483647 0
+int_add_no_overflow 0 -2147483647 -2147483647
+int_sub_no_overflow 0 -2147483647 2147483647
+int_ceildiv 0 -2147483647 1
+int_min 0 -65536 -65536
+int_max 0 -65536 0
+int_fix_mul 0 -65536 0
+int_fix_mul_t1 0 -65536 0
+int_add_no_overflow 0 -65536 -65536
+int_sub_no_overflow 0 -65536 65536
+int_ceildiv 0 -65536 1
+int_min 0 -4097 -4097
+int_max 0 -4097 0
+int_fix_mul 0 -4097 0
+int_fix_mul_t1 0 -4097 0
+int_add_no_overflow 0 -4097 -4097
+int_sub_no_overflow 0 -4097 4097
+int_ceildiv 0 -4097 1
+int_min 0 -4096 -4096
+int_max 0 -4096 0
+int_fix_mul 0 -4096 0
+int_fix_mul_t1 0 -4096 0
+int_add_no_overflow 0 -4096 -4096
+int_sub_no_overflow 0 -4096 4096
+int_ceildiv 0 -4096 1
+int_min 0 -3 -3
+int_max 0 -3 0
+int_fix_mul 0 -3 0
+int_fix_mul_t1 0 -3 0
+int_add_no_overflow 0 -3 -3
+int_sub_no_overflow 0 -3 3
+int_ceildiv 0 -3 1
+int_min 0 -2 -2
+int_max 0 -2 0
+int_fix_mul 0 -2 0
+int_fix_mul_t1 0 -2 0
+int_add_no_overflow 0 -2 -2
+int_sub_no_overflow 0 -2 2
+int_ceildiv 0 -2 1
+int_min 0 -1 -1
+int_max 0 -1 0
+int_fix_mul 0 -1 0
+int_fix_mul_t1 0 -1 0
+int_add_no_overflow 0 -1 -1
+int_sub_no_overflow 0 -1 1
+int_ceildiv 0 -1 2
+int_min 0 0 0
+int_max 0 0 0
+int_fix_mul 0 0 0
+int_fix_mul_t1 0 0 0
+int_add_no_overflow 0 0 0
+int_sub_no_overflow 0 0 0
+int_min 0 1 0
+int_max 0 1 1
+int_fix_mul 0 1 0
+int_fix_mul_t1 0 1 0
+int_add_no_overflow 0 1 1
+int_sub_no_overflow 0 1 -1
+int_ceildiv 0 1 0
+int_min 0 2 0
+int_max 0 2 2
+int_fix_mul 0 2 0
+int_fix_mul_t1 0 2 0
+int_add_no_overflow 0 2 2
+int_sub_no_overflow 0 2 -2
+int_ceildiv 0 2 0
+int_min 0 3 0
+int_max 0 3 3
+int_fix_mul 0 3 0
+int_fix_mul_t1 0 3 0
+int_add_no_overflow 0 3 3
+int_sub_no_overflow 0 3 -3
+int_ceildiv 0 3 0
+int_min 0 4096 0
+int_max 0 4096 4096
+int_fix_mul 0 4096 0
+int_fix_mul_t1 0 4096 0
+int_add_no_overflow 0 4096 4096
+int_sub_no_overflow 0 4096 -4096
+int_ceildiv 0 4096 0
+int_min 0 65536 0
+int_max 0 65536 65536
+int_fix_mul 0 65536 0
+int_fix_mul_t1 0 65536 0
+int_add_no_overflow 0 65536 65536
+int_sub_no_overflow 0 65536 -65536
+int_ceildiv 0 65536 0
+int_min 0 2147483646 0
+int_max 0 2147483646 2147483646
+int_fix_mul 0 2147483646 0
+int_fix_mul_t1 0 2147483646 0
+int_add_no_overflow 0 2147483646 2147483646
+int_sub_no_overflow 0 2147483646 -2147483646
+int_ceildiv 0 2147483646 0
+int_min 0 2147483647 0
+int_max 0 2147483647 2147483647
+int_fix_mul 0 2147483647 0
+int_fix_mul_t1 0 2147483647 0
+int_add_no_overflow 0 2147483647 2147483647
+int_sub_no_overflow 0 2147483647 -2147483647
+int_ceildiv 0 2147483647 0
+int_min 1 -2147483648 -2147483648
+int_max 1 -2147483648 1
+int_fix_mul 1 -2147483648 -262144
+int_fix_mul_t1 1 -2147483648 -8192
+int_add_no_overflow 1 -2147483648 -2147483647
+int_sub_no_overflow 1 -2147483648 -2147483647
+int_ceildiv 1 -2147483648 1
+int_min 1 -2147483647 -2147483647
+int_max 1 -2147483647 1
+int_fix_mul 1 -2147483647 -262144
+int_fix_mul_t1 1 -2147483647 -8192
+int_add_no_overflow 1 -2147483647 -2147483646
+int_sub_no_overflow 1 -2147483647 -2147483648
+int_ceildiv 1 -2147483647 1
+int_min 1 -65536 -65536
+int_max 1 -65536 1
+int_fix_mul 1 -65536 -8
+int_fix_mul_t1 1 -65536 -1
+int_add_no_overflow 1 -65536 -65535
+int_sub_no_overflow 1 -65536 65537
+int_ceildiv 1 -65536 1
+int_min 1 -4097 -4097
+int_max 1 -4097 1
+int_fix_mul 1 -4097 -1
+int_fix_mul_t1 1 -4097 -1
+int_add_no_overflow 1 -4097 -4096
+int_sub_no_overflow 1 -4097 4098
+int_ceildiv 1 -4097 1
+int_min 1 -4096 -4096
+int_max 1 -4096 1
+int_fix_mul 1 -4096 0
+int_fix_mul_t1 1 -4096 0
+int_add_no_overflow 1 -4096 -4095
+int_sub_no_overflow 1 -4096 4097
+int_ceildiv 1 -4096 1
+int_min 1 -3 -3
+int_max 1 -3 1
+int_fix_mul 1 -3 0
+int_fix_mul_t1 1 -3 0
+int_add_no_overflow 1 -3 -2
+int_sub_no_overflow 1 -3 4
+int_ceildiv 1 -3 1
+int_min 1 -2 -2
+int_max 1 -2 1
+int_fix_mul 1 -2 0
+int_fix_mul_t1 1 -2 0
+int_add_no_overflow 1 -2 -1
+int_sub_no_overflow 1 -2 3
+int_ceildiv 1 -2 1
+int_min 1 -1 -1
+int_max 1 -1 1
+int_fix_mul 1 -1 0
+int_fix_mul_t1 1 -1 0
+int_add_no_overflow 1 -1 0
+int_sub_no_overflow 1 -1 2
+int_ceildiv 1 -1 1
+int_min 1 0 0
+int_max 1 0 1
+int_fix_mul 1 0 0
+int_fix_mul_t1 1 0 0
+int_add_no_overflow 1 0 1
+int_sub_no_overflow 1 0 1
+int_min 1 1 1
+int_max 1 1 1
+int_fix_mul 1 1 0
+int_fix_mul_t1 1 1 0
+int_add_no_overflow 1 1 2
+int_sub_no_overflow 1 1 0
+int_ceildiv 1 1 1
+int_min 1 2 1
+int_max 1 2 2
+int_fix_mul 1 2 0
+int_fix_mul_t1 1 2 0
+int_add_no_overflow 1 2 3
+int_sub_no_overflow 1 2 -1
+int_ceildiv 1 2 1
+int_min 1 3 1
+int_max 1 3 3
+int_fix_mul 1 3 0
+int_fix_mul_t1 1 3 0
+int_add_no_overflow 1 3 4
+int_sub_no_overflow 1 3 -2
+int_ceildiv 1 3 1
+int_min 1 4096 1
+int_max 1 4096 4096
+int_fix_mul 1 4096 1
+int_fix_mul_t1 1 4096 0
+int_add_no_overflow 1 4096 4097
+int_sub_no_overflow 1 4096 -4095
+int_ceildiv 1 4096 1
+int_min 1 65536 1
+int_max 1 65536 65536
+int_fix_mul 1 65536 8
+int_fix_mul_t1 1 65536 0
+int_add_no_overflow 1 65536 65537
+int_sub_no_overflow 1 65536 -65535
+int_ceildiv 1 65536 1
+int_min 1 2147483646 1
+int_max 1 2147483646 2147483646
+int_fix_mul 1 2147483646 262144
+int_fix_mul_t1 1 2147483646 8192
+int_add_no_overflow 1 2147483646 2147483647
+int_sub_no_overflow 1 2147483646 -2147483645
+int_ceildiv 1 2147483646 1
+int_min 1 2147483647 1
+int_max 1 2147483647 2147483647
+int_fix_mul 1 2147483647 262144
+int_fix_mul_t1 1 2147483647 8192
+int_add_no_overflow 1 2147483647 -2147483648
+int_sub_no_overflow 1 2147483647 -2147483646
+int_ceildiv 1 2147483647 1
+int_min 2 -2147483648 -2147483648
+int_max 2 -2147483648 2
+int_fix_mul 2 -2147483648 -524288
+int_fix_mul_t1 2 -2147483648 -16384
+int_add_no_overflow 2 -2147483648 -2147483646
+int_sub_no_overflow 2 -2147483648 -2147483646
+int_ceildiv 2 -2147483648 0
+int_min 2 -2147483647 -2147483647
+int_max 2 -2147483647 2
+int_fix_mul 2 -2147483647 -524288
+int_fix_mul_t1 2 -2147483647 -16384
+int_add_no_overflow 2 -2147483647 -2147483645
+int_sub_no_overflow 2 -2147483647 -2147483647
+int_ceildiv 2 -2147483647 0
+int_min 2 -65536 -65536
+int_max 2 -65536 2
+int_fix_mul 2 -65536 -16
+int_fix_mul_t1 2 -65536 -1
+int_add_no_overflow 2 -65536 -65534
+int_sub_no_overflow 2 -65536 65538
+int_ceildiv 2 -65536 0
+int_min 2 -4097 -4097
+int_max 2 -4097 2
+int_fix_mul 2 -4097 -1
+int_fix_mul_t1 2 -4097 -1
+int_add_no_overflow 2 -4097 -4095
+int_sub_no_overflow 2 -4097 4099
+int_ceildiv 2 -4097 0
+int_min 2 -4096 -4096
+int_max 2 -4096 2
+int_fix_mul 2 -4096 -1
+int_fix_mul_t1 2 -4096 -1
+int_add_no_overflow 2 -4096 -4094
+int_sub_no_overflow 2 -4096 4098
+int_ceildiv 2 -4096 0
+int_min 2 -3 -3
+int_max 2 -3 2
+int_fix_mul 2 -3 0
+int_fix_mul_t1 2 -3 0
+int_add_no_overflow 2 -3 -1
+int_sub_no_overflow 2 -3 5
+int_ceildiv 2 -3 0
+int_min 2 -2 -2
+int_max 2 -2 2
+int_fix_mul 2 -2 0
+int_fix_mul_t1 2 -2 0
+int_add_no_overflow 2 -2 0
+int_sub_no_overflow 2 -2 4
+int_ceildiv 2 -2 0
+int_min 2 -1 -1
+int_max 2 -1 2
+int_fix_mul 2 -1 0
+int_fix_mul_t1 2 -1 0
+int_add_no_overflow 2 -1 1
+int_sub_no_overflow 2 -1 3
+int_ceildiv 2 -1 0
+int_min 2 0 0
+int_max 2 0 2
+int_fix_mul 2 0 0
+int_fix_mul_t1 2 0 0
+int_add_no_overflow 2 0 2
+int_sub_no_overflow 2 0 2
+int_min 2 1 1
+int_max 2 1 2
+int_fix_mul 2 1 0
+int_fix_mul_t1 2 1 0
+int_add_no_overflow 2 1 3
+int_sub_no_overflow 2 1 1
+int_ceildiv 2 1 2
+int_min 2 2 2
+int_max 2 2 2
+int_fix_mul 2 2 0
+int_fix_mul_t1 2 2 0
+int_add_no_overflow 2 2 4
+int_sub_no_overflow 2 2 0
+int_ceildiv 2 2 1
+int_min 2 3 2
+int_max 2 3 3
+int_fix_mul 2 3 0
+int_fix_mul_t1 2 3 0
+int_add_no_overflow 2 3 5
+int_sub_no_overflow 2 3 -1
+int_ceildiv 2 3 1
+int_min 2 4096 2
+int_max 2 4096 4096
+int_fix_mul 2 4096 1
+int_fix_mul_t1 2 4096 0
+int_add_no_overflow 2 4096 4098
+int_sub_no_overflow 2 4096 -4094
+int_ceildiv 2 4096 1
+int_min 2 65536 2
+int_max 2 65536 65536
+int_fix_mul 2 65536 16
+int_fix_mul_t1 2 65536 0
+int_add_no_overflow 2 65536 65538
+int_sub_no_overflow 2 65536 -65534
+int_ceildiv 2 65536 1
+int_min 2 2147483646 2
+int_max 2 2147483646 2147483646
+int_fix_mul 2 2147483646 524288
+int_fix_mul_t1 2 2147483646 16384
+int_add_no_overflow 2 2147483646 -2147483648
+int_sub_no_overflow 2 2147483646 -2147483644
+int_ceildiv 2 2147483646 1
+int_min 2 2147483647 2
+int_max 2 2147483647 2147483647
+int_fix_mul 2 2147483647 524288
+int_fix_mul_t1 2 2147483647 16384
+int_add_no_overflow 2 2147483647 -2147483647
+int_sub_no_overflow 2 2147483647 -2147483645
+int_ceildiv 2 2147483647 1
+int_min 3 -2147483648 -2147483648
+int_max 3 -2147483648 3
+int_fix_mul 3 -2147483648 -786432
+int_fix_mul_t1 3 -2147483648 -24576
+int_add_no_overflow 3 -2147483648 -2147483645
+int_sub_no_overflow 3 -2147483648 -2147483645
+int_ceildiv 3 -2147483648 0
+int_min 3 -2147483647 -2147483647
+int_max 3 -2147483647 3
+int_fix_mul 3 -2147483647 -786432
+int_fix_mul_t1 3 -2147483647 -24576
+int_add_no_overflow 3 -2147483647 -2147483644
+int_sub_no_overflow 3 -2147483647 -2147483646
+int_ceildiv 3 -2147483647 0
+int_min 3 -65536 -65536
+int_max 3 -65536 3
+int_fix_mul 3 -65536 -24
+int_fix_mul_t1 3 -65536 -1
+int_add_no_overflow 3 -65536 -65533
+int_sub_no_overflow 3 -65536 65539
+int_ceildiv 3 -65536 0
+int_min 3 -4097 -4097
+int_max 3 -4097 3
+int_fix_mul 3 -4097 -2
+int_fix_mul_t1 3 -4097 -1
+int_add_no_overflow 3 -4097 -4094
+int_sub_no_overflow 3 -4097 4100
+int_ceildiv 3 -4097 0
+int_min 3 -4096 -4096
+int_max 3 -4096 3
+int_fix_mul 3 -4096 -1
+int_fix_mul_t1 3 -4096 -1
+int_add_no_overflow 3 -4096 -4093
+int_sub_no_overflow 3 -4096 4099
+int_ceildiv 3 -4096 0
+int_min 3 -3 -3
+int_max 3 -3 3
+int_fix_mul 3 -3 0
+int_fix_mul_t1 3 -3 0
+int_add_no_overflow 3 -3 0
+int_sub_no_overflow 3 -3 6
+int_ceildiv 3 -3 0
+int_min 3 -2 -2
+int_max 3 -2 3
+int_fix_mul 3 -2 0
+int_fix_mul_t1 3 -2 0
+int_add_no_overflow 3 -2 1
+int_sub_no_overflow 3 -2 5
+int_ceildiv 3 -2 0
+int_min 3 -1 -1
+int_max 3 -1 3
+int_fix_mul 3 -1 0
+int_fix_mul_t1 3 -1 0
+int_add_no_overflow 3 -1 2
+int_sub_no_overflow 3 -1 4
+int_ceildiv 3 -1 -1
+int_min 3 0 0
+int_max 3 0 3
+int_fix_mul 3 0 0
+int_fix_mul_t1 3 0 0
+int_add_no_overflow 3 0 3
+int_sub_no_overflow 3 0 3
+int_min 3 1 1
+int_max 3 1 3
+int_fix_mul 3 1 0
+int_fix_mul_t1 3 1 0
+int_add_no_overflow 3 1 4
+int_sub_no_overflow 3 1 2
+int_ceildiv 3 1 3
+int_min 3 2 2
+int_max 3 2 3
+int_fix_mul 3 2 0
+int_fix_mul_t1 3 2 0
+int_add_no_overflow 3 2 5
+int_sub_no_overflow 3 2 1
+int_ceildiv 3 2 2
+int_min 3 3 3
+int_max 3 3 3
+int_fix_mul 3 3 0
+int_fix_mul_t1 3 3 0
+int_add_no_overflow 3 3 6
+int_sub_no_overflow 3 3 0
+int_ceildiv 3 3 1
+int_min 3 4096 3
+int_max 3 4096 4096
+int_fix_mul 3 4096 2
+int_fix_mul_t1 3 4096 0
+int_add_no_overflow 3 4096 4099
+int_sub_no_overflow 3 4096 -4093
+int_ceildiv 3 4096 1
+int_min 3 65536 3
+int_max 3 65536 65536
+int_fix_mul 3 65536 24
+int_fix_mul_t1 3 65536 0
+int_add_no_overflow 3 65536 65539
+int_sub_no_overflow 3 65536 -65533
+int_ceildiv 3 65536 1
+int_min 3 2147483646 3
+int_max 3 2147483646 2147483646
+int_fix_mul 3 2147483646 786432
+int_fix_mul_t1 3 2147483646 24576
+int_add_no_overflow 3 2147483646 -2147483647
+int_sub_no_overflow 3 2147483646 -2147483643
+int_ceildiv 3 2147483646 1
+int_min 3 2147483647 3
+int_max 3 2147483647 2147483647
+int_fix_mul 3 2147483647 786432
+int_fix_mul_t1 3 2147483647 24576
+int_add_no_overflow 3 2147483647 -2147483646
+int_sub_no_overflow 3 2147483647 -2147483644
+int_ceildiv 3 2147483647 1
+int_min 4096 -2147483648 -2147483648
+int_max 4096 -2147483648 4096
+int_fix_mul 4096 -2147483648 -1073741824
+int_fix_mul_t1 4096 -2147483648 -33554432
+int_add_no_overflow 4096 -2147483648 -2147479552
+int_sub_no_overflow 4096 -2147483648 -2147479552
+int_ceildiv 4096 -2147483648 0
+int_min 4096 -2147483647 -2147483647
+int_max 4096 -2147483647 4096
+int_fix_mul 4096 -2147483647 -1073741823
+int_fix_mul_t1 4096 -2147483647 -33554432
+int_add_no_overflow 4096 -2147483647 -2147479551
+int_sub_no_overflow 4096 -2147483647 -2147479553
+int_ceildiv 4096 -2147483647 0
+int_min 4096 -65536 -65536
+int_max 4096 -65536 4096
+int_fix_mul 4096 -65536 -32768
+int_fix_mul_t1 4096 -65536 -1024
+int_add_no_overflow 4096 -65536 -61440
+int_sub_no_overflow 4096 -65536 69632
+int_ceildiv 4096 -65536 0
+int_min 4096 -4097 -4097
+int_max 4096 -4097 4096
+int_fix_mul 4096 -4097 -2048
+int_fix_mul_t1 4096 -4097 -64
+int_add_no_overflow 4096 -4097 -1
+int_sub_no_overflow 4096 -4097 8193
+int_ceildiv 4096 -4097 0
+int_min 4096 -4096 -4096
+int_max 4096 -4096 4096
+int_fix_mul 4096 -4096 -2048
+int_fix_mul_t1 4096 -4096 -64
+int_add_no_overflow 4096 -4096 0
+int_sub_no_overflow 4096 -4096 8192
+int_ceildiv 4096 -4096 0
+int_min 4096 -3 -3
+int_max 4096 -3 4096
+int_fix_mul 4096 -3 -1
+int_fix_mul_t1 4096 -3 -1
+int_add_no_overflow 4096 -3 4093
+int_sub_no_overflow 4096 -3 4099
+int_ceildiv 4096 -3 -1364
+int_min 4096 -2 -2
+int_max 4096 -2 4096
+int_fix_mul 4096 -2 -1
+int_fix_mul_t1 4096 -2 -1
+int_add_no_overflow 4096 -2 4094
+int_sub_no_overflow 4096 -2 4098
+int_ceildiv 4096 -2 -2046
+int_min 4096 -1 -1
+int_max 4096 -1 4096
+int_fix_mul 4096 -1 0
+int_fix_mul_t1 4096 -1 0
+int_add_no_overflow 4096 -1 4095
+int_sub_no_overflow 4096 -1 4097
+int_ceildiv 4096 -1 -4094
+int_min 4096 0 0
+int_max 4096 0 4096
+int_fix_mul 4096 0 0
+int_fix_mul_t1 4096 0 0
+int_add_no_overflow 4096 0 4096
+int_sub_no_overflow 4096 0 4096
+int_min 4096 1 1
+int_max 4096 1 4096
+int_fix_mul 4096 1 1
+int_fix_mul_t1 4096 1 0
+int_add_no_overflow 4096 1 4097
+int_sub_no_overflow 4096 1 4095
+int_ceildiv 4096 1 4096
+int_min 4096 2 2
+int_max 4096 2 4096
+int_fix_mul 4096 2 1
+int_fix_mul_t1 4096 2 0
+int_add_no_overflow 4096 2 4098
+int_sub_no_overflow 4096 2 4094
+int_ceildiv 4096 2 2048
+int_min 4096 3 3
+int_max 4096 3 4096
+int_fix_mul 4096 3 2
+int_fix_mul_t1 4096 3 0
+int_add_no_overflow 4096 3 4099
+int_sub_no_overflow 4096 3 4093
+int_ceildiv 4096 3 1366
+int_min 4096 4096 4096
+int_max 4096 4096 4096
+int_fix_mul 4096 4096 2048
+int_fix_mul_t1 4096 4096 64
+int_add_no_overflow 4096 4096 8192
+int_sub_no_overflow 4096 4096 0
+int_ceildiv 4096 4096 1
+int_min 4096 65536 4096
+int_max 4096 65536 65536
+int_fix_mul 4096 65536 32768
+int_fix_mul_t1 4096 65536 1024
+int_add_no_overflow 4096 65536 69632
+int_sub_no_overflow 4096 65536 -61440
+int_ceildiv 4096 65536 1
+int_min 4096 2147483646 4096
+int_max 4096 2147483646 2147483646
+int_fix_mul 4096 2147483646 1073741823
+int_fix_mul_t1 4096 2147483646 33554431
+int_add_no_overflow 4096 2147483646 -2147479554
+int_sub_no_overflow 4096 2147483646 -2147479550
+int_ceildiv 4096 2147483646 1
+int_min 4096 2147483647 4096
+int_max 4096 2147483647 2147483647
+int_fix_mul 4096 2147483647 1073741824
+int_fix_mul_t1 4096 2147483647 33554432
+int_add_no_overflow 4096 2147483647 -2147479553
+int_sub_no_overflow 4096 2147483647 -2147479551
+int_ceildiv 4096 2147483647 1
+int_min 65536 -2147483648 -2147483648
+int_max 65536 -2147483648 65536
+int_fix_mul 65536 -2147483648 0
+int_fix_mul_t1 65536 -2147483648 -536870912
+int_add_no_overflow 65536 -2147483648 -2147418112
+int_sub_no_overflow 65536 -2147483648 -2147418112
+int_ceildiv 65536 -2147483648 0
+int_min 65536 -2147483647 -2147483647
+int_max 65536 -2147483647 65536
+int_fix_mul 65536 -2147483647 8
+int_fix_mul_t1 65536 -2147483647 -536870912
+int_add_no_overflow 65536 -2147483647 -2147418111
+int_sub_no_overflow 65536 -2147483647 -2147418113
+int_ceildiv 65536 -2147483647 0
+int_min 65536 -65536 -65536
+int_max 65536 -65536 65536
+int_fix_mul 65536 -65536 -524288
+int_fix_mul_t1 65536 -65536 -16384
+int_add_no_overflow 65536 -65536 0
+int_sub_no_overflow 65536 -65536 131072
+int_ceildiv 65536 -65536 0
+int_min 65536 -4097 -4097
+int_max 65536 -4097 65536
+int_fix_mul 65536 -4097 -32776
+int_fix_mul_t1 65536 -4097 -1025
+int_add_no_overflow 65536 -4097 61439
+int_sub_no_overflow 65536 -4097 69633
+int_ceildiv 65536 -4097 -14
+int_min 65536 -4096 -4096
+int_max 65536 -4096 65536
+int_fix_mul 65536 -4096 -32768
+int_fix_mul_t1 65536 -4096 -1024
+int_add_no_overflow 65536 -4096 61440
+int_sub_no_overflow 65536 -4096 69632
+int_ceildiv 65536 -4096 -14
+int_min 65536 -3 -3
+int_max 65536 -3 65536
+int_fix_mul 65536 -3 -24
+int_fix_mul_t1 65536 -3 -1
+int_add_no_overflow 65536 -3 65533
+int_sub_no_overflow 65536 -3 65539
+int_ceildiv 65536 -3 -21844
+int_min 65536 -2 -2
+int_max 65536 -2 65536
+int_fix_mul 65536 -2 -16
+int_fix_mul_t1 65536 -2 -1
+int_add_no_overflow 65536 -2 65534
+int_sub_no_overflow 65536 -2 65538
+int_ceildiv 65536 -2 -32766
+int_min 65536 -1 -1
+int_max 65536 -1 65536
+int_fix_mul 65536 -1 -8
+int_fix_mul_t1 65536 -1 -1
+int_add_no_overflow 65536 -1 65535
+int_sub_no_overflow 65536 -1 65537
+int_ceildiv 65536 -1 -65534
+int_min 65536 0 0
+int_max 65536 0 65536
+int_fix_mul 65536 0 0
+int_fix_mul_t1 65536 0 0
+int_add_no_overflow 65536 0 65536
+int_sub_no_overflow 65536 0 65536
+int_min 65536 1 1
+int_max 65536 1 65536
+int_fix_mul 65536 1 8
+int_fix_mul_t1 65536 1 0
+int_add_no_overflow 65536 1 65537
+int_sub_no_overflow 65536 1 65535
+int_ceildiv 65536 1 65536
+int_min 65536 2 2
+int_max 65536 2 65536
+int_fix_mul 65536 2 16
+int_fix_mul_t1 65536 2 0
+int_add_no_overflow 65536 2 65538
+int_sub_no_overflow 65536 2 65534
+int_ceildiv 65536 2 32768
+int_min 65536 3 3
+int_max 65536 3 65536
+int_fix_mul 65536 3 24
+int_fix_mul_t1 65536 3 0
+int_add_no_overflow 65536 3 65539
+int_sub_no_overflow 65536 3 65533
+int_ceildiv 65536 3 21846
+int_min 65536 4096 4096
+int_max 65536 4096 65536
+int_fix_mul 65536 4096 32768
+int_fix_mul_t1 65536 4096 1024
+int_add_no_overflow 65536 4096 69632
+int_sub_no_overflow 65536 4096 61440
+int_ceildiv 65536 4096 16
+int_min 65536 65536 65536
+int_max 65536 65536 65536
+int_fix_mul 65536 65536 524288
+int_fix_mul_t1 65536 65536 16384
+int_add_no_overflow 65536 65536 131072
+int_sub_no_overflow 65536 65536 0
+int_ceildiv 65536 65536 1
+int_min 65536 2147483646 65536
+int_max 65536 2147483646 2147483646
+int_fix_mul 65536 2147483646 -16
+int_fix_mul_t1 65536 2147483646 536870911
+int_add_no_overflow 65536 2147483646 -2147418114
+int_sub_no_overflow 65536 2147483646 -2147418110
+int_ceildiv 65536 2147483646 1
+int_min 65536 2147483647 65536
+int_max 65536 2147483647 2147483647
+int_fix_mul 65536 2147483647 -8
+int_fix_mul_t1 65536 2147483647 536870911
+int_add_no_overflow 65536 2147483647 -2147418113
+int_sub_no_overflow 65536 2147483647 -2147418111
+int_ceildiv 65536 2147483647 1
+int_min 2147483646 -2147483648 -2147483648
+int_max 2147483646 -2147483648 2147483646
+int_fix_mul 2147483646 -2147483648 524288
+int_fix_mul_t1 2147483646 -2147483648 16384
+int_add_no_overflow 2147483646 -2147483648 -2
+int_sub_no_overflow 2147483646 -2147483648 -2
+int_ceildiv 2147483646 -2147483648 0
+int_min 2147483646 -2147483647 -2147483647
+int_max 2147483646 -2147483647 2147483646
+int_fix_mul 2147483646 -2147483647 786432
+int_fix_mul_t1 2147483646 -2147483647 24576
+int_add_no_overflow 2147483646 -2147483647 -1
+int_sub_no_overflow 2147483646 -2147483647 -3
+int_ceildiv 2147483646 -2147483647 0
+int_min 2147483646 -65536 -65536
+int_max 2147483646 -65536 2147483646
+int_fix_mul 2147483646 -65536 16
+int_fix_mul_t1 2147483646 -65536 -536870912
+int_add_no_overflow 2147483646 -65536 2147418110
+int_sub_no_overflow 2147483646 -65536 -2147418114
+int_ceildiv 2147483646 -65536 -32766
+int_min 2147483646 -4097 -4097
+int_max 2147483646 -4097 2147483646
+int_fix_mul 2147483646 -4097 -1074003967
+int_fix_mul_t1 2147483646 -4097 -33562624
+int_add_no_overflow 2147483646 -4097 2147479549
+int_sub_no_overflow 2147483646 -4097 -2147479553
+int_ceildiv 2147483646 -4097 -524159
+int_min 2147483646 -4096 -4096
+int_max 2147483646 -4096 2147483646
+int_fix_mul 2147483646 -4096 -1073741823
+int_fix_mul_t1 2147483646 -4096 -33554432
+int_add_no_overflow 2147483646 -4096 2147479550
+int_sub_no_overflow 2147483646 -4096 -2147479554
+int_ceildiv 2147483646 -4096 -524286
+int_min 2147483646 -3 -3
+int_max 2147483646 -3 2147483646
+int_fix_mul 2147483646 -3 -786432
+int_fix_mul_t1 2147483646 -3 -24576
+int_add_no_overflow 2147483646 -3 2147483643
+int_sub_no_overflow 2147483646 -3 -2147483647
+int_ceildiv 2147483646 -3 -715827880
+int_min 2147483646 -2 -2
+int_max 2147483646 -2 2147483646
+int_fix_mul 2147483646 -2 -524288
+int_fix_mul_t1 2147483646 -2 -16384
+int_add_no_overflow 2147483646 -2 2147483644
+int_sub_no_overflow 2147483646 -2 -2147483648
+int_ceildiv 2147483646 -2 -1073741821
+int_min 2147483646 -1 -1
+int_max 2147483646 -1 2147483646
+int_fix_mul 2147483646 -1 -262144
+int_fix_mul_t1 2147483646 -1 -8192
+int_add_no_overflow 2147483646 -1 2147483645
+int_sub_no_overflow 2147483646 -1 2147483647
+int_ceildiv 2147483646 -1 -2147483644
+int_min 2147483646 0 0
+int_max 2147483646 0 2147483646
+int_fix_mul 2147483646 0 0
+int_fix_mul_t1 2147483646 0 0
+int_add_no_overflow 2147483646 0 2147483646
+int_sub_no_overflow 2147483646 0 2147483646
+int_min 2147483646 1 1
+int_max 2147483646 1 2147483646
+int_fix_mul 2147483646 1 262144
+int_fix_mul_t1 2147483646 1 8192
+int_add_no_overflow 2147483646 1 2147483647
+int_sub_no_overflow 2147483646 1 2147483645
+int_ceildiv 2147483646 1 2147483646
+int_min 2147483646 2 2
+int_max 2147483646 2 2147483646
+int_fix_mul 2147483646 2 524288
+int_fix_mul_t1 2147483646 2 16384
+int_add_no_overflow 2147483646 2 -2147483648
+int_sub_no_overflow 2147483646 2 2147483644
+int_ceildiv 2147483646 2 1073741823
+int_min 2147483646 3 3
+int_max 2147483646 3 2147483646
+int_fix_mul 2147483646 3 786432
+int_fix_mul_t1 2147483646 3 24576
+int_add_no_overflow 2147483646 3 -2147483647
+int_sub_no_overflow 2147483646 3 2147483643
+int_ceildiv 2147483646 3 715827882
+int_min 2147483646 4096 4096
+int_max 2147483646 4096 2147483646
+int_fix_mul 2147483646 4096 1073741823
+int_fix_mul_t1 2147483646 4096 33554431
+int_add_no_overflow 2147483646 4096 -2147479554
+int_sub_no_overflow 2147483646 4096 2147479550
+int_ceildiv 2147483646 4096 524288
+int_min 2147483646 65536 65536
+int_max 2147483646 65536 2147483646
+int_fix_mul 2147483646 65536 -16
+int_fix_mul_t1 2147483646 65536 536870911
+int_add_no_overflow 2147483646 65536 -2147418114
+int_sub_no_overflow 2147483646 65536 2147418110
+int_ceildiv 2147483646 65536 32768
+int_min 2147483646 2147483646 2147483646
+int_max 2147483646 2147483646 2147483646
+int_fix_mul 2147483646 2147483646 -1048576
+int_fix_mul_t1 2147483646 2147483646 -32768
+int_add_no_overflow 2147483646 2147483646 -4
+int_sub_no_overflow 2147483646 2147483646 0
+int_ceildiv 2147483646 2147483646 1
+int_min 2147483646 2147483647 2147483646
+int_max 2147483646 2147483647 2147483647
+int_fix_mul 2147483646 2147483647 -786432
+int_fix_mul_t1 2147483646 2147483647 -24576
+int_add_no_overflow 2147483646 2147483647 -3
+int_sub_no_overflow 2147483646 2147483647 -1
+int_ceildiv 2147483646 2147483647 1
+int_min 2147483647 -2147483648 -2147483648
+int_max 2147483647 -2147483648 2147483647
+int_fix_mul 2147483647 -2147483648 262144
+int_fix_mul_t1 2147483647 -2147483648 8192
+int_add_no_overflow 2147483647 -2147483648 -1
+int_sub_no_overflow 2147483647 -2147483648 -1
+int_ceildiv 2147483647 -2147483648 0
+int_min 2147483647 -2147483647 -2147483647
+int_max 2147483647 -2147483647 2147483647
+int_fix_mul 2147483647 -2147483647 524288
+int_fix_mul_t1 2147483647 -2147483647 16384
+int_add_no_overflow 2147483647 -2147483647 0
+int_sub_no_overflow 2147483647 -2147483647 -2
+int_ceildiv 2147483647 -2147483647 0
+int_min 2147483647 -65536 -65536
+int_max 2147483647 -65536 2147483647
+int_fix_mul 2147483647 -65536 8
+int_fix_mul_t1 2147483647 -65536 -536870912
+int_add_no_overflow 2147483647 -65536 2147418111
+int_sub_no_overflow 2147483647 -65536 -2147418113
+int_ceildiv 2147483647 -65536 -32766
+int_min 2147483647 -4097 -4097
+int_max 2147483647 -4097 2147483647
+int_fix_mul 2147483647 -4097 -1074003967
+int_fix_mul_t1 2147483647 -4097 -33562624
+int_add_no_overflow 2147483647 -4097 2147479550
+int_sub_no_overflow 2147483647 -4097 -2147479552
+int_ceildiv 2147483647 -4097 -524159
+int_min 2147483647 -4096 -4096
+int_max 2147483647 -4096 2147483647
+int_fix_mul 2147483647 -4096 -1073741823
+int_fix_mul_t1 2147483647 -4096 -33554432
+int_add_no_overflow 2147483647 -4096 2147479551
+int_sub_no_overflow 2147483647 -4096 -2147479553
+int_ceildiv 2147483647 -4096 -524286
+int_min 2147483647 -3 -3
+int_max 2147483647 -3 2147483647
+int_fix_mul 2147483647 -3 -786432
+int_fix_mul_t1 2147483647 -3 -24576
+int_add_no_overflow 2147483647 -3 2147483644
+int_sub_no_overflow 2147483647 -3 -2147483646
+int_ceildiv 2147483647 -3 -715827881
+int_min 2147483647 -2 -2
+int_max 2147483647 -2 2147483647
+int_fix_mul 2147483647 -2 -524288
+int_fix_mul_t1 2147483647 -2 -16384
+int_add_no_overflow 2147483647 -2 2147483645
+int_sub_no_overflow 2147483647 -2 -2147483647
+int_ceildiv 2147483647 -2 -1073741822
+int_min 2147483647 -1 -1
+int_max 2147483647 -1 2147483647
+int_fix_mul 2147483647 -1 -262144
+int_fix_mul_t1 2147483647 -1 -8192
+int_add_no_overflow 2147483647 -1 2147483646
+int_sub_no_overflow 2147483647 -1 -2147483648
+int_ceildiv 2147483647 -1 -2147483645
+int_min 2147483647 0 0
+int_max 2147483647 0 2147483647
+int_fix_mul 2147483647 0 0
+int_fix_mul_t1 2147483647 0 0
+int_add_no_overflow 2147483647 0 2147483647
+int_sub_no_overflow 2147483647 0 2147483647
+int_min 2147483647 1 1
+int_max 2147483647 1 2147483647
+int_fix_mul 2147483647 1 262144
+int_fix_mul_t1 2147483647 1 8192
+int_add_no_overflow 2147483647 1 -2147483648
+int_sub_no_overflow 2147483647 1 2147483646
+int_ceildiv 2147483647 1 2147483647
+int_min 2147483647 2 2
+int_max 2147483647 2 2147483647
+int_fix_mul 2147483647 2 524288
+int_fix_mul_t1 2147483647 2 16384
+int_add_no_overflow 2147483647 2 -2147483647
+int_sub_no_overflow 2147483647 2 2147483645
+int_ceildiv 2147483647 2 1073741824
+int_min 2147483647 3 3
+int_max 2147483647 3 2147483647
+int_fix_mul 2147483647 3 786432
+int_fix_mul_t1 2147483647 3 24576
+int_add_no_overflow 2147483647 3 -2147483646
+int_sub_no_overflow 2147483647 3 2147483644
+int_ceildiv 2147483647 3 715827883
+int_min 2147483647 4096 4096
+int_max 2147483647 4096 2147483647
+int_fix_mul 2147483647 4096 1073741824
+int_fix_mul_t1 2147483647 4096 33554432
+int_add_no_overflow 2147483647 4096 -2147479553
+int_sub_no_overflow 2147483647 4096 2147479551
+int_ceildiv 2147483647 4096 524288
+int_min 2147483647 65536 65536
+int_max 2147483647 65536 2147483647
+int_fix_mul 2147483647 65536 -8
+int_fix_mul_t1 2147483647 65536 536870911
+int_add_no_overflow 2147483647 65536 -2147418113
+int_sub_no_overflow 2147483647 65536 2147418111
+int_ceildiv 2147483647 65536 32768
+int_min 2147483647 2147483646 2147483646
+int_max 2147483647 2147483646 2147483647
+int_fix_mul 2147483647 2147483646 -786432
+int_fix_mul_t1 2147483647 2147483646 -24576
+int_add_no_overflow 2147483647 2147483646 -3
+int_sub_no_overflow 2147483647 2147483646 1
+int_ceildiv 2147483647 2147483646 2
+int_min 2147483647 2147483647 2147483647
+int_max 2147483647 2147483647 2147483647
+int_fix_mul 2147483647 2147483647 -524288
+int_fix_mul_t1 2147483647 2147483647 -16384
+int_add_no_overflow 2147483647 2147483647 -2
+int_sub_no_overflow 2147483647 2147483647 0
+int_ceildiv 2147483647 2147483647 1
+uint_min 0 0 0
+uint_max 0 0 0
+uint_adds 0 0 0
+uint_subs 0 0 0
+uint_min 0 1 0
+uint_max 0 1 1
+uint_adds 0 1 1
+uint_subs 0 1 0
+uint_ceildiv 0 1 0
+uint_min 0 2 0
+uint_max 0 2 2
+uint_adds 0 2 2
+uint_subs 0 2 0
+uint_ceildiv 0 2 0
+uint_min 0 3 0
+uint_max 0 3 3
+uint_adds 0 3 3
+uint_subs 0 3 0
+uint_ceildiv 0 3 0
+uint_min 0 4095 0
+uint_max 0 4095 4095
+uint_adds 0 4095 4095
+uint_subs 0 4095 0
+uint_ceildiv 0 4095 0
+uint_min 0 4096 0
+uint_max 0 4096 4096
+uint_adds 0 4096 4096
+uint_subs 0 4096 0
+uint_ceildiv 0 4096 0
+uint_min 0 4097 0
+uint_max 0 4097 4097
+uint_adds 0 4097 4097
+uint_subs 0 4097 0
+uint_ceildiv 0 4097 0
+uint_min 0 65535 0
+uint_max 0 65535 65535
+uint_adds 0 65535 65535
+uint_subs 0 65535 0
+uint_ceildiv 0 65535 0
+uint_min 0 65536 0
+uint_max 0 65536 65536
+uint_adds 0 65536 65536
+uint_subs 0 65536 0
+uint_ceildiv 0 65536 0
+uint_min 0 2147483647 0
+uint_max 0 2147483647 2147483647
+uint_adds 0 2147483647 2147483647
+uint_subs 0 2147483647 0
+uint_ceildiv 0 2147483647 0
+uint_min 0 2147483648 0
+uint_max 0 2147483648 2147483648
+uint_adds 0 2147483648 2147483648
+uint_subs 0 2147483648 0
+uint_ceildiv 0 2147483648 0
+uint_min 0 4294967295 0
+uint_max 0 4294967295 4294967295
+uint_adds 0 4294967295 4294967295
+uint_subs 0 4294967295 0
+uint_ceildiv 0 4294967295 0
+uint_min 1 0 0
+uint_max 1 0 1
+uint_adds 1 0 1
+uint_subs 1 0 1
+uint_min 1 1 1
+uint_max 1 1 1
+uint_adds 1 1 2
+uint_subs 1 1 0
+uint_ceildiv 1 1 1
+uint_min 1 2 1
+uint_max 1 2 2
+uint_adds 1 2 3
+uint_subs 1 2 0
+uint_ceildiv 1 2 1
+uint_min 1 3 1
+uint_max 1 3 3
+uint_adds 1 3 4
+uint_subs 1 3 0
+uint_ceildiv 1 3 1
+uint_min 1 4095 1
+uint_max 1 4095 4095
+uint_adds 1 4095 4096
+uint_subs 1 4095 0
+uint_ceildiv 1 4095 1
+uint_min 1 4096 1
+uint_max 1 4096 4096
+uint_adds 1 4096 4097
+uint_subs 1 4096 0
+uint_ceildiv 1 4096 1
+uint_min 1 4097 1
+uint_max 1 4097 4097
+uint_adds 1 4097 4098
+uint_subs 1 4097 0
+uint_ceildiv 1 4097 1
+uint_min 1 65535 1
+uint_max 1 65535 65535
+uint_adds 1 65535 65536
+uint_subs 1 65535 0
+uint_ceildiv 1 65535 1
+uint_min 1 65536 1
+uint_max 1 65536 65536
+uint_adds 1 65536 65537
+uint_subs 1 65536 0
+uint_ceildiv 1 65536 1
+uint_min 1 2147483647 1
+uint_max 1 2147483647 2147483647
+uint_adds 1 2147483647 2147483648
+uint_subs 1 2147483647 0
+uint_ceildiv 1 2147483647 1
+uint_min 1 2147483648 1
+uint_max 1 2147483648 2147483648
+uint_adds 1 2147483648 2147483649
+uint_subs 1 2147483648 0
+uint_ceildiv 1 2147483648 1
+uint_min 1 4294967295 1
+uint_max 1 4294967295 4294967295
+uint_adds 1 4294967295 4294967295
+uint_subs 1 4294967295 0
+uint_ceildiv 1 4294967295 1
+uint_min 2 0 0
+uint_max 2 0 2
+uint_adds 2 0 2
+uint_subs 2 0 2
+uint_min 2 1 1
+uint_max 2 1 2
+uint_adds 2 1 3
+uint_subs 2 1 1
+uint_ceildiv 2 1 2
+uint_min 2 2 2
+uint_max 2 2 2
+uint_adds 2 2 4
+uint_subs 2 2 0
+uint_ceildiv 2 2 1
+uint_min 2 3 2
+uint_max 2 3 3
+uint_adds 2 3 5
+uint_subs 2 3 0
+uint_ceildiv 2 3 1
+uint_min 2 4095 2
+uint_max 2 4095 4095
+uint_adds 2 4095 4097
+uint_subs 2 4095 0
+uint_ceildiv 2 4095 1
+uint_min 2 4096 2
+uint_max 2 4096 4096
+uint_adds 2 4096 4098
+uint_subs 2 4096 0
+uint_ceildiv 2 4096 1
+uint_min 2 4097 2
+uint_max 2 4097 4097
+uint_adds 2 4097 4099
+uint_subs 2 4097 0
+uint_ceildiv 2 4097 1
+uint_min 2 65535 2
+uint_max 2 65535 65535
+uint_adds 2 65535 65537
+uint_subs 2 65535 0
+uint_ceildiv 2 65535 1
+uint_min 2 65536 2
+uint_max 2 65536 65536
+uint_adds 2 65536 65538
+uint_subs 2 65536 0
+uint_ceildiv 2 65536 1
+uint_min 2 2147483647 2
+uint_max 2 2147483647 2147483647
+uint_adds 2 2147483647 2147483649
+uint_subs 2 2147483647 0
+uint_ceildiv 2 2147483647 1
+uint_min 2 2147483648 2
+uint_max 2 2147483648 2147483648
+uint_adds 2 2147483648 2147483650
+uint_subs 2 2147483648 0
+uint_ceildiv 2 2147483648 1
+uint_min 2 4294967295 2
+uint_max 2 4294967295 4294967295
+uint_adds 2 4294967295 4294967295
+uint_subs 2 4294967295 0
+uint_ceildiv 2 4294967295 1
+uint_min 3 0 0
+uint_max 3 0 3
+uint_adds 3 0 3
+uint_subs 3 0 3
+uint_min 3 1 1
+uint_max 3 1 3
+uint_adds 3 1 4
+uint_subs 3 1 2
+uint_ceildiv 3 1 3
+uint_min 3 2 2
+uint_max 3 2 3
+uint_adds 3 2 5
+uint_subs 3 2 1
+uint_ceildiv 3 2 2
+uint_min 3 3 3
+uint_max 3 3 3
+uint_adds 3 3 6
+uint_subs 3 3 0
+uint_ceildiv 3 3 1
+uint_min 3 4095 3
+uint_max 3 4095 4095
+uint_adds 3 4095 4098
+uint_subs 3 4095 0
+uint_ceildiv 3 4095 1
+uint_min 3 4096 3
+uint_max 3 4096 4096
+uint_adds 3 4096 4099
+uint_subs 3 4096 0
+uint_ceildiv 3 4096 1
+uint_min 3 4097 3
+uint_max 3 4097 4097
+uint_adds 3 4097 4100
+uint_subs 3 4097 0
+uint_ceildiv 3 4097 1
+uint_min 3 65535 3
+uint_max 3 65535 65535
+uint_adds 3 65535 65538
+uint_subs 3 65535 0
+uint_ceildiv 3 65535 1
+uint_min 3 65536 3
+uint_max 3 65536 65536
+uint_adds 3 65536 65539
+uint_subs 3 65536 0
+uint_ceildiv 3 65536 1
+uint_min 3 2147483647 3
+uint_max 3 2147483647 2147483647
+uint_adds 3 2147483647 2147483650
+uint_subs 3 2147483647 0
+uint_ceildiv 3 2147483647 1
+uint_min 3 2147483648 3
+uint_max 3 2147483648 2147483648
+uint_adds 3 2147483648 2147483651
+uint_subs 3 2147483648 0
+uint_ceildiv 3 2147483648 1
+uint_min 3 4294967295 3
+uint_max 3 4294967295 4294967295
+uint_adds 3 4294967295 4294967295
+uint_subs 3 4294967295 0
+uint_ceildiv 3 4294967295 1
+uint_min 4095 0 0
+uint_max 4095 0 4095
+uint_adds 4095 0 4095
+uint_subs 4095 0 4095
+uint_min 4095 1 1
+uint_max 4095 1 4095
+uint_adds 4095 1 4096
+uint_subs 4095 1 4094
+uint_ceildiv 4095 1 4095
+uint_min 4095 2 2
+uint_max 4095 2 4095
+uint_adds 4095 2 4097
+uint_subs 4095 2 4093
+uint_ceildiv 4095 2 2048
+uint_min 4095 3 3
+uint_max 4095 3 4095
+uint_adds 4095 3 4098
+uint_subs 4095 3 4092
+uint_ceildiv 4095 3 1365
+uint_min 4095 4095 4095
+uint_max 4095 4095 4095
+uint_adds 4095 4095 8190
+uint_subs 4095 4095 0
+uint_ceildiv 4095 4095 1
+uint_min 4095 4096 4095
+uint_max 4095 4096 4096
+uint_adds 4095 4096 8191
+uint_subs 4095 4096 0
+uint_ceildiv 4095 4096 1
+uint_min 4095 4097 4095
+uint_max 4095 4097 4097
+uint_adds 4095 4097 8192
+uint_subs 4095 4097 0
+uint_ceildiv 4095 4097 1
+uint_min 4095 65535 4095
+uint_max 4095 65535 65535
+uint_adds 4095 65535 69630
+uint_subs 4095 65535 0
+uint_ceildiv 4095 65535 1
+uint_min 4095 65536 4095
+uint_max 4095 65536 65536
+uint_adds 4095 65536 69631
+uint_subs 4095 65536 0
+uint_ceildiv 4095 65536 1
+uint_min 4095 2147483647 4095
+uint_max 4095 2147483647 2147483647
+uint_adds 4095 2147483647 2147487742
+uint_subs 4095 2147483647 0
+uint_ceildiv 4095 2147483647 1
+uint_min 4095 2147483648 4095
+uint_max 4095 2147483648 2147483648
+uint_adds 4095 2147483648 2147487743
+uint_subs 4095 2147483648 0
+uint_ceildiv 4095 2147483648 1
+uint_min 4095 4294967295 4095
+uint_max 4095 4294967295 4294967295
+uint_adds 4095 4294967295 4294967295
+uint_subs 4095 4294967295 0
+uint_ceildiv 4095 4294967295 1
+uint_min 4096 0 0
+uint_max 4096 0 4096
+uint_adds 4096 0 4096
+uint_subs 4096 0 4096
+uint_min 4096 1 1
+uint_max 4096 1 4096
+uint_adds 4096 1 4097
+uint_subs 4096 1 4095
+uint_ceildiv 4096 1 4096
+uint_min 4096 2 2
+uint_max 4096 2 4096
+uint_adds 4096 2 4098
+uint_subs 4096 2 4094
+uint_ceildiv 4096 2 2048
+uint_min 4096 3 3
+uint_max 4096 3 4096
+uint_adds 4096 3 4099
+uint_subs 4096 3 4093
+uint_ceildiv 4096 3 1366
+uint_min 4096 4095 4095
+uint_max 4096 4095 4096
+uint_adds 4096 4095 8191
+uint_subs 4096 4095 1
+uint_ceildiv 4096 4095 2
+uint_min 4096 4096 4096
+uint_max 4096 4096 4096
+uint_adds 4096 4096 8192
+uint_subs 4096 4096 0
+uint_ceildiv 4096 4096 1
+uint_min 4096 4097 4096
+uint_max 4096 4097 4097
+uint_adds 4096 4097 8193
+uint_subs 4096 4097 0
+uint_ceildiv 4096 4097 1
+uint_min 4096 65535 4096
+uint_max 4096 65535 65535
+uint_adds 4096 65535 69631
+uint_subs 4096 65535 0
+uint_ceildiv 4096 65535 1
+uint_min 4096 65536 4096
+uint_max 4096 65536 65536
+uint_adds 4096 65536 69632
+uint_subs 4096 65536 0
+uint_ceildiv 4096 65536 1
+uint_min 4096 2147483647 4096
+uint_max 4096 2147483647 2147483647
+uint_adds 4096 2147483647 2147487743
+uint_subs 4096 2147483647 0
+uint_ceildiv 4096 2147483647 1
+uint_min 4096 2147483648 4096
+uint_max 4096 2147483648 2147483648
+uint_adds 4096 2147483648 2147487744
+uint_subs 4096 2147483648 0
+uint_ceildiv 4096 2147483648 1
+uint_min 4096 4294967295 4096
+uint_max 4096 4294967295 4294967295
+uint_adds 4096 4294967295 4294967295
+uint_subs 4096 4294967295 0
+uint_ceildiv 4096 4294967295 1
+uint_min 4097 0 0
+uint_max 4097 0 4097
+uint_adds 4097 0 4097
+uint_subs 4097 0 4097
+uint_min 4097 1 1
+uint_max 4097 1 4097
+uint_adds 4097 1 4098
+uint_subs 4097 1 4096
+uint_ceildiv 4097 1 4097
+uint_min 4097 2 2
+uint_max 4097 2 4097
+uint_adds 4097 2 4099
+uint_subs 4097 2 4095
+uint_ceildiv 4097 2 2049
+uint_min 4097 3 3
+uint_max 4097 3 4097
+uint_adds 4097 3 4100
+uint_subs 4097 3 4094
+uint_ceildiv 4097 3 1366
+uint_min 4097 4095 4095
+uint_max 4097 4095 4097
+uint_adds 4097 4095 8192
+uint_subs 4097 4095 2
+uint_ceildiv 4097 4095 2
+uint_min 4097 4096 4096
+uint_max 4097 4096 4097
+uint_adds 4097 4096 8193
+uint_subs 4097 4096 1
+uint_ceildiv 4097 4096 2
+uint_min 4097 4097 4097
+uint_max 4097 4097 4097
+uint_adds 4097 4097 8194
+uint_subs 4097 4097 0
+uint_ceildiv 4097 4097 1
+uint_min 4097 65535 4097
+uint_max 4097 65535 65535
+uint_adds 4097 65535 69632
+uint_subs 4097 65535 0
+uint_ceildiv 4097 65535 1
+uint_min 4097 65536 4097
+uint_max 4097 65536 65536
+uint_adds 4097 65536 69633
+uint_subs 4097 65536 0
+uint_ceildiv 4097 65536 1
+uint_min 4097 2147483647 4097
+uint_max 4097 2147483647 2147483647
+uint_adds 4097 2147483647 2147487744
+uint_subs 4097 2147483647 0
+uint_ceildiv 4097 2147483647 1
+uint_min 4097 2147483648 4097
+uint_max 4097 2147483648 2147483648
+uint_adds 4097 2147483648 2147487745
+uint_subs 4097 2147483648 0
+uint_ceildiv 4097 2147483648 1
+uint_min 4097 4294967295 4097
+uint_max 4097 4294967295 4294967295
+uint_adds 4097 4294967295 4294967295
+uint_subs 4097 4294967295 0
+uint_ceildiv 4097 4294967295 1
+uint_min 65535 0 0
+uint_max 65535 0 65535
+uint_adds 65535 0 65535
+uint_subs 65535 0 65535
+uint_min 65535 1 1
+uint_max 65535 1 65535
+uint_adds 65535 1 65536
+uint_subs 65535 1 65534
+uint_ceildiv 65535 1 65535
+uint_min 65535 2 2
+uint_max 65535 2 65535
+uint_adds 65535 2 65537
+uint_subs 65535 2 65533
+uint_ceildiv 65535 2 32768
+uint_min 65535 3 3
+uint_max 65535 3 65535
+uint_adds 65535 3 65538
+uint_subs 65535 3 65532
+uint_ceildiv 65535 3 21845
+uint_min 65535 4095 4095
+uint_max 65535 4095 65535
+uint_adds 65535 4095 69630
+uint_subs 65535 4095 61440
+uint_ceildiv 65535 4095 17
+uint_min 65535 4096 4096
+uint_max 65535 4096 65535
+uint_adds 65535 4096 69631
+uint_subs 65535 4096 61439
+uint_ceildiv 65535 4096 16
+uint_min 65535 4097 4097
+uint_max 65535 4097 65535
+uint_adds 65535 4097 69632
+uint_subs 65535 4097 61438
+uint_ceildiv 65535 4097 16
+uint_min 65535 65535 65535
+uint_max 65535 65535 65535
+uint_adds 65535 65535 131070
+uint_subs 65535 65535 0
+uint_ceildiv 65535 65535 1
+uint_min 65535 65536 65535
+uint_max 65535 65536 65536
+uint_adds 65535 65536 131071
+uint_subs 65535 65536 0
+uint_ceildiv 65535 65536 1
+uint_min 65535 2147483647 65535
+uint_max 65535 2147483647 2147483647
+uint_adds 65535 2147483647 2147549182
+uint_subs 65535 2147483647 0
+uint_ceildiv 65535 2147483647 1
+uint_min 65535 2147483648 65535
+uint_max 65535 2147483648 2147483648
+uint_adds 65535 2147483648 2147549183
+uint_subs 65535 2147483648 0
+uint_ceildiv 65535 2147483648 1
+uint_min 65535 4294967295 65535
+uint_max 65535 4294967295 4294967295
+uint_adds 65535 4294967295 4294967295
+uint_subs 65535 4294967295 0
+uint_ceildiv 65535 4294967295 1
+uint_min 65536 0 0
+uint_max 65536 0 65536
+uint_adds 65536 0 65536
+uint_subs 65536 0 65536
+uint_min 65536 1 1
+uint_max 65536 1 65536
+uint_adds 65536 1 65537
+uint_subs 65536 1 65535
+uint_ceildiv 65536 1 65536
+uint_min 65536 2 2
+uint_max 65536 2 65536
+uint_adds 65536 2 65538
+uint_subs 65536 2 65534
+uint_ceildiv 65536 2 32768
+uint_min 65536 3 3
+uint_max 65536 3 65536
+uint_adds 65536 3 65539
+uint_subs 65536 3 65533
+uint_ceildiv 65536 3 21846
+uint_min 65536 4095 4095
+uint_max 65536 4095 65536
+uint_adds 65536 4095 69631
+uint_subs 65536 4095 61441
+uint_ceildiv 65536 4095 17
+uint_min 65536 4096 4096
+uint_max 65536 4096 65536
+uint_adds 65536 4096 69632
+uint_subs 65536 4096 61440
+uint_ceildiv 65536 4096 16
+uint_min 65536 4097 4097
+uint_max 65536 4097 65536
+uint_adds 65536 4097 69633
+uint_subs 65536 4097 61439
+uint_ceildiv 65536 4097 16
+uint_min 65536 65535 65535
+uint_max 65536 65535 65536
+uint_adds 65536 65535 131071
+uint_subs 65536 65535 1
+uint_ceildiv 65536 65535 2
+uint_min 65536 65536 65536
+uint_max 65536 65536 65536
+uint_adds 65536 65536 131072
+uint_subs 65536 65536 0
+uint_ceildiv 65536 65536 1
+uint_min 65536 2147483647 65536
+uint_max 65536 2147483647 2147483647
+uint_adds 65536 2147483647 2147549183
+uint_subs 65536 2147483647 0
+uint_ceildiv 65536 2147483647 1
+uint_min 65536 2147483648 65536
+uint_max 65536 2147483648 2147483648
+uint_adds 65536 2147483648 2147549184
+uint_subs 65536 2147483648 0
+uint_ceildiv 65536 2147483648 1
+uint_min 65536 4294967295 65536
+uint_max 65536 4294967295 4294967295
+uint_adds 65536 4294967295 4294967295
+uint_subs 65536 4294967295 0
+uint_ceildiv 65536 4294967295 1
+uint_min 2147483647 0 0
+uint_max 2147483647 0 2147483647
+uint_adds 2147483647 0 2147483647
+uint_subs 2147483647 0 2147483647
+uint_min 2147483647 1 1
+uint_max 2147483647 1 2147483647
+uint_adds 2147483647 1 2147483648
+uint_subs 2147483647 1 2147483646
+uint_ceildiv 2147483647 1 2147483647
+uint_min 2147483647 2 2
+uint_max 2147483647 2 2147483647
+uint_adds 2147483647 2 2147483649
+uint_subs 2147483647 2 2147483645
+uint_ceildiv 2147483647 2 1073741824
+uint_min 2147483647 3 3
+uint_max 2147483647 3 2147483647
+uint_adds 2147483647 3 2147483650
+uint_subs 2147483647 3 2147483644
+uint_ceildiv 2147483647 3 715827883
+uint_min 2147483647 4095 4095
+uint_max 2147483647 4095 2147483647
+uint_adds 2147483647 4095 2147487742
+uint_subs 2147483647 4095 2147479552
+uint_ceildiv 2147483647 4095 524417
+uint_min 2147483647 4096 4096
+uint_max 2147483647 4096 2147483647
+uint_adds 2147483647 4096 2147487743
+uint_subs 2147483647 4096 2147479551
+uint_ceildiv 2147483647 4096 524288
+uint_min 2147483647 4097 4097
+uint_max 2147483647 4097 2147483647
+uint_adds 2147483647 4097 2147487744
+uint_subs 2147483647 4097 2147479550
+uint_ceildiv 2147483647 4097 524161
+uint_min 2147483647 65535 65535
+uint_max 2147483647 65535 2147483647
+uint_adds 2147483647 65535 2147549182
+uint_subs 2147483647 65535 2147418112
+uint_ceildiv 2147483647 65535 32769
+uint_min 2147483647 65536 65536
+uint_max 2147483647 65536 2147483647
+uint_adds 2147483647 65536 2147549183
+uint_subs 2147483647 65536 2147418111
+uint_ceildiv 2147483647 65536 32768
+uint_min 2147483647 2147483647 2147483647
+uint_max 2147483647 2147483647 2147483647
+uint_adds 2147483647 2147483647 4294967294
+uint_subs 2147483647 2147483647 0
+uint_ceildiv 2147483647 2147483647 1
+uint_min 2147483647 2147483648 2147483647
+uint_max 2147483647 2147483648 2147483648
+uint_adds 2147483647 2147483648 4294967295
+uint_subs 2147483647 2147483648 0
+uint_ceildiv 2147483647 2147483648 1
+uint_min 2147483647 4294967295 2147483647
+uint_max 2147483647 4294967295 4294967295
+uint_adds 2147483647 4294967295 4294967295
+uint_subs 2147483647 4294967295 0
+uint_ceildiv 2147483647 4294967295 1
+uint_min 2147483648 0 0
+uint_max 2147483648 0 2147483648
+uint_adds 2147483648 0 2147483648
+uint_subs 2147483648 0 2147483648
+uint_min 2147483648 1 1
+uint_max 2147483648 1 2147483648
+uint_adds 2147483648 1 2147483649
+uint_subs 2147483648 1 2147483647
+uint_ceildiv 2147483648 1 2147483648
+uint_min 2147483648 2 2
+uint_max 2147483648 2 2147483648
+uint_adds 2147483648 2 2147483650
+uint_subs 2147483648 2 2147483646
+uint_ceildiv 2147483648 2 1073741824
+uint_min 2147483648 3 3
+uint_max 2147483648 3 2147483648
+uint_adds 2147483648 3 2147483651
+uint_subs 2147483648 3 2147483645
+uint_ceildiv 2147483648 3 715827883
+uint_min 2147483648 4095 4095
+uint_max 2147483648 4095 2147483648
+uint_adds 2147483648 4095 2147487743
+uint_subs 2147483648 4095 2147479553
+uint_ceildiv 2147483648 4095 524417
+uint_min 2147483648 4096 4096
+uint_max 2147483648 4096 2147483648
+uint_adds 2147483648 4096 2147487744
+uint_subs 2147483648 4096 2147479552
+uint_ceildiv 2147483648 4096 524288
+uint_min 2147483648 4097 4097
+uint_max 2147483648 4097 2147483648
+uint_adds 2147483648 4097 2147487745
+uint_subs 2147483648 4097 2147479551
+uint_ceildiv 2147483648 4097 524161
+uint_min 2147483648 65535 65535
+uint_max 2147483648 65535 2147483648
+uint_adds 2147483648 65535 2147549183
+uint_subs 2147483648 65535 2147418113
+uint_ceildiv 2147483648 65535 32769
+uint_min 2147483648 65536 65536
+uint_max 2147483648 65536 2147483648
+uint_adds 2147483648 65536 2147549184
+uint_subs 2147483648 65536 2147418112
+uint_ceildiv 2147483648 65536 32768
+uint_min 2147483648 2147483647 2147483647
+uint_max 2147483648 2147483647 2147483648
+uint_adds 2147483648 2147483647 4294967295
+uint_subs 2147483648 2147483647 1
+uint_ceildiv 2147483648 2147483647 2
+uint_min 2147483648 2147483648 2147483648
+uint_max 2147483648 2147483648 2147483648
+uint_adds 2147483648 2147483648 4294967295
+uint_subs 2147483648 2147483648 0
+uint_ceildiv 2147483648 2147483648 1
+uint_min 2147483648 4294967295 2147483648
+uint_max 2147483648 4294967295 4294967295
+uint_adds 2147483648 4294967295 4294967295
+uint_subs 2147483648 4294967295 0
+uint_ceildiv 2147483648 4294967295 1
+uint_min 4294967295 0 0
+uint_max 4294967295 0 4294967295
+uint_adds 4294967295 0 4294967295
+uint_subs 4294967295 0 4294967295
+uint_min 4294967295 1 1
+uint_max 4294967295 1 4294967295
+uint_adds 4294967295 1 4294967295
+uint_subs 4294967295 1 4294967294
+uint_ceildiv 4294967295 1 4294967295
+uint_min 4294967295 2 2
+uint_max 4294967295 2 4294967295
+uint_adds 4294967295 2 4294967295
+uint_subs 4294967295 2 4294967293
+uint_ceildiv 4294967295 2 2147483648
+uint_min 4294967295 3 3
+uint_max 4294967295 3 4294967295
+uint_adds 4294967295 3 4294967295
+uint_subs 4294967295 3 4294967292
+uint_ceildiv 4294967295 3 1431655765
+uint_min 4294967295 4095 4095
+uint_max 4294967295 4095 4294967295
+uint_adds 4294967295 4095 4294967295
+uint_subs 4294967295 4095 4294963200
+uint_ceildiv 4294967295 4095 1048833
+uint_min 4294967295 4096 4096
+uint_max 4294967295 4096 4294967295
+uint_adds 4294967295 4096 4294967295
+uint_subs 4294967295 4096 4294963199
+uint_ceildiv 4294967295 4096 1048576
+uint_min 4294967295 4097 4097
+uint_max 4294967295 4097 4294967295
+uint_adds 4294967295 4097 4294967295
+uint_subs 4294967295 4097 4294963198
+uint_ceildiv 4294967295 4097 1048321
+uint_min 4294967295 65535 65535
+uint_max 4294967295 65535 4294967295
+uint_adds 4294967295 65535 4294967295
+uint_subs 4294967295 65535 4294901760
+uint_ceildiv 4294967295 65535 65537
+uint_min 4294967295 65536 65536
+uint_max 4294967295 65536 4294967295
+uint_adds 4294967295 65536 4294967295
+uint_subs 4294967295 65536 4294901759
+uint_ceildiv 4294967295 65536 65536
+uint_min 4294967295 2147483647 2147483647
+uint_max 4294967295 2147483647 4294967295
+uint_adds 4294967295 2147483647 4294967295
+uint_subs 4294967295 2147483647 2147483648
+uint_ceildiv 4294967295 2147483647 3
+uint_min 4294967295 2147483648 2147483648
+uint_max 4294967295 2147483648 4294967295
+uint_adds 4294967295 2147483648 4294967295
+uint_subs 4294967295 2147483648 2147483647
+uint_ceildiv 4294967295 2147483648 2
+uint_min 4294967295 4294967295 4294967295
+uint_max 4294967295 4294967295 4294967295
+uint_adds 4294967295 4294967295 4294967295
+uint_subs 4294967295 4294967295 0
+uint_ceildiv 4294967295 4294967295 1
+int_clamp -2147483648 -2147483648 -2147483648 -2147483648
+int64_clamp -2147483648 -2147483648 -2147483648 -2147483648
+int_clamp -2147483648 -2147483648 -100 -2147483648
+int64_clamp -2147483648 -2147483648 -100 -2147483648
+int_clamp -2147483648 -2147483648 -1 -2147483648
+int64_clamp -2147483648 -2147483648 -1 -2147483648
+int_clamp -2147483648 -2147483648 0 -2147483648
+int64_clamp -2147483648 -2147483648 0 -2147483648
+int_clamp -2147483648 -2147483648 1 -2147483648
+int64_clamp -2147483648 -2147483648 1 -2147483648
+int_clamp -2147483648 -2147483648 100 -2147483648
+int64_clamp -2147483648 -2147483648 100 -2147483648
+int_clamp -2147483648 -2147483648 2147483647 -2147483648
+int64_clamp -2147483648 -2147483648 2147483647 -2147483648
+int_clamp -2147483648 -100 -2147483648 -100
+int64_clamp -2147483648 -100 -2147483648 -100
+int_clamp -2147483648 -100 -100 -100
+int64_clamp -2147483648 -100 -100 -100
+int_clamp -2147483648 -100 -1 -100
+int64_clamp -2147483648 -100 -1 -100
+int_clamp -2147483648 -100 0 -100
+int64_clamp -2147483648 -100 0 -100
+int_clamp -2147483648 -100 1 -100
+int64_clamp -2147483648 -100 1 -100
+int_clamp -2147483648 -100 100 -100
+int64_clamp -2147483648 -100 100 -100
+int_clamp -2147483648 -100 2147483647 -100
+int64_clamp -2147483648 -100 2147483647 -100
+int_clamp -2147483648 -1 -2147483648 -1
+int64_clamp -2147483648 -1 -2147483648 -1
+int_clamp -2147483648 -1 -100 -1
+int64_clamp -2147483648 -1 -100 -1
+int_clamp -2147483648 -1 -1 -1
+int64_clamp -2147483648 -1 -1 -1
+int_clamp -2147483648 -1 0 -1
+int64_clamp -2147483648 -1 0 -1
+int_clamp -2147483648 -1 1 -1
+int64_clamp -2147483648 -1 1 -1
+int_clamp -2147483648 -1 100 -1
+int64_clamp -2147483648 -1 100 -1
+int_clamp -2147483648 -1 2147483647 -1
+int64_clamp -2147483648 -1 2147483647 -1
+int_clamp -2147483648 0 -2147483648 0
+int64_clamp -2147483648 0 -2147483648 0
+int_clamp -2147483648 0 -100 0
+int64_clamp -2147483648 0 -100 0
+int_clamp -2147483648 0 -1 0
+int64_clamp -2147483648 0 -1 0
+int_clamp -2147483648 0 0 0
+int64_clamp -2147483648 0 0 0
+int_clamp -2147483648 0 1 0
+int64_clamp -2147483648 0 1 0
+int_clamp -2147483648 0 100 0
+int64_clamp -2147483648 0 100 0
+int_clamp -2147483648 0 2147483647 0
+int64_clamp -2147483648 0 2147483647 0
+int_clamp -2147483648 1 -2147483648 1
+int64_clamp -2147483648 1 -2147483648 1
+int_clamp -2147483648 1 -100 1
+int64_clamp -2147483648 1 -100 1
+int_clamp -2147483648 1 -1 1
+int64_clamp -2147483648 1 -1 1
+int_clamp -2147483648 1 0 1
+int64_clamp -2147483648 1 0 1
+int_clamp -2147483648 1 1 1
+int64_clamp -2147483648 1 1 1
+int_clamp -2147483648 1 100 1
+int64_clamp -2147483648 1 100 1
+int_clamp -2147483648 1 2147483647 1
+int64_clamp -2147483648 1 2147483647 1
+int_clamp -2147483648 100 -2147483648 100
+int64_clamp -2147483648 100 -2147483648 100
+int_clamp -2147483648 100 -100 100
+int64_clamp -2147483648 100 -100 100
+int_clamp -2147483648 100 -1 100
+int64_clamp -2147483648 100 -1 100
+int_clamp -2147483648 100 0 100
+int64_clamp -2147483648 100 0 100
+int_clamp -2147483648 100 1 100
+int64_clamp -2147483648 100 1 100
+int_clamp -2147483648 100 100 100
+int64_clamp -2147483648 100 100 100
+int_clamp -2147483648 100 2147483647 100
+int64_clamp -2147483648 100 2147483647 100
+int_clamp -2147483648 2147483647 -2147483648 2147483647
+int64_clamp -2147483648 2147483647 -2147483648 2147483647
+int_clamp -2147483648 2147483647 -100 2147483647
+int64_clamp -2147483648 2147483647 -100 2147483647
+int_clamp -2147483648 2147483647 -1 2147483647
+int64_clamp -2147483648 2147483647 -1 2147483647
+int_clamp -2147483648 2147483647 0 2147483647
+int64_clamp -2147483648 2147483647 0 2147483647
+int_clamp -2147483648 2147483647 1 2147483647
+int64_clamp -2147483648 2147483647 1 2147483647
+int_clamp -2147483648 2147483647 100 2147483647
+int64_clamp -2147483648 2147483647 100 2147483647
+int_clamp -2147483648 2147483647 2147483647 2147483647
+int64_clamp -2147483648 2147483647 2147483647 2147483647
+int_clamp -100 -2147483648 -2147483648 -2147483648
+int64_clamp -100 -2147483648 -2147483648 -2147483648
+int_clamp -100 -2147483648 -100 -100
+int64_clamp -100 -2147483648 -100 -100
+int_clamp -100 -2147483648 -1 -100
+int64_clamp -100 -2147483648 -1 -100
+int_clamp -100 -2147483648 0 -100
+int64_clamp -100 -2147483648 0 -100
+int_clamp -100 -2147483648 1 -100
+int64_clamp -100 -2147483648 1 -100
+int_clamp -100 -2147483648 100 -100
+int64_clamp -100 -2147483648 100 -100
+int_clamp -100 -2147483648 2147483647 -100
+int64_clamp -100 -2147483648 2147483647 -100
+int_clamp -100 -100 -2147483648 -2147483648
+int64_clamp -100 -100 -2147483648 -2147483648
+int_clamp -100 -100 -100 -100
+int64_clamp -100 -100 -100 -100
+int_clamp -100 -100 -1 -100
+int64_clamp -100 -100 -1 -100
+int_clamp -100 -100 0 -100
+int64_clamp -100 -100 0 -100
+int_clamp -100 -100 1 -100
+int64_clamp -100 -100 1 -100
+int_clamp -100 -100 100 -100
+int64_clamp -100 -100 100 -100
+int_clamp -100 -100 2147483647 -100
+int64_clamp -100 -100 2147483647 -100
+int_clamp -100 -1 -2147483648 -1
+int64_clamp -100 -1 -2147483648 -1
+int_clamp -100 -1 -100 -1
+int64_clamp -100 -1 -100 -1
+int_clamp -100 -1 -1 -1
+int64_clamp -100 -1 -1 -1
+int_clamp -100 -1 0 -1
+int64_clamp -100 -1 0 -1
+int_clamp -100 -1 1 -1
+int64_clamp -100 -1 1 -1
+int_clamp -100 -1 100 -1
+int64_clamp -100 -1 100 -1
+int_clamp -100 -1 2147483647 -1
+int64_clamp -100 -1 2147483647 -1
+int_clamp -100 0 -2147483648 0
+int64_clamp -100 0 -2147483648 0
+int_clamp -100 0 -100 0
+int64_clamp -100 0 -100 0
+int_clamp -100 0 -1 0
+int64_clamp -100 0 -1 0
+int_clamp -100 0 0 0
+int64_clamp -100 0 0 0
+int_clamp -100 0 1 0
+int64_clamp -100 0 1 0
+int_clamp -100 0 100 0
+int64_clamp -100 0 100 0
+int_clamp -100 0 2147483647 0
+int64_clamp -100 0 2147483647 0
+int_clamp -100 1 -2147483648 1
+int64_clamp -100 1 -2147483648 1
+int_clamp -100 1 -100 1
+int64_clamp -100 1 -100 1
+int_clamp -100 1 -1 1
+int64_clamp -100 1 -1 1
+int_clamp -100 1 0 1
+int64_clamp -100 1 0 1
+int_clamp -100 1 1 1
+int64_clamp -100 1 1 1
+int_clamp -100 1 100 1
+int64_clamp -100 1 100 1
+int_clamp -100 1 2147483647 1
+int64_clamp -100 1 2147483647 1
+int_clamp -100 100 -2147483648 100
+int64_clamp -100 100 -2147483648 100
+int_clamp -100 100 -100 100
+int64_clamp -100 100 -100 100
+int_clamp -100 100 -1 100
+int64_clamp -100 100 -1 100
+int_clamp -100 100 0 100
+int64_clamp -100 100 0 100
+int_clamp -100 100 1 100
+int64_clamp -100 100 1 100
+int_clamp -100 100 100 100
+int64_clamp -100 100 100 100
+int_clamp -100 100 2147483647 100
+int64_clamp -100 100 2147483647 100
+int_clamp -100 2147483647 -2147483648 2147483647
+int64_clamp -100 2147483647 -2147483648 2147483647
+int_clamp -100 2147483647 -100 2147483647
+int64_clamp -100 2147483647 -100 2147483647
+int_clamp -100 2147483647 -1 2147483647
+int64_clamp -100 2147483647 -1 2147483647
+int_clamp -100 2147483647 0 2147483647
+int64_clamp -100 2147483647 0 2147483647
+int_clamp -100 2147483647 1 2147483647
+int64_clamp -100 2147483647 1 2147483647
+int_clamp -100 2147483647 100 2147483647
+int64_clamp -100 2147483647 100 2147483647
+int_clamp -100 2147483647 2147483647 2147483647
+int64_clamp -100 2147483647 2147483647 2147483647
+int_clamp -1 -2147483648 -2147483648 -2147483648
+int64_clamp -1 -2147483648 -2147483648 -2147483648
+int_clamp -1 -2147483648 -100 -100
+int64_clamp -1 -2147483648 -100 -100
+int_clamp -1 -2147483648 -1 -1
+int64_clamp -1 -2147483648 -1 -1
+int_clamp -1 -2147483648 0 -1
+int64_clamp -1 -2147483648 0 -1
+int_clamp -1 -2147483648 1 -1
+int64_clamp -1 -2147483648 1 -1
+int_clamp -1 -2147483648 100 -1
+int64_clamp -1 -2147483648 100 -1
+int_clamp -1 -2147483648 2147483647 -1
+int64_clamp -1 -2147483648 2147483647 -1
+int_clamp -1 -100 -2147483648 -2147483648
+int64_clamp -1 -100 -2147483648 -2147483648
+int_clamp -1 -100 -100 -100
+int64_clamp -1 -100 -100 -100
+int_clamp -1 -100 -1 -1
+int64_clamp -1 -100 -1 -1
+int_clamp -1 -100 0 -1
+int64_clamp -1 -100 0 -1
+int_clamp -1 -100 1 -1
+int64_clamp -1 -100 1 -1
+int_clamp -1 -100 100 -1
+int64_clamp -1 -100 100 -1
+int_clamp -1 -100 2147483647 -1
+int64_clamp -1 -100 2147483647 -1
+int_clamp -1 -1 -2147483648 -2147483648
+int64_clamp -1 -1 -2147483648 -2147483648
+int_clamp -1 -1 -100 -100
+int64_clamp -1 -1 -100 -100
+int_clamp -1 -1 -1 -1
+int64_clamp -1 -1 -1 -1
+int_clamp -1 -1 0 -1
+int64_clamp -1 -1 0 -1
+int_clamp -1 -1 1 -1
+int64_clamp -1 -1 1 -1
+int_clamp -1 -1 100 -1
+int64_clamp -1 -1 100 -1
+int_clamp -1 -1 2147483647 -1
+int64_clamp -1 -1 2147483647 -1
+int_clamp -1 0 -2147483648 0
+int64_clamp -1 0 -2147483648 0
+int_clamp -1 0 -100 0
+int64_clamp -1 0 -100 0
+int_clamp -1 0 -1 0
+int64_clamp -1 0 -1 0
+int_clamp -1 0 0 0
+int64_clamp -1 0 0 0
+int_clamp -1 0 1 0
+int64_clamp -1 0 1 0
+int_clamp -1 0 100 0
+int64_clamp -1 0 100 0
+int_clamp -1 0 2147483647 0
+int64_clamp -1 0 2147483647 0
+int_clamp -1 1 -2147483648 1
+int64_clamp -1 1 -2147483648 1
+int_clamp -1 1 -100 1
+int64_clamp -1 1 -100 1
+int_clamp -1 1 -1 1
+int64_clamp -1 1 -1 1
+int_clamp -1 1 0 1
+int64_clamp -1 1 0 1
+int_clamp -1 1 1 1
+int64_clamp -1 1 1 1
+int_clamp -1 1 100 1
+int64_clamp -1 1 100 1
+int_clamp -1 1 2147483647 1
+int64_clamp -1 1 2147483647 1
+int_clamp -1 100 -2147483648 100
+int64_clamp -1 100 -2147483648 100
+int_clamp -1 100 -100 100
+int64_clamp -1 100 -100 100
+int_clamp -1 100 -1 100
+int64_clamp -1 100 -1 100
+int_clamp -1 100 0 100
+int64_clamp -1 100 0 100
+int_clamp -1 100 1 100
+int64_clamp -1 100 1 100
+int_clamp -1 100 100 100
+int64_clamp -1 100 100 100
+int_clamp -1 100 2147483647 100
+int64_clamp -1 100 2147483647 100
+int_clamp -1 2147483647 -2147483648 2147483647
+int64_clamp -1 2147483647 -2147483648 2147483647
+int_clamp -1 2147483647 -100 2147483647
+int64_clamp -1 2147483647 -100 2147483647
+int_clamp -1 2147483647 -1 2147483647
+int64_clamp -1 2147483647 -1 2147483647
+int_clamp -1 2147483647 0 2147483647
+int64_clamp -1 2147483647 0 2147483647
+int_clamp -1 2147483647 1 2147483647
+int64_clamp -1 2147483647 1 2147483647
+int_clamp -1 2147483647 100 2147483647
+int64_clamp -1 2147483647 100 2147483647
+int_clamp -1 2147483647 2147483647 2147483647
+int64_clamp -1 2147483647 2147483647 2147483647
+int_clamp 0 -2147483648 -2147483648 -2147483648
+int64_clamp 0 -2147483648 -2147483648 -2147483648
+int_clamp 0 -2147483648 -100 -100
+int64_clamp 0 -2147483648 -100 -100
+int_clamp 0 -2147483648 -1 -1
+int64_clamp 0 -2147483648 -1 -1
+int_clamp 0 -2147483648 0 0
+int64_clamp 0 -2147483648 0 0
+int_clamp 0 -2147483648 1 0
+int64_clamp 0 -2147483648 1 0
+int_clamp 0 -2147483648 100 0
+int64_clamp 0 -2147483648 100 0
+int_clamp 0 -2147483648 2147483647 0
+int64_clamp 0 -2147483648 2147483647 0
+int_clamp 0 -100 -2147483648 -2147483648
+int64_clamp 0 -100 -2147483648 -2147483648
+int_clamp 0 -100 -100 -100
+int64_clamp 0 -100 -100 -100
+int_clamp 0 -100 -1 -1
+int64_clamp 0 -100 -1 -1
+int_clamp 0 -100 0 0
+int64_clamp 0 -100 0 0
+int_clamp 0 -100 1 0
+int64_clamp 0 -100 1 0
+int_clamp 0 -100 100 0
+int64_clamp 0 -100 100 0
+int_clamp 0 -100 2147483647 0
+int64_clamp 0 -100 2147483647 0
+int_clamp 0 -1 -2147483648 -2147483648
+int64_clamp 0 -1 -2147483648 -2147483648
+int_clamp 0 -1 -100 -100
+int64_clamp 0 -1 -100 -100
+int_clamp 0 -1 -1 -1
+int64_clamp 0 -1 -1 -1
+int_clamp 0 -1 0 0
+int64_clamp 0 -1 0 0
+int_clamp 0 -1 1 0
+int64_clamp 0 -1 1 0
+int_clamp 0 -1 100 0
+int64_clamp 0 -1 100 0
+int_clamp 0 -1 2147483647 0
+int64_clamp 0 -1 2147483647 0
+int_clamp 0 0 -2147483648 -2147483648
+int64_clamp 0 0 -2147483648 -2147483648
+int_clamp 0 0 -100 -100
+int64_clamp 0 0 -100 -100
+int_clamp 0 0 -1 -1
+int64_clamp 0 0 -1 -1
+int_clamp 0 0 0 0
+int64_clamp 0 0 0 0
+int_clamp 0 0 1 0
+int64_clamp 0 0 1 0
+int_clamp 0 0 100 0
+int64_clamp 0 0 100 0
+int_clamp 0 0 2147483647 0
+int64_clamp 0 0 2147483647 0
+int_clamp 0 1 -2147483648 1
+int64_clamp 0 1 -2147483648 1
+int_clamp 0 1 -100 1
+int64_clamp 0 1 -100 1
+int_clamp 0 1 -1 1
+int64_clamp 0 1 -1 1
+int_clamp 0 1 0 1
+int64_clamp 0 1 0 1
+int_clamp 0 1 1 1
+int64_clamp 0 1 1 1
+int_clamp 0 1 100 1
+int64_clamp 0 1 100 1
+int_clamp 0 1 2147483647 1
+int64_clamp 0 1 2147483647 1
+int_clamp 0 100 -2147483648 100
+int64_clamp 0 100 -2147483648 100
+int_clamp 0 100 -100 100
+int64_clamp 0 100 -100 100
+int_clamp 0 100 -1 100
+int64_clamp 0 100 -1 100
+int_clamp 0 100 0 100
+int64_clamp 0 100 0 100
+int_clamp 0 100 1 100
+int64_clamp 0 100 1 100
+int_clamp 0 100 100 100
+int64_clamp 0 100 100 100
+int_clamp 0 100 2147483647 100
+int64_clamp 0 100 2147483647 100
+int_clamp 0 2147483647 -2147483648 2147483647
+int64_clamp 0 2147483647 -2147483648 2147483647
+int_clamp 0 2147483647 -100 2147483647
+int64_clamp 0 2147483647 -100 2147483647
+int_clamp 0 2147483647 -1 2147483647
+int64_clamp 0 2147483647 -1 2147483647
+int_clamp 0 2147483647 0 2147483647
+int64_clamp 0 2147483647 0 2147483647
+int_clamp 0 2147483647 1 2147483647
+int64_clamp 0 2147483647 1 2147483647
+int_clamp 0 2147483647 100 2147483647
+int64_clamp 0 2147483647 100 2147483647
+int_clamp 0 2147483647 2147483647 2147483647
+int64_clamp 0 2147483647 2147483647 2147483647
+int_clamp 1 -2147483648 -2147483648 -2147483648
+int64_clamp 1 -2147483648 -2147483648 -2147483648
+int_clamp 1 -2147483648 -100 -100
+int64_clamp 1 -2147483648 -100 -100
+int_clamp 1 -2147483648 -1 -1
+int64_clamp 1 -2147483648 -1 -1
+int_clamp 1 -2147483648 0 0
+int64_clamp 1 -2147483648 0 0
+int_clamp 1 -2147483648 1 1
+int64_clamp 1 -2147483648 1 1
+int_clamp 1 -2147483648 100 1
+int64_clamp 1 -2147483648 100 1
+int_clamp 1 -2147483648 2147483647 1
+int64_clamp 1 -2147483648 2147483647 1
+int_clamp 1 -100 -2147483648 -2147483648
+int64_clamp 1 -100 -2147483648 -2147483648
+int_clamp 1 -100 -100 -100
+int64_clamp 1 -100 -100 -100
+int_clamp 1 -100 -1 -1
+int64_clamp 1 -100 -1 -1
+int_clamp 1 -100 0 0
+int64_clamp 1 -100 0 0
+int_clamp 1 -100 1 1
+int64_clamp 1 -100 1 1
+int_clamp 1 -100 100 1
+int64_clamp 1 -100 100 1
+int_clamp 1 -100 2147483647 1
+int64_clamp 1 -100 2147483647 1
+int_clamp 1 -1 -2147483648 -2147483648
+int64_clamp 1 -1 -2147483648 -2147483648
+int_clamp 1 -1 -100 -100
+int64_clamp 1 -1 -100 -100
+int_clamp 1 -1 -1 -1
+int64_clamp 1 -1 -1 -1
+int_clamp 1 -1 0 0
+int64_clamp 1 -1 0 0
+int_clamp 1 -1 1 1
+int64_clamp 1 -1 1 1
+int_clamp 1 -1 100 1
+int64_clamp 1 -1 100 1
+int_clamp 1 -1 2147483647 1
+int64_clamp 1 -1 2147483647 1
+int_clamp 1 0 -2147483648 -2147483648
+int64_clamp 1 0 -2147483648 -2147483648
+int_clamp 1 0 -100 -100
+int64_clamp 1 0 -100 -100
+int_clamp 1 0 -1 -1
+int64_clamp 1 0 -1 -1
+int_clamp 1 0 0 0
+int64_clamp 1 0 0 0
+int_clamp 1 0 1 1
+int64_clamp 1 0 1 1
+int_clamp 1 0 100 1
+int64_clamp 1 0 100 1
+int_clamp 1 0 2147483647 1
+int64_clamp 1 0 2147483647 1
+int_clamp 1 1 -2147483648 -2147483648
+int64_clamp 1 1 -2147483648 -2147483648
+int_clamp 1 1 -100 -100
+int64_clamp 1 1 -100 -100
+int_clamp 1 1 -1 -1
+int64_clamp 1 1 -1 -1
+int_clamp 1 1 0 0
+int64_clamp 1 1 0 0
+int_clamp 1 1 1 1
+int64_clamp 1 1 1 1
+int_clamp 1 1 100 1
+int64_clamp 1 1 100 1
+int_clamp 1 1 2147483647 1
+int64_clamp 1 1 2147483647 1
+int_clamp 1 100 -2147483648 100
+int64_clamp 1 100 -2147483648 100
+int_clamp 1 100 -100 100
+int64_clamp 1 100 -100 100
+int_clamp 1 100 -1 100
+int64_clamp 1 100 -1 100
+int_clamp 1 100 0 100
+int64_clamp 1 100 0 100
+int_clamp 1 100 1 100
+int64_clamp 1 100 1 100
+int_clamp 1 100 100 100
+int64_clamp 1 100 100 100
+int_clamp 1 100 2147483647 100
+int64_clamp 1 100 2147483647 100
+int_clamp 1 2147483647 -2147483648 2147483647
+int64_clamp 1 2147483647 -2147483648 2147483647
+int_clamp 1 2147483647 -100 2147483647
+int64_clamp 1 2147483647 -100 2147483647
+int_clamp 1 2147483647 -1 2147483647
+int64_clamp 1 2147483647 -1 2147483647
+int_clamp 1 2147483647 0 2147483647
+int64_clamp 1 2147483647 0 2147483647
+int_clamp 1 2147483647 1 2147483647
+int64_clamp 1 2147483647 1 2147483647
+int_clamp 1 2147483647 100 2147483647
+int64_clamp 1 2147483647 100 2147483647
+int_clamp 1 2147483647 2147483647 2147483647
+int64_clamp 1 2147483647 2147483647 2147483647
+int_clamp 100 -2147483648 -2147483648 -2147483648
+int64_clamp 100 -2147483648 -2147483648 -2147483648
+int_clamp 100 -2147483648 -100 -100
+int64_clamp 100 -2147483648 -100 -100
+int_clamp 100 -2147483648 -1 -1
+int64_clamp 100 -2147483648 -1 -1
+int_clamp 100 -2147483648 0 0
+int64_clamp 100 -2147483648 0 0
+int_clamp 100 -2147483648 1 1
+int64_clamp 100 -2147483648 1 1
+int_clamp 100 -2147483648 100 100
+int64_clamp 100 -2147483648 100 100
+int_clamp 100 -2147483648 2147483647 100
+int64_clamp 100 -2147483648 2147483647 100
+int_clamp 100 -100 -2147483648 -2147483648
+int64_clamp 100 -100 -2147483648 -2147483648
+int_clamp 100 -100 -100 -100
+int64_clamp 100 -100 -100 -100
+int_clamp 100 -100 -1 -1
+int64_clamp 100 -100 -1 -1
+int_clamp 100 -100 0 0
+int64_clamp 100 -100 0 0
+int_clamp 100 -100 1 1
+int64_clamp 100 -100 1 1
+int_clamp 100 -100 100 100
+int64_clamp 100 -100 100 100
+int_clamp 100 -100 2147483647 100
+int64_clamp 100 -100 2147483647 100
+int_clamp 100 -1 -2147483648 -2147483648
+int64_clamp 100 -1 -2147483648 -2147483648
+int_clamp 100 -1 -100 -100
+int64_clamp 100 -1 -100 -100
+int_clamp 100 -1 -1 -1
+int64_clamp 100 -1 -1 -1
+int_clamp 100 -1 0 0
+int64_clamp 100 -1 0 0
+int_clamp 100 -1 1 1
+int64_clamp 100 -1 1 1
+int_clamp 100 -1 100 100
+int64_clamp 100 -1 100 100
+int_clamp 100 -1 2147483647 100
+int64_clamp 100 -1 2147483647 100
+int_clamp 100 0 -2147483648 -2147483648
+int64_clamp 100 0 -2147483648 -2147483648
+int_clamp 100 0 -100 -100
+int64_clamp 100 0 -100 -100
+int_clamp 100 0 -1 -1
+int64_clamp 100 0 -1 -1
+int_clamp 100 0 0 0
+int64_clamp 100 0 0 0
+int_clamp 100 0 1 1
+int64_clamp 100 0 1 1
+int_clamp 100 0 100 100
+int64_clamp 100 0 100 100
+int_clamp 100 0 2147483647 100
+int64_clamp 100 0 2147483647 100
+int_clamp 100 1 -2147483648 -2147483648
+int64_clamp 100 1 -2147483648 -2147483648
+int_clamp 100 1 -100 -100
+int64_clamp 100 1 -100 -100
+int_clamp 100 1 -1 -1
+int64_clamp 100 1 -1 -1
+int_clamp 100 1 0 0
+int64_clamp 100 1 0 0
+int_clamp 100 1 1 1
+int64_clamp 100 1 1 1
+int_clamp 100 1 100 100
+int64_clamp 100 1 100 100
+int_clamp 100 1 2147483647 100
+int64_clamp 100 1 2147483647 100
+int_clamp 100 100 -2147483648 -2147483648
+int64_clamp 100 100 -2147483648 -2147483648
+int_clamp 100 100 -100 -100
+int64_clamp 100 100 -100 -100
+int_clamp 100 100 -1 -1
+int64_clamp 100 100 -1 -1
+int_clamp 100 100 0 0
+int64_clamp 100 100 0 0
+int_clamp 100 100 1 1
+int64_clamp 100 100 1 1
+int_clamp 100 100 100 100
+int64_clamp 100 100 100 100
+int_clamp 100 100 2147483647 100
+int64_clamp 100 100 2147483647 100
+int_clamp 100 2147483647 -2147483648 2147483647
+int64_clamp 100 2147483647 -2147483648 2147483647
+int_clamp 100 2147483647 -100 2147483647
+int64_clamp 100 2147483647 -100 2147483647
+int_clamp 100 2147483647 -1 2147483647
+int64_clamp 100 2147483647 -1 2147483647
+int_clamp 100 2147483647 0 2147483647
+int64_clamp 100 2147483647 0 2147483647
+int_clamp 100 2147483647 1 2147483647
+int64_clamp 100 2147483647 1 2147483647
+int_clamp 100 2147483647 100 2147483647
+int64_clamp 100 2147483647 100 2147483647
+int_clamp 100 2147483647 2147483647 2147483647
+int64_clamp 100 2147483647 2147483647 2147483647
+int_clamp 2147483647 -2147483648 -2147483648 -2147483648
+int64_clamp 2147483647 -2147483648 -2147483648 -2147483648
+int_clamp 2147483647 -2147483648 -100 -100
+int64_clamp 2147483647 -2147483648 -100 -100
+int_clamp 2147483647 -2147483648 -1 -1
+int64_clamp 2147483647 -2147483648 -1 -1
+int_clamp 2147483647 -2147483648 0 0
+int64_clamp 2147483647 -2147483648 0 0
+int_clamp 2147483647 -2147483648 1 1
+int64_clamp 2147483647 -2147483648 1 1
+int_clamp 2147483647 -2147483648 100 100
+int64_clamp 2147483647 -2147483648 100 100
+int_clamp 2147483647 -2147483648 2147483647 2147483647
+int64_clamp 2147483647 -2147483648 2147483647 2147483647
+int_clamp 2147483647 -100 -2147483648 -2147483648
+int64_clamp 2147483647 -100 -2147483648 -2147483648
+int_clamp 2147483647 -100 -100 -100
+int64_clamp 2147483647 -100 -100 -100
+int_clamp 2147483647 -100 -1 -1
+int64_clamp 2147483647 -100 -1 -1
+int_clamp 2147483647 -100 0 0
+int64_clamp 2147483647 -100 0 0
+int_clamp 2147483647 -100 1 1
+int64_clamp 2147483647 -100 1 1
+int_clamp 2147483647 -100 100 100
+int64_clamp 2147483647 -100 100 100
+int_clamp 2147483647 -100 2147483647 2147483647
+int64_clamp 2147483647 -100 2147483647 2147483647
+int_clamp 2147483647 -1 -2147483648 -2147483648
+int64_clamp 2147483647 -1 -2147483648 -2147483648
+int_clamp 2147483647 -1 -100 -100
+int64_clamp 2147483647 -1 -100 -100
+int_clamp 2147483647 -1 -1 -1
+int64_clamp 2147483647 -1 -1 -1
+int_clamp 2147483647 -1 0 0
+int64_clamp 2147483647 -1 0 0
+int_clamp 2147483647 -1 1 1
+int64_clamp 2147483647 -1 1 1
+int_clamp 2147483647 -1 100 100
+int64_clamp 2147483647 -1 100 100
+int_clamp 2147483647 -1 2147483647 2147483647
+int64_clamp 2147483647 -1 2147483647 2147483647
+int_clamp 2147483647 0 -2147483648 -2147483648
+int64_clamp 2147483647 0 -2147483648 -2147483648
+int_clamp 2147483647 0 -100 -100
+int64_clamp 2147483647 0 -100 -100
+int_clamp 2147483647 0 -1 -1
+int64_clamp 2147483647 0 -1 -1
+int_clamp 2147483647 0 0 0
+int64_clamp 2147483647 0 0 0
+int_clamp 2147483647 0 1 1
+int64_clamp 2147483647 0 1 1
+int_clamp 2147483647 0 100 100
+int64_clamp 2147483647 0 100 100
+int_clamp 2147483647 0 2147483647 2147483647
+int64_clamp 2147483647 0 2147483647 2147483647
+int_clamp 2147483647 1 -2147483648 -2147483648
+int64_clamp 2147483647 1 -2147483648 -2147483648
+int_clamp 2147483647 1 -100 -100
+int64_clamp 2147483647 1 -100 -100
+int_clamp 2147483647 1 -1 -1
+int64_clamp 2147483647 1 -1 -1
+int_clamp 2147483647 1 0 0
+int64_clamp 2147483647 1 0 0
+int_clamp 2147483647 1 1 1
+int64_clamp 2147483647 1 1 1
+int_clamp 2147483647 1 100 100
+int64_clamp 2147483647 1 100 100
+int_clamp 2147483647 1 2147483647 2147483647
+int64_clamp 2147483647 1 2147483647 2147483647
+int_clamp 2147483647 100 -2147483648 -2147483648
+int64_clamp 2147483647 100 -2147483648 -2147483648
+int_clamp 2147483647 100 -100 -100
+int64_clamp 2147483647 100 -100 -100
+int_clamp 2147483647 100 -1 -1
+int64_clamp 2147483647 100 -1 -1
+int_clamp 2147483647 100 0 0
+int64_clamp 2147483647 100 0 0
+int_clamp 2147483647 100 1 1
+int64_clamp 2147483647 100 1 1
+int_clamp 2147483647 100 100 100
+int64_clamp 2147483647 100 100 100
+int_clamp 2147483647 100 2147483647 2147483647
+int64_clamp 2147483647 100 2147483647 2147483647
+int_clamp 2147483647 2147483647 -2147483648 -2147483648
+int64_clamp 2147483647 2147483647 -2147483648 -2147483648
+int_clamp 2147483647 2147483647 -100 -100
+int64_clamp 2147483647 2147483647 -100 -100
+int_clamp 2147483647 2147483647 -1 -1
+int64_clamp 2147483647 2147483647 -1 -1
+int_clamp 2147483647 2147483647 0 0
+int64_clamp 2147483647 2147483647 0 0
+int_clamp 2147483647 2147483647 1 1
+int64_clamp 2147483647 2147483647 1 1
+int_clamp 2147483647 2147483647 100 100
+int64_clamp 2147483647 2147483647 100 100
+int_clamp 2147483647 2147483647 2147483647 2147483647
+int64_clamp 2147483647 2147483647 2147483647 2147483647
+int_abs -2147483648 -2147483648
+int_floorlog2 -2147483648 0
+int_abs -2147483647 2147483647
+int_floorlog2 -2147483647 0
+int_abs -65536 65536
+int_floorlog2 -65536 0
+int_abs -4097 4097
+int_floorlog2 -4097 0
+int_abs -4096 4096
+int_floorlog2 -4096 0
+int_abs -3 3
+int_floorlog2 -3 0
+int_abs -2 2
+int_floorlog2 -2 0
+int_abs -1 1
+int_floorlog2 -1 0
+int_abs 0 0
+int_floorlog2 0 0
+int_abs 1 1
+int_floorlog2 1 0
+int_abs 2 2
+int_floorlog2 2 1
+int_abs 3 3
+int_floorlog2 3 1
+int_abs 4096 4096
+int_floorlog2 4096 12
+int_abs 65536 65536
+int_floorlog2 65536 16
+int_abs 2147483646 2147483646
+int_floorlog2 2147483646 30
+int_abs 2147483647 2147483647
+int_floorlog2 2147483647 30
+uint_floorlog2 0 0
+uint_floorlog2 1 0
+uint_floorlog2 2 1
+uint_floorlog2 3 1
+uint_floorlog2 4095 11
+uint_floorlog2 4096 12
+uint_floorlog2 4097 12
+uint_floorlog2 65535 15
+uint_floorlog2 65536 16
+uint_floorlog2 2147483647 30
+uint_floorlog2 2147483648 31
+uint_floorlog2 4294967295 31
+int_ceildivpow2 -2147483648 0 -2147483648
+int_floordivpow2 -2147483648 0 -2147483648
+int_ceildivpow2 -2147483648 1 -1073741824
+int_floordivpow2 -2147483648 1 -1073741824
+int_ceildivpow2 -2147483648 2 -536870912
+int_floordivpow2 -2147483648 2 -536870912
+int_ceildivpow2 -2147483648 3 -268435456
+int_floordivpow2 -2147483648 3 -268435456
+int_ceildivpow2 -2147483648 13 -262144
+int_floordivpow2 -2147483648 13 -262144
+int_ceildivpow2 -2147483648 16 -32768
+int_floordivpow2 -2147483648 16 -32768
+int_ceildivpow2 -2147483648 30 -2
+int_floordivpow2 -2147483648 30 -2
+int_ceildivpow2 -2147483648 31 -1
+int_floordivpow2 -2147483648 31 -1
+int_ceildivpow2 -2147483647 0 -2147483647
+int_floordivpow2 -2147483647 0 -2147483647
+int_ceildivpow2 -2147483647 1 -1073741823
+int_floordivpow2 -2147483647 1 -1073741824
+int_ceildivpow2 -2147483647 2 -536870911
+int_floordivpow2 -2147483647 2 -536870912
+int_ceildivpow2 -2147483647 3 -268435455
+int_floordivpow2 -2147483647 3 -268435456
+int_ceildivpow2 -2147483647 13 -262143
+int_floordivpow2 -2147483647 13 -262144
+int_ceildivpow2 -2147483647 16 -32767
+int_floordivpow2 -2147483647 16 -32768
+int_ceildivpow2 -2147483647 30 -1
+int_floordivpow2 -2147483647 30 -2
+int_ceildivpow2 -2147483647 31 0
+int_floordivpow2 -2147483647 31 -1
+int_ceildivpow2 -65536 0 -65536
+int_floordivpow2 -65536 0 -65536
+int_ceildivpow2 -65536 1 -32768
+int_floordivpow2 -65536 1 -32768
+int_ceildivpow2 -65536 2 -16384
+int_floordivpow2 -65536 2 -16384
+int_ceildivpow2 -65536 3 -8192
+int_floordivpow2 -65536 3 -8192
+int_ceildivpow2 -65536 13 -8
+int_floordivpow2 -65536 13 -8
+int_ceildivpow2 -65536 16 -1
+int_floordivpow2 -65536 16 -1
+int_ceildivpow2 -65536 30 0
+int_floordivpow2 -65536 30 -1
+int_ceildivpow2 -65536 31 0
+int_floordivpow2 -65536 31 -1
+int_ceildivpow2 -4097 0 -4097
+int_floordivpow2 -4097 0 -4097
+int_ceildivpow2 -4097 1 -2048
+int_floordivpow2 -4097 1 -2049
+int_ceildivpow2 -4097 2 -1024
+int_floordivpow2 -4097 2 -1025
+int_ceildivpow2 -4097 3 -512
+int_floordivpow2 -4097 3 -513
+int_ceildivpow2 -4097 13 0
+int_floordivpow2 -4097 13 -1
+int_ceildivpow2 -4097 16 0
+int_floordivpow2 -4097 16 -1
+int_ceildivpow2 -4097 30 0
+int_floordivpow2 -4097 30 -1
+int_ceildivpow2 -4097 31 0
+int_floordivpow2 -4097 31 -1
+int_ceildivpow2 -4096 0 -4096
+int_floordivpow2 -4096 0 -4096
+int_ceildivpow2 -4096 1 -2048
+int_floordivpow2 -4096 1 -2048
+int_ceildivpow2 -4096 2 -1024
+int_floordivpow2 -4096 2 -1024
+int_ceildivpow2 -4096 3 -512
+int_floordivpow2 -4096 3 -512
+int_ceildivpow2 -4096 13 0
+int_floordivpow2 -4096 13 -1
+int_ceildivpow2 -4096 16 0
+int_floordivpow2 -4096 16 -1
+int_ceildivpow2 -4096 30 0
+int_floordivpow2 -4096 30 -1
+int_ceildivpow2 -4096 31 0
+int_floordivpow2 -4096 31 -1
+int_ceildivpow2 -3 0 -3
+int_floordivpow2 -3 0 -3
+int_ceildivpow2 -3 1 -1
+int_floordivpow2 -3 1 -2
+int_ceildivpow2 -3 2 0
+int_floordivpow2 -3 2 -1
+int_ceildivpow2 -3 3 0
+int_floordivpow2 -3 3 -1
+int_ceildivpow2 -3 13 0
+int_floordivpow2 -3 13 -1
+int_ceildivpow2 -3 16 0
+int_floordivpow2 -3 16 -1
+int_ceildivpow2 -3 30 0
+int_floordivpow2 -3 30 -1
+int_ceildivpow2 -3 31 0
+int_floordivpow2 -3 31 -1
+int_ceildivpow2 -2 0 -2
+int_floordivpow2 -2 0 -2
+int_ceildivpow2 -2 1 -1
+int_floordivpow2 -2 1 -1
+int_ceildivpow2 -2 2 0
+int_floordivpow2 -2 2 -1
+int_ceildivpow2 -2 3 0
+int_floordivpow2 -2 3 -1
+int_ceildivpow2 -2 13 0
+int_floordivpow2 -2 13 -1
+int_ceildivpow2 -2 16 0
+int_floordivpow2 -2 16 -1
+int_ceildivpow2 -2 30 0
+int_floordivpow2 -2 30 -1
+int_ceildivpow2 -2 31 0
+int_floordivpow2 -2 31 -1
+int_ceildivpow2 -1 0 -1
+int_floordivpow2 -1 0 -1
+int_ceildivpow2 -1 1 0
+int_floordivpow2 -1 1 -1
+int_ceildivpow2 -1 2 0
+int_floordivpow2 -1 2 -1
+int_ceildivpow2 -1 3 0
+int_floordivpow2 -1 3 -1
+int_ceildivpow2 -1 13 0
+int_floordivpow2 -1 13 -1
+int_ceildivpow2 -1 16 0
+int_floordivpow2 -1 16 -1
+int_ceildivpow2 -1 30 0
+int_floordivpow2 -1 30 -1
+int_ceildivpow2 -1 31 0
+int_floordivpow2 -1 31 -1
+int_ceildivpow2 0 0 0
+int_floordivpow2 0 0 0
+int_ceildivpow2 0 1 0
+int_floordivpow2 0 1 0
+int_ceildivpow2 0 2 0
+int_floordivpow2 0 2 0
+int_ceildivpow2 0 3 0
+int_floordivpow2 0 3 0
+int_ceildivpow2 0 13 0
+int_floordivpow2 0 13 0
+int_ceildivpow2 0 16 0
+int_floordivpow2 0 16 0
+int_ceildivpow2 0 30 0
+int_floordivpow2 0 30 0
+int_ceildivpow2 0 31 0
+int_floordivpow2 0 31 0
+int_ceildivpow2 1 0 1
+int_floordivpow2 1 0 1
+int_ceildivpow2 1 1 1
+int_floordivpow2 1 1 0
+int_ceildivpow2 1 2 1
+int_floordivpow2 1 2 0
+int_ceildivpow2 1 3 1
+int_floordivpow2 1 3 0
+int_ceildivpow2 1 13 1
+int_floordivpow2 1 13 0
+int_ceildivpow2 1 16 1
+int_floordivpow2 1 16 0
+int_ceildivpow2 1 30 1
+int_floordivpow2 1 30 0
+int_ceildivpow2 1 31 1
+int_floordivpow2 1 31 0
+int_ceildivpow2 2 0 2
+int_floordivpow2 2 0 2
+int_ceildivpow2 2 1 1
+int_floordivpow2 2 1 1
+int_ceildivpow2 2 2 1
+int_floordivpow2 2 2 0
+int_ceildivpow2 2 3 1
+int_floordivpow2 2 3 0
+int_ceildivpow2 2 13 1
+int_floordivpow2 2 13 0
+int_ceildivpow2 2 16 1
+int_floordivpow2 2 16 0
+int_ceildivpow2 2 30 1
+int_floordivpow2 2 30 0
+int_ceildivpow2 2 31 1
+int_floordivpow2 2 31 0
+int_ceildivpow2 3 0 3
+int_floordivpow2 3 0 3
+int_ceildivpow2 3 1 2
+int_floordivpow2 3 1 1
+int_ceildivpow2 3 2 1
+int_floordivpow2 3 2 0
+int_ceildivpow2 3 3 1
+int_floordivpow2 3 3 0
+int_ceildivpow2 3 13 1
+int_floordivpow2 3 13 0
+int_ceildivpow2 3 16 1
+int_floordivpow2 3 16 0
+int_ceildivpow2 3 30 1
+int_floordivpow2 3 30 0
+int_ceildivpow2 3 31 1
+int_floordivpow2 3 31 0
+int_ceildivpow2 4096 0 4096
+int_floordivpow2 4096 0 4096
+int_ceildivpow2 4096 1 2048
+int_floordivpow2 4096 1 2048
+int_ceildivpow2 4096 2 1024
+int_floordivpow2 4096 2 1024
+int_ceildivpow2 4096 3 512
+int_floordivpow2 4096 3 512
+int_ceildivpow2 4096 13 1
+int_floordivpow2 4096 13 0
+int_ceildivpow2 4096 16 1
+int_floordivpow2 4096 16 0
+int_ceildivpow2 4096 30 1
+int_floordivpow2 4096 30 0
+int_ceildivpow2 4096 31 1
+int_floordivpow2 4096 31 0
+int_ceildivpow2 65536 0 65536
+int_floordivpow2 65536 0 65536
+int_ceildivpow2 65536 1 32768
+int_floordivpow2 65536 1 32768
+int_ceildivpow2 65536 2 16384
+int_floordivpow2 65536 2 16384
+int_ceildivpow2 65536 3 8192
+int_floordivpow2 65536 3 8192
+int_ceildivpow2 65536 13 8
+int_floordivpow2 65536 13 8
+int_ceildivpow2 65536 16 1
+int_floordivpow2 65536 16 1
+int_ceildivpow2 65536 30 1
+int_floordivpow2 65536 30 0
+int_ceildivpow2 65536 31 1
+int_floordivpow2 65536 31 0
+int_ceildivpow2 2147483646 0 2147483646
+int_floordivpow2 2147483646 0 2147483646
+int_ceildivpow2 2147483646 1 1073741823
+int_floordivpow2 2147483646 1 1073741823
+int_ceildivpow2 2147483646 2 536870912
+int_floordivpow2 2147483646 2 536870911
+int_ceildivpow2 2147483646 3 268435456
+int_floordivpow2 2147483646 3 268435455
+int_ceildivpow2 2147483646 13 262144
+int_floordivpow2 2147483646 13 262143
+int_ceildivpow2 2147483646 16 32768
+int_floordivpow2 2147483646 16 32767
+int_ceildivpow2 2147483646 30 2
+int_floordivpow2 2147483646 30 1
+int_ceildivpow2 2147483646 31 1
+int_floordivpow2 2147483646 31 0
+int_ceildivpow2 2147483647 0 2147483647
+int_floordivpow2 2147483647 0 2147483647
+int_ceildivpow2 2147483647 1 1073741824
+int_floordivpow2 2147483647 1 1073741823
+int_ceildivpow2 2147483647 2 536870912
+int_floordivpow2 2147483647 2 536870911
+int_ceildivpow2 2147483647 3 268435456
+int_floordivpow2 2147483647 3 268435455
+int_ceildivpow2 2147483647 13 262144
+int_floordivpow2 2147483647 13 262143
+int_ceildivpow2 2147483647 16 32768
+int_floordivpow2 2147483647 16 32767
+int_ceildivpow2 2147483647 30 2
+int_floordivpow2 2147483647 30 1
+int_ceildivpow2 2147483647 31 1
+int_floordivpow2 2147483647 31 0
+uint_ceildivpow2 0 0 0
+uint_floordivpow2 0 0 0
+uint_ceildivpow2 0 1 0
+uint_floordivpow2 0 1 0
+uint_ceildivpow2 0 2 0
+uint_floordivpow2 0 2 0
+uint_ceildivpow2 0 3 0
+uint_floordivpow2 0 3 0
+uint_ceildivpow2 0 13 0
+uint_floordivpow2 0 13 0
+uint_ceildivpow2 0 16 0
+uint_floordivpow2 0 16 0
+uint_ceildivpow2 0 30 0
+uint_floordivpow2 0 30 0
+uint_ceildivpow2 0 31 0
+uint_floordivpow2 0 31 0
+uint_ceildivpow2 1 0 1
+uint_floordivpow2 1 0 1
+uint_ceildivpow2 1 1 1
+uint_floordivpow2 1 1 0
+uint_ceildivpow2 1 2 1
+uint_floordivpow2 1 2 0
+uint_ceildivpow2 1 3 1
+uint_floordivpow2 1 3 0
+uint_ceildivpow2 1 13 1
+uint_floordivpow2 1 13 0
+uint_ceildivpow2 1 16 1
+uint_floordivpow2 1 16 0
+uint_ceildivpow2 1 30 1
+uint_floordivpow2 1 30 0
+uint_ceildivpow2 1 31 1
+uint_floordivpow2 1 31 0
+uint_ceildivpow2 2 0 2
+uint_floordivpow2 2 0 2
+uint_ceildivpow2 2 1 1
+uint_floordivpow2 2 1 1
+uint_ceildivpow2 2 2 1
+uint_floordivpow2 2 2 0
+uint_ceildivpow2 2 3 1
+uint_floordivpow2 2 3 0
+uint_ceildivpow2 2 13 1
+uint_floordivpow2 2 13 0
+uint_ceildivpow2 2 16 1
+uint_floordivpow2 2 16 0
+uint_ceildivpow2 2 30 1
+uint_floordivpow2 2 30 0
+uint_ceildivpow2 2 31 1
+uint_floordivpow2 2 31 0
+uint_ceildivpow2 3 0 3
+uint_floordivpow2 3 0 3
+uint_ceildivpow2 3 1 2
+uint_floordivpow2 3 1 1
+uint_ceildivpow2 3 2 1
+uint_floordivpow2 3 2 0
+uint_ceildivpow2 3 3 1
+uint_floordivpow2 3 3 0
+uint_ceildivpow2 3 13 1
+uint_floordivpow2 3 13 0
+uint_ceildivpow2 3 16 1
+uint_floordivpow2 3 16 0
+uint_ceildivpow2 3 30 1
+uint_floordivpow2 3 30 0
+uint_ceildivpow2 3 31 1
+uint_floordivpow2 3 31 0
+uint_ceildivpow2 4095 0 4095
+uint_floordivpow2 4095 0 4095
+uint_ceildivpow2 4095 1 2048
+uint_floordivpow2 4095 1 2047
+uint_ceildivpow2 4095 2 1024
+uint_floordivpow2 4095 2 1023
+uint_ceildivpow2 4095 3 512
+uint_floordivpow2 4095 3 511
+uint_ceildivpow2 4095 13 1
+uint_floordivpow2 4095 13 0
+uint_ceildivpow2 4095 16 1
+uint_floordivpow2 4095 16 0
+uint_ceildivpow2 4095 30 1
+uint_floordivpow2 4095 30 0
+uint_ceildivpow2 4095 31 1
+uint_floordivpow2 4095 31 0
+uint_ceildivpow2 4096 0 4096
+uint_floordivpow2 4096 0 4096
+uint_ceildivpow2 4096 1 2048
+uint_floordivpow2 4096 1 2048
+uint_ceildivpow2 4096 2 1024
+uint_floordivpow2 4096 2 1024
+uint_ceildivpow2 4096 3 512
+uint_floordivpow2 4096 3 512
+uint_ceildivpow2 4096 13 1
+uint_floordivpow2 4096 13 0
+uint_ceildivpow2 4096 16 1
+uint_floordivpow2 4096 16 0
+uint_ceildivpow2 4096 30 1
+uint_floordivpow2 4096 30 0
+uint_ceildivpow2 4096 31 1
+uint_floordivpow2 4096 31 0
+uint_ceildivpow2 4097 0 4097
+uint_floordivpow2 4097 0 4097
+uint_ceildivpow2 4097 1 2049
+uint_floordivpow2 4097 1 2048
+uint_ceildivpow2 4097 2 1025
+uint_floordivpow2 4097 2 1024
+uint_ceildivpow2 4097 3 513
+uint_floordivpow2 4097 3 512
+uint_ceildivpow2 4097 13 1
+uint_floordivpow2 4097 13 0
+uint_ceildivpow2 4097 16 1
+uint_floordivpow2 4097 16 0
+uint_ceildivpow2 4097 30 1
+uint_floordivpow2 4097 30 0
+uint_ceildivpow2 4097 31 1
+uint_floordivpow2 4097 31 0
+uint_ceildivpow2 65535 0 65535
+uint_floordivpow2 65535 0 65535
+uint_ceildivpow2 65535 1 32768
+uint_floordivpow2 65535 1 32767
+uint_ceildivpow2 65535 2 16384
+uint_floordivpow2 65535 2 16383
+uint_ceildivpow2 65535 3 8192
+uint_floordivpow2 65535 3 8191
+uint_ceildivpow2 65535 13 8
+uint_floordivpow2 65535 13 7
+uint_ceildivpow2 65535 16 1
+uint_floordivpow2 65535 16 0
+uint_ceildivpow2 65535 30 1
+uint_floordivpow2 65535 30 0
+uint_ceildivpow2 65535 31 1
+uint_floordivpow2 65535 31 0
+uint_ceildivpow2 65536 0 65536
+uint_floordivpow2 65536 0 65536
+uint_ceildivpow2 65536 1 32768
+uint_floordivpow2 65536 1 32768
+uint_ceildivpow2 65536 2 16384
+uint_floordivpow2 65536 2 16384
+uint_ceildivpow2 65536 3 8192
+uint_floordivpow2 65536 3 8192
+uint_ceildivpow2 65536 13 8
+uint_floordivpow2 65536 13 8
+uint_ceildivpow2 65536 16 1
+uint_floordivpow2 65536 16 1
+uint_ceildivpow2 65536 30 1
+uint_floordivpow2 65536 30 0
+uint_ceildivpow2 65536 31 1
+uint_floordivpow2 65536 31 0
+uint_ceildivpow2 2147483647 0 2147483647
+uint_floordivpow2 2147483647 0 2147483647
+uint_ceildivpow2 2147483647 1 1073741824
+uint_floordivpow2 2147483647 1 1073741823
+uint_ceildivpow2 2147483647 2 536870912
+uint_floordivpow2 2147483647 2 536870911
+uint_ceildivpow2 2147483647 3 268435456
+uint_floordivpow2 2147483647 3 268435455
+uint_ceildivpow2 2147483647 13 262144
+uint_floordivpow2 2147483647 13 262143
+uint_ceildivpow2 2147483647 16 32768
+uint_floordivpow2 2147483647 16 32767
+uint_ceildivpow2 2147483647 30 2
+uint_floordivpow2 2147483647 30 1
+uint_ceildivpow2 2147483647 31 1
+uint_floordivpow2 2147483647 31 0
+uint_ceildivpow2 2147483648 0 2147483648
+uint_floordivpow2 2147483648 0 2147483648
+uint_ceildivpow2 2147483648 1 1073741824
+uint_floordivpow2 2147483648 1 1073741824
+uint_ceildivpow2 2147483648 2 536870912
+uint_floordivpow2 2147483648 2 536870912
+uint_ceildivpow2 2147483648 3 268435456
+uint_floordivpow2 2147483648 3 268435456
+uint_ceildivpow2 2147483648 13 262144
+uint_floordivpow2 2147483648 13 262144
+uint_ceildivpow2 2147483648 16 32768
+uint_floordivpow2 2147483648 16 32768
+uint_ceildivpow2 2147483648 30 2
+uint_floordivpow2 2147483648 30 2
+uint_ceildivpow2 2147483648 31 1
+uint_floordivpow2 2147483648 31 1
+uint_ceildivpow2 4294967295 0 4294967295
+uint_floordivpow2 4294967295 0 4294967295
+uint_ceildivpow2 4294967295 1 2147483648
+uint_floordivpow2 4294967295 1 2147483647
+uint_ceildivpow2 4294967295 2 1073741824
+uint_floordivpow2 4294967295 2 1073741823
+uint_ceildivpow2 4294967295 3 536870912
+uint_floordivpow2 4294967295 3 536870911
+uint_ceildivpow2 4294967295 13 524288
+uint_floordivpow2 4294967295 13 524287
+uint_ceildivpow2 4294967295 16 65536
+uint_floordivpow2 4294967295 16 65535
+uint_ceildivpow2 4294967295 30 4
+uint_floordivpow2 4294967295 30 3
+uint_ceildivpow2 4294967295 31 2
+uint_floordivpow2 4294967295 31 1
+int64_ceildivpow2 -9223372036854775808 0 0
+int64_ceildivpow2 -9223372036854775808 1 0
+int64_ceildivpow2 -9223372036854775808 2 0
+int64_ceildivpow2 -9223372036854775808 3 0
+int64_ceildivpow2 -9223372036854775808 13 0
+int64_ceildivpow2 -9223372036854775808 16 0
+int64_ceildivpow2 -9223372036854775808 30 0
+int64_ceildivpow2 -9223372036854775808 31 0
+int64_ceildivpow2 -4294967296 0 0
+int64_ceildivpow2 -4294967296 1 -2147483648
+int64_ceildivpow2 -4294967296 2 -1073741824
+int64_ceildivpow2 -4294967296 3 -536870912
+int64_ceildivpow2 -4294967296 13 -524288
+int64_ceildivpow2 -4294967296 16 -65536
+int64_ceildivpow2 -4294967296 30 -4
+int64_ceildivpow2 -4294967296 31 -2
+int64_ceildivpow2 -65536 0 -65536
+int64_ceildivpow2 -65536 1 -32768
+int64_ceildivpow2 -65536 2 -16384
+int64_ceildivpow2 -65536 3 -8192
+int64_ceildivpow2 -65536 13 -8
+int64_ceildivpow2 -65536 16 -1
+int64_ceildivpow2 -65536 30 0
+int64_ceildivpow2 -65536 31 0
+int64_ceildivpow2 -1 0 -1
+int64_ceildivpow2 -1 1 0
+int64_ceildivpow2 -1 2 0
+int64_ceildivpow2 -1 3 0
+int64_ceildivpow2 -1 13 0
+int64_ceildivpow2 -1 16 0
+int64_ceildivpow2 -1 30 0
+int64_ceildivpow2 -1 31 0
+int64_ceildivpow2 0 0 0
+int64_ceildivpow2 0 1 0
+int64_ceildivpow2 0 2 0
+int64_ceildivpow2 0 3 0
+int64_ceildivpow2 0 13 0
+int64_ceildivpow2 0 16 0
+int64_ceildivpow2 0 30 0
+int64_ceildivpow2 0 31 0
+int64_ceildivpow2 1 0 1
+int64_ceildivpow2 1 1 1
+int64_ceildivpow2 1 2 1
+int64_ceildivpow2 1 3 1
+int64_ceildivpow2 1 13 1
+int64_ceildivpow2 1 16 1
+int64_ceildivpow2 1 30 1
+int64_ceildivpow2 1 31 1
+int64_ceildivpow2 4096 0 4096
+int64_ceildivpow2 4096 1 2048
+int64_ceildivpow2 4096 2 1024
+int64_ceildivpow2 4096 3 512
+int64_ceildivpow2 4096 13 1
+int64_ceildivpow2 4096 16 1
+int64_ceildivpow2 4096 30 1
+int64_ceildivpow2 4096 31 1
+int64_ceildivpow2 65536 0 65536
+int64_ceildivpow2 65536 1 32768
+int64_ceildivpow2 65536 2 16384
+int64_ceildivpow2 65536 3 8192
+int64_ceildivpow2 65536 13 8
+int64_ceildivpow2 65536 16 1
+int64_ceildivpow2 65536 30 1
+int64_ceildivpow2 65536 31 1
+int64_ceildivpow2 2147483647 0 2147483647
+int64_ceildivpow2 2147483647 1 1073741824
+int64_ceildivpow2 2147483647 2 536870912
+int64_ceildivpow2 2147483647 3 268435456
+int64_ceildivpow2 2147483647 13 262144
+int64_ceildivpow2 2147483647 16 32768
+int64_ceildivpow2 2147483647 30 2
+int64_ceildivpow2 2147483647 31 1
+int64_ceildivpow2 2147483648 0 -2147483648
+int64_ceildivpow2 2147483648 1 1073741824
+int64_ceildivpow2 2147483648 2 536870912
+int64_ceildivpow2 2147483648 3 268435456
+int64_ceildivpow2 2147483648 13 262144
+int64_ceildivpow2 2147483648 16 32768
+int64_ceildivpow2 2147483648 30 2
+int64_ceildivpow2 2147483648 31 1
+int64_ceildivpow2 4294967296 0 0
+int64_ceildivpow2 4294967296 1 -2147483648
+int64_ceildivpow2 4294967296 2 1073741824
+int64_ceildivpow2 4294967296 3 536870912
+int64_ceildivpow2 4294967296 13 524288
+int64_ceildivpow2 4294967296 16 65536
+int64_ceildivpow2 4294967296 30 4
+int64_ceildivpow2 4294967296 31 2
+int64_ceildivpow2 9223372036854775807 0 -1
+int64_ceildivpow2 9223372036854775807 1 0
+int64_ceildivpow2 9223372036854775807 2 0
+int64_ceildivpow2 9223372036854775807 3 0
+int64_ceildivpow2 9223372036854775807 13 0
+int64_ceildivpow2 9223372036854775807 16 0
+int64_ceildivpow2 9223372036854775807 30 0
+int64_ceildivpow2 9223372036854775807 31 0
+uint64_ceildiv_res_uint32 0 1 0
+uint64_ceildiv_res_uint32 0 3 0
+uint64_ceildiv_res_uint32 0 4096 0
+uint64_ceildiv_res_uint32 0 65536 0
+uint64_ceildiv_res_uint32 0 4294967294 0
+uint64_ceildiv_res_uint32 0 4294967295 0
+uint64_ceildiv_res_uint32 0 4294967296 0
+uint64_ceildiv_res_uint32 0 9223372036854775807 0
+uint64_ceildiv_res_uint32 0 18446744073709551615 0
+uint64_ceildiv_res_uint32 1 1 1
+uint64_ceildiv_res_uint32 1 3 1
+uint64_ceildiv_res_uint32 1 4096 1
+uint64_ceildiv_res_uint32 1 65536 1
+uint64_ceildiv_res_uint32 1 4294967294 1
+uint64_ceildiv_res_uint32 1 4294967295 1
+uint64_ceildiv_res_uint32 1 4294967296 1
+uint64_ceildiv_res_uint32 1 9223372036854775807 1
+uint64_ceildiv_res_uint32 1 18446744073709551615 1
+uint64_ceildiv_res_uint32 3 1 3
+uint64_ceildiv_res_uint32 3 3 1
+uint64_ceildiv_res_uint32 3 4096 1
+uint64_ceildiv_res_uint32 3 65536 1
+uint64_ceildiv_res_uint32 3 4294967294 1
+uint64_ceildiv_res_uint32 3 4294967295 1
+uint64_ceildiv_res_uint32 3 4294967296 1
+uint64_ceildiv_res_uint32 3 9223372036854775807 1
+uint64_ceildiv_res_uint32 3 18446744073709551615 0
+uint64_ceildiv_res_uint32 4096 1 4096
+uint64_ceildiv_res_uint32 4096 3 1366
+uint64_ceildiv_res_uint32 4096 4096 1
+uint64_ceildiv_res_uint32 4096 65536 1
+uint64_ceildiv_res_uint32 4096 4294967294 1
+uint64_ceildiv_res_uint32 4096 4294967295 1
+uint64_ceildiv_res_uint32 4096 4294967296 1
+uint64_ceildiv_res_uint32 4096 9223372036854775807 1
+uint64_ceildiv_res_uint32 4096 18446744073709551615 0
+uint64_ceildiv_res_uint32 65536 1 65536
+uint64_ceildiv_res_uint32 65536 3 21846
+uint64_ceildiv_res_uint32 65536 4096 16
+uint64_ceildiv_res_uint32 65536 65536 1
+uint64_ceildiv_res_uint32 65536 4294967294 1
+uint64_ceildiv_res_uint32 65536 4294967295 1
+uint64_ceildiv_res_uint32 65536 4294967296 1
+uint64_ceildiv_res_uint32 65536 9223372036854775807 1
+uint64_ceildiv_res_uint32 65536 18446744073709551615 0
+uint64_ceildiv_res_uint32 4294967294 1 4294967294
+uint64_ceildiv_res_uint32 4294967294 3 1431655765
+uint64_ceildiv_res_uint32 4294967294 4096 1048576
+uint64_ceildiv_res_uint32 4294967294 65536 65536
+uint64_ceildiv_res_uint32 4294967294 4294967294 1
+uint64_ceildiv_res_uint32 4294967294 4294967295 1
+uint64_ceildiv_res_uint32 4294967294 4294967296 1
+uint64_ceildiv_res_uint32 4294967294 9223372036854775807 1
+uint64_ceildiv_res_uint32 4294967294 18446744073709551615 0
+uint64_ceildiv_res_uint32 4294967295 1 4294967295
+uint64_ceildiv_res_uint32 4294967295 3 1431655765
+uint64_ceildiv_res_uint32 4294967295 4096 1048576
+uint64_ceildiv_res_uint32 4294967295 65536 65536
+uint64_ceildiv_res_uint32 4294967295 4294967294 2
+uint64_ceildiv_res_uint32 4294967295 4294967295 1
+uint64_ceildiv_res_uint32 4294967295 4294967296 1
+uint64_ceildiv_res_uint32 4294967295 9223372036854775807 1
+uint64_ceildiv_res_uint32 4294967295 18446744073709551615 0
+uint64_ceildiv_res_uint32 4294967296 1 0
+uint64_ceildiv_res_uint32 4294967296 3 1431655766
+uint64_ceildiv_res_uint32 4294967296 4096 1048576
+uint64_ceildiv_res_uint32 4294967296 65536 65536
+uint64_ceildiv_res_uint32 4294967296 4294967294 2
+uint64_ceildiv_res_uint32 4294967296 4294967295 2
+uint64_ceildiv_res_uint32 4294967296 4294967296 1
+uint64_ceildiv_res_uint32 4294967296 9223372036854775807 1
+uint64_ceildiv_res_uint32 4294967296 18446744073709551615 0
+uint64_ceildiv_res_uint32 9223372036854775807 1 4294967295
+uint64_ceildiv_res_uint32 9223372036854775807 3 2863311531
+uint64_ceildiv_res_uint32 9223372036854775807 4096 0
+uint64_ceildiv_res_uint32 9223372036854775807 65536 0
+uint64_ceildiv_res_uint32 9223372036854775807 4294967294 2147483650
+uint64_ceildiv_res_uint32 9223372036854775807 4294967295 2147483649
+uint64_ceildiv_res_uint32 9223372036854775807 4294967296 2147483648
+uint64_ceildiv_res_uint32 9223372036854775807 9223372036854775807 1
+uint64_ceildiv_res_uint32 9223372036854775807 18446744073709551615 0
+uint64_ceildiv_res_uint32 18446744073709551615 1 4294967295
+uint64_ceildiv_res_uint32 18446744073709551615 3 0
+uint64_ceildiv_res_uint32 18446744073709551615 4096 0
+uint64_ceildiv_res_uint32 18446744073709551615 65536 0
+uint64_ceildiv_res_uint32 18446744073709551615 4294967294 0
+uint64_ceildiv_res_uint32 18446744073709551615 4294967295 0
+uint64_ceildiv_res_uint32 18446744073709551615 4294967296 0
+uint64_ceildiv_res_uint32 18446744073709551615 9223372036854775807 0
+uint64_ceildiv_res_uint32 18446744073709551615 18446744073709551615 0
