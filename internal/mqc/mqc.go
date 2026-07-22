@@ -66,13 +66,9 @@ type MQC struct {
 // NumBytes is the port of opj_mqc_numbytes: the number of bytes written/read
 // since initialisation.
 func (m *MQC) NumBytes() uint32 {
-	// Before any byteout/flush the encoder's bp still points at the fake
-	// leading byte (start-1). The C ptrdiff would be -1 there; it is never
-	// observed because zero-pass code-blocks carry no data, but in Go we
-	// return 0 explicitly rather than let the uint32 wrap (no-panic rule).
-	if m.bp < m.start {
-		return 0
-	}
+	// Before any byteout the encoder's bp still points at the fake leading
+	// byte (start-1); the C ptrdiff wraps to 0xFFFFFFFF and the t1 rate
+	// clamping relies on that value, so the wraparound is intentional.
 	return uint32(m.bp - m.start)
 }
 
