@@ -176,3 +176,15 @@ gopenjpeg/               public API: Decode/Encode, options, image.Image interop
   In flight: W14 (cinema t2 full-stream parity, CMYK/CIELab color
   parity), W15 (Phase 7 performance: concurrency mirroring the C
   thread-pool sites, profile-driven optimization, benchmarks vs C).
+- 2026-07-22: W15 landed (Phase 7): per-cblk t1 + DWT row/col
+  parallel decode, WithConcurrency/-threads, byte-identical and
+  race-clean; Go(16) within 1.3-2.2x of C(16); single-thread
+  1.7-2.5x of C (MQ macro-inlining is the deferred lever, along
+  with t1-encode parallelism and in-place 9/7 float buffers).
+- 2026-07-22: W14 landed: cinema cells full-stream byte-identical
+  (two more -ffast-math reassociations: forward ICT grouping and
+  hoisted quantizer division), CMYK bit-exact and un-excluded,
+  CIELab implemented (<=1/65535 vs LCMS, tolerance-gated). Only
+  remaining exclusion anywhere: embedded ICC profiles (needs CMS).
+  Remaining roadmap: hardening (corpus fuzz + no-panic audit),
+  deferred perf items above.
