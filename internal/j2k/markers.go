@@ -12,8 +12,26 @@ type mreader struct {
 	pos  int
 }
 
+// u reads the next n bytes (big-endian) from the marker segment and advances
+// the cursor. It is bounds-safe: bytes past the end of the segment read as 0.
+//
+// The C opj_read_bytes (used by opj_j2k_read_SQcd_SQcc and friends) reads its n
+// bytes directly from the marker-segment scratch buffer *before* the running
+// *p_header_size accounting is validated, so a short/truncated segment makes C
+// over-read past the malloc'd buffer (a heap over-read ASan flags; tolerated
+// only because the immediately following size check returns OPJ_FALSE and the
+// over-read value is discarded). Zero-extending past the end reproduces that
+// outcome without indexing out of range: the same size checks in the callers
+// then reject the segment with an error. Faithful in result, panic-free.
 func (r *mreader) u(n int) uint32 {
-	v := cio.ReadBytes(r.data[r.pos:], uint32(n))
+	var v uint32
+	for i := 0; i < n; i++ {
+		var b uint32
+		if idx := r.pos + i; idx >= 0 && idx < len(r.data) {
+			b = uint32(r.data[idx])
+		}
+		v = (v << 8) | b
+	}
 	r.pos += n
 	return v
 }

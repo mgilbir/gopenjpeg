@@ -195,3 +195,22 @@ gopenjpeg/               public API: Decode/Encode, options, image.Image interop
   encode with deterministic distortion order (byte-identical at any
   thread count). Deferred: encode-side MQ inlining, in-place 9/7
   floats (~2-5%). Next: hardening wave.
+- 2026-07-22: W16 landed (hardening wave): corpus-seeded public-API
+  fuzz targets (root fuzz_test.go: FuzzDecode, FuzzDecodeConcurrent,
+  FuzzEncodeDecodeRoundTrip, FuzzReadInfo) with a 64MB decoded-size
+  cap and seeds from testdata/fuzzseed (15 small checked-in files) +
+  a curated ~40-file oracle subset. One crasher found and fixed:
+  truncated QCD/SQcd with SIQNT made j2k mreader.u over-read (C does
+  the same heap over-read, tolerated only by the following header-size
+  check) -> mreader.u is now bounds-safe (zero-extends past the
+  segment end), so every j2k marker parser is OOB-proof and the
+  existing size checks reject the input (regression: root fuzz corpus
+  + TestReadSQcdSQccTruncated/TestMreaderBoundsSafe). Sustained clean
+  fuzz runs: FuzzDecode 10m/580k execs, FuzzDecodeConcurrent
+  10m/832k, FuzzEncodeDecodeRoundTrip 5m/1.5M, FuzzReadInfo 3m/391k;
+  all 11 internal targets 2m each clean (pi 21M, t2 24M, ht 25M,
+  bio/tgt/mqc ~9M). Static audit: zero panic() in library; SIZ/ihdr/
+  ftyp/box/QCD allocations and tile-count math all carry the C sanity
+  guards. -race clean on all internal packages and the full oracletest
+  suite (decode/jp2/encode/cli/concurrency, 0 data races). Only fix
+  needed was the mreader OOB.

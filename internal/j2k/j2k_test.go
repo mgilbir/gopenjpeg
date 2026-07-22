@@ -98,6 +98,40 @@ func TestMergePPMOverflow(t *testing.T) {
 	}
 }
 
+// TestMreaderBoundsSafe verifies the marker cursor zero-extends past the end of
+// a short segment instead of indexing out of range (regression for the QCD
+// SIQNT truncation crasher: a 2-byte QCD payload with Sqcx=SIQNT made
+// readSQcdSQcc read a 2-byte SPqcx at offset 1 of a 2-byte buffer).
+func TestMreaderBoundsSafe(t *testing.T) {
+	r := &mreader{data: []byte{0xAB}}
+	if got := r.u(1); got != 0xAB {
+		t.Fatalf("u(1)=%#x want 0xAB", got)
+	}
+	// Reading past the end must not panic; missing low bytes read as 0.
+	if got := r.u(2); got != 0 {
+		t.Fatalf("u(2) past end=%#x want 0", got)
+	}
+	r2 := &mreader{data: []byte{0x12, 0x34}}
+	r2.pos = 1
+	if got := r2.u(2); got != 0x3400 { // 0x34 then a zero-extended byte
+		t.Fatalf("u(2) partial=%#x want 0x3400", got)
+	}
+}
+
+// TestReadSQcdSQccTruncated feeds the exact truncated SIQNT quantization
+// segment from the fuzz crasher and asserts an error (not a panic).
+func TestReadSQcdSQccTruncated(t *testing.T) {
+	d := CreateDecompress()
+	d.privateImage = &image.Image{Numcomps: 1}
+	tcp := &cparams.TCP{TCCPs: make([]cparams.TCCP, 1)}
+	// Sqcx=0x41 -> qntsty = 0x41&0x1f = 1 (SIQNT); only 1 payload byte left.
+	data := []byte{0x41, 0x30}
+	hs := len(data)
+	if err := d.readSQcdSQcc(tcp, 0, data, &hs); err == nil {
+		t.Fatalf("expected error for truncated SIQNT quantization segment")
+	}
+}
+
 // FuzzReadHeader ensures ReadHeader never panics on arbitrary bytes.
 func FuzzReadHeader(f *testing.F) {
 	f.Add(buildSIZ(16, 16, 16, 16, 1))
