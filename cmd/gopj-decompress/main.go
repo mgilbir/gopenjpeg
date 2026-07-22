@@ -24,6 +24,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"runtime"
 	"strconv"
 	"strings"
 
@@ -46,10 +47,18 @@ func run() error {
 		area   = flag.String("d", "", "decode area x0,y0,x1,y1")
 		comps  = flag.String("c", "", "component subset, comma-separated")
 		tile   = flag.Int("t", -1, "decode only tile index N")
-		strict = flag.Bool("strict", false, "strict conformance mode")
-		quiet  = flag.Bool("quiet", false, "suppress informational output")
+		strict  = flag.Bool("strict", false, "strict conformance mode")
+		quiet   = flag.Bool("quiet", false, "suppress informational output")
+		threads = flag.String("threads", "1", "worker threads for decode, or ALL_CPUS")
 	)
 	flag.Parse()
+
+	nThreads := 1
+	if *threads == "ALL_CPUS" {
+		nThreads = runtime.NumCPU()
+	} else if n, perr := strconv.Atoi(*threads); perr == nil && n > 0 {
+		nThreads = n
+	}
 
 	if *in == "" || *out == "" {
 		flag.Usage()
@@ -65,6 +74,7 @@ func run() error {
 		gopenjpeg.WithReduce(uint32(*reduce)),
 		gopenjpeg.WithLayers(uint32(*layers)),
 		gopenjpeg.WithStrictMode(*strict),
+		gopenjpeg.WithConcurrency(nThreads),
 	}
 	if !*quiet {
 		opts = append(opts,

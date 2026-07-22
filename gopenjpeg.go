@@ -76,13 +76,14 @@ type options struct {
 	comps   []uint32
 	tile    int64 // -1 == decode whole image
 	strict  bool
+	threads int
 	onWarn  func(string)
 	onError func(string)
 	onInfo  func(string)
 }
 
 func defaultOptions() options {
-	return options{format: FormatAuto, tile: -1}
+	return options{format: FormatAuto, tile: -1, threads: 1}
 }
 
 // Option configures a decode.
@@ -120,6 +121,22 @@ func WithTile(index int) Option { return func(o *options) { o.tile = int64(index
 // non-compliant codestreams are rejected; when false (the default, matching
 // opj_decompress), they are decoded as far as possible.
 func WithStrictMode(strict bool) Option { return func(o *options) { o.strict = strict } }
+
+// WithConcurrency sets the number of worker goroutines used for the
+// parallelizable decode stages: per-code-block tier-1 decode and the inverse
+// DWT row/column passes (mirroring OpenJPEG's opj_thread_pool use in t1.c and
+// dwt.c). n<=1 (the default) is fully sequential and bit-for-bit identical to
+// C's default single-thread behaviour. n>1 fans work across n goroutines; the
+// decoded output is unchanged (workers write to disjoint regions). Pass
+// runtime.NumCPU() for the ALL_CPUS equivalent of opj_decompress -threads.
+func WithConcurrency(n int) Option {
+	return func(o *options) {
+		if n < 1 {
+			n = 1
+		}
+		o.threads = n
+	}
+}
 
 // WithWarningHandler installs a callback for decoder warnings.
 func WithWarningHandler(fn func(string)) Option { return func(o *options) { o.onWarn = fn } }
@@ -266,6 +283,7 @@ func decodeJ2K(stream *cio.Stream, mgr *event.Manager, o *options) (*Image, erro
 	d := j2k.CreateDecompress()
 	d.SetupDecoder(o.reduce, o.layers)
 	d.SetStrictMode(o.strict)
+	d.SetThreads(o.threads)
 
 	img, err := d.ReadHeader(stream, mgr)
 	if err != nil {
@@ -312,6 +330,7 @@ func decodeJP2(stream *cio.Stream, mgr *event.Manager, o *options) (*Image, erro
 	container := jp2.Create(adapter, true)
 	container.SetupDecoder(&jp2.DecoderParams{})
 	container.SetDecoderStrictMode(o.strict)
+	_ = adapter.SetThreads(uint32(o.threads))
 
 	img, err := container.ReadHeader(stream, mgr)
 	if err != nil {

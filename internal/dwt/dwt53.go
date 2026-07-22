@@ -251,8 +251,11 @@ func idwt53V(d *dwt53, tiledp []int32, colOff int, stride int, nbCols int32) {
 }
 
 // DecodeTile is a port of opj_dwt_decode_tile: whole-tile inverse 5/3 transform.
-// It reconstructs tc.Data in place for numres resolution levels.
-func DecodeTile(tc *TileComponent, numres uint32) bool {
+// It reconstructs tc.Data in place for numres resolution levels. numThreads>1
+// fans the per-level horizontal (row) and vertical (column) passes across that
+// many goroutines, mirroring the opj_thread_pool jobs of opj_dwt_decode_tile;
+// the result is identical to the sequential decode.
+func DecodeTile(tc *TileComponent, numres uint32, numThreads int) bool {
 	tr := tc.Resolutions
 	rw := uint32(tr[0].X1 - tr[0].X0)
 	rh := uint32(tr[0].Y1 - tr[0].Y0)
@@ -265,32 +268,38 @@ func DecodeTile(tc *TileComponent, numres uint32) bool {
 	}
 
 	hMem := maxResolution(tr, numres)
-	d := &dwt53{mem: make([]int32, hMem)}
 
 	ti := 0 // index into tr
 	for numres--; numres > 0; numres-- {
 		tiledp := tc.Data
 		ti++
-		d.sn = int32(rw)
+		snH := int32(rw)
 		snV := int32(rh)
 
 		rw = uint32(tr[ti].X1 - tr[ti].X0)
 		rh = uint32(tr[ti].Y1 - tr[ti].Y0)
 
-		d.dn = int32(rw) - d.sn
-		d.cas = tr[ti].X0 % 2
+		dnH := int32(rw) - snH
+		casH := tr[ti].X0 % 2
 
-		for j := uint32(0); j < rh; j++ {
-			idwt53H(d, tiledp, int(j*w))
-		}
+		// Horizontal pass: one independent inverse transform per row.
+		parChunksI32(numThreads, int(rh), int(hMem), func(mem []int32, js, je uint32) {
+			d := &dwt53{mem: mem, sn: snH, dn: dnH, cas: casH}
+			for j := js; j < je; j++ {
+				idwt53H(d, tiledp, int(j*w))
+			}
+		})
 
-		d.sn = snV
-		d.dn = int32(rh) - d.sn
-		d.cas = tr[ti].Y0 % 2
+		dnV := int32(rh) - snV
+		casV := tr[ti].Y0 % 2
 
-		for j := uint32(0); j < rw; j++ {
-			idwt53V(d, tiledp, int(j), int(w), 1)
-		}
+		// Vertical pass: one independent inverse transform per column.
+		parChunksI32(numThreads, int(rw), int(hMem), func(mem []int32, js, je uint32) {
+			d := &dwt53{mem: mem, sn: snV, dn: dnV, cas: casV}
+			for j := js; j < je; j++ {
+				idwt53V(d, tiledp, int(j), int(w), 1)
+			}
+		})
 	}
 	return true
 }

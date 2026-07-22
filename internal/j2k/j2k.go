@@ -153,7 +153,17 @@ type Decoder struct {
 
 	ihdrW uint32 // ihdr_w (from JP2 IHDR; 0 for raw codestream)
 	ihdrH uint32
+
+	// numThreads ports opj_j2k_t.m_tp thread count (opj_j2k_set_threads):
+	// the worker count handed to the tile coder/decoder for the
+	// parallelizable decode stages. 0/1 means sequential (the C default).
+	numThreads int
 }
+
+// SetThreads ports opj_j2k_set_threads: record the worker count used for the
+// parallel decode stages (tier-1 code-block decode, inverse DWT). It is applied
+// to the tile decoder when it is created.
+func (d *Decoder) SetThreads(n int) { d.numThreads = n }
 
 // CreateDecompress ports opj_j2k_create_decompress.
 func CreateDecompress() *Decoder {

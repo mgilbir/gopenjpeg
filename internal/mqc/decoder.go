@@ -120,9 +120,14 @@ func (m *MQC) renormd() {
 // Decode is the port of opj_mqc_decode / opj_mqc_decode_macro: decode a single
 // decision using the currently selected context (ISO 15444-1 C.3.2 DECODE).
 // It returns the decoded symbol (0 or 1).
+//
+// st is taken by pointer to avoid copying the 16-byte mqcState per decision.
+// (The whole function cannot be inlined into the tier-1 pass loops because the
+// renormalization it calls contains a loop; see the worker report's note on the
+// single-thread tier-1 gap versus the C macro-inlined coder.)
 func (m *MQC) Decode() uint32 {
 	var d uint32
-	st := states[m.ctxs[m.curctx]]
+	st := &states[uint32(m.ctxs[m.curctx])]
 	m.a -= st.qeval
 	if (m.c >> 16) < st.qeval {
 		// LPS exchange (opj_mqc_lpsexchange_macro).

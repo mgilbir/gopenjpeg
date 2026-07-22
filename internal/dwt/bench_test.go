@@ -25,7 +25,7 @@ func BenchmarkDecodeTile53(b *testing.B) {
 		b.StopTimer()
 		copy(tc.Data, orig)
 		b.StartTimer()
-		DecodeTile(tc, tc.Numresolutions)
+		DecodeTile(tc, tc.Numresolutions, 1)
 	}
 }
 
@@ -38,6 +38,6 @@ func BenchmarkDecodeTile97(b *testing.B) {
 		b.StopTimer()
 		copy(tc.Data, orig)
 		b.StartTimer()
-		DecodeTile97(tc, tc.Numresolutions)
+		DecodeTile97(tc, tc.Numresolutions, 1)
 	}
 }

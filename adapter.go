@@ -40,9 +40,13 @@ func (a *j2kAdapter) SetupDecoder(params *jp2.DecoderParams) {
 
 func (a *j2kAdapter) SetDecoderStrictMode(strict bool) { a.d.SetStrictMode(strict) }
 
-// SetThreads is a no-op: this port decodes sequentially. It returns nil, the
-// success value the C opj_j2k_set_threads returns.
-func (a *j2kAdapter) SetThreads(numThreads uint32) error { return nil }
+// SetThreads ports opj_j2k_set_threads: forward the worker count to the
+// codestream decoder, which hands it to the tile decoder for parallel tier-1
+// and DWT. It returns nil, the success value the C opj_j2k_set_threads returns.
+func (a *j2kAdapter) SetThreads(numThreads uint32) error {
+	a.d.SetThreads(int(numThreads))
+	return nil
+}
 
 func (a *j2kAdapter) ReadHeader(stream *cio.Stream, mgr *event.Manager) (*image.Image, error) {
 	return a.d.ReadHeader(stream, mgr)

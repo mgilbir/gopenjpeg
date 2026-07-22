@@ -16,7 +16,6 @@ package tcd
 import (
 	"github.com/mgilbir/gopenjpeg/internal/cparams"
 	"github.com/mgilbir/gopenjpeg/internal/event"
-	"github.com/mgilbir/gopenjpeg/internal/ht"
 	"github.com/mgilbir/gopenjpeg/internal/image"
 	"github.com/mgilbir/gopenjpeg/internal/tile"
 )
@@ -55,10 +54,20 @@ type TCD struct {
 	// otherwise len == image.Numcomps with true for components to decode.
 	UsedComponent []bool
 
-	// htState is the lazily created HTJ2K block decoder, reused across
-	// code-blocks (mirrors the reusable t1.T1 handle).
-	htState *ht.Decoder
+	// NumThreads is the worker count for the parallelizable stages (tier-1
+	// code-block decode, inverse DWT). It ports the effect of
+	// opj_thread_pool_get_thread_count(tcd->thread_pool): 1 (the default)
+	// reproduces the C single-threaded path exactly; N>1 fans code-blocks and
+	// DWT row/column chunks across N goroutines, each with private scratch
+	// state, writing to disjoint output regions so the result is bit-identical
+	// to the sequential decode regardless of scheduling.
+	NumThreads int
 }
+
+// SetNumThreads sets the worker count for parallel decode stages. n<=1 keeps
+// the fully sequential behaviour (the default, matching C's default of a
+// single-thread pool).
+func (t *TCD) SetNumThreads(n int) { t.NumThreads = n }
 
 // Create ports opj_tcd_create.
 func Create(isDecoder bool) *TCD {

@@ -261,6 +261,7 @@ func (d *Decoder) copyDefaultTCPAndCreateTCD() error {
 	}
 
 	d.tcd = tcd.Create(true)
+	d.tcd.SetNumThreads(d.numThreads)
 	if !d.tcd.Init(img, &d.CP) {
 		d.mgr.Errorf("Cannot decode tile, memory error\n")
 		return ErrDecodeFailed

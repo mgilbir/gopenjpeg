@@ -373,7 +373,10 @@ func v8dwtInterleaveV(d *v8dwt, a []float32, aOff int, width, nbEltsRead uint32)
 
 // DecodeTile97 is a port of opj_dwt_decode_tile_97: whole-tile inverse 9/7
 // transform. tc.Data holds float32 bit patterns and is reconstructed in place.
-func DecodeTile97(tc *TileComponent, numres uint32) bool {
+// numThreads>1 fans the per-level row-group horizontal pass and column-group
+// vertical pass across that many goroutines (mirroring opj_dwt_decode_tile_97's
+// thread-pool jobs); the result is identical to the sequential decode.
+func DecodeTile97(tc *TileComponent, numres uint32, numThreads int) bool {
 	if numres == 1 {
 		return true
 	}
@@ -382,14 +385,14 @@ func DecodeTile97(tc *TileComponent, numres uint32) bool {
 	for i, v := range tc.Data {
 		fdata[i] = f32frombits(v)
 	}
-	ok := decodeTile97(fdata, tc, numres)
+	ok := decodeTile97(fdata, tc, numres, numThreads)
 	for i, v := range fdata {
 		tc.Data[i] = f32bits(v)
 	}
 	return ok
 }
 
-func decodeTile97(fdata []float32, tc *TileComponent, numres uint32) bool {
+func decodeTile97(fdata []float32, tc *TileComponent, numres uint32, numThreads int) bool {
 	res := tc.Resolutions
 	ri := 0
 	rw := uint32(res[0].X1 - res[0].X0)
@@ -399,74 +402,70 @@ func decodeTile97(fdata []float32, tc *TileComponent, numres uint32) bool {
 		tc.Resolutions[tc.MinimumNumResolutions-1].X0)
 
 	dataSize := maxResolution(res, numres)
-	var h, v v8dwt
-	h.wavelet = make([]float32, uint64(dataSize)*nbEltsV8)
-	v.wavelet = h.wavelet
+	scratchLen := int(uint64(dataSize) * nbEltsV8)
 
 	for numres--; numres > 0; numres-- {
-		aOff := 0
-		h.sn = int32(rw)
-		v.sn = int32(rh)
+		snH := int32(rw)
+		snV := int32(rh)
 
 		ri++
 		rw = uint32(res[ri].X1 - res[ri].X0)
 		rh = uint32(res[ri].Y1 - res[ri].Y0)
 
-		h.dn = int32(rw) - h.sn
-		h.cas = res[ri].X0 % 2
-		h.winLX0 = 0
-		h.winLX1 = uint32(h.sn)
-		h.winHX0 = 0
-		h.winHX1 = uint32(h.dn)
-
-		var j uint32
-		for j = 0; j+(nbEltsV8-1) < rh; j += nbEltsV8 {
-			v8dwtInterleaveH(&h, fdata, aOff, w, nbEltsV8)
-			v8dwtDecode(&h)
-			for k := uint32(0); k < rw; k++ {
-				for l := 0; l < nbEltsV8; l++ {
-					fdata[aOff+int(k)+int(w)*l] = h.wavelet[int(k)*nbEltsV8+l]
-				}
-			}
-			aOff += int(w) * nbEltsV8
+		// --- horizontal pass over rows, grouped by NB_ELTS_V8 ---
+		hbase := v8dwt{
+			sn: snH, dn: int32(rw) - snH, cas: res[ri].X0 % 2,
+			winLX0: 0, winLX1: uint32(snH), winHX0: 0, winHX1: uint32(int32(rw) - snH),
 		}
-		if j < rh {
-			v8dwtInterleaveH(&h, fdata, aOff, w, rh-j)
-			v8dwtDecode(&h)
+		hFullGroups := int(rh / nbEltsV8)
+		hRow := func(h *v8dwt, aOff int, nRows uint32) {
+			v8dwtInterleaveH(h, fdata, aOff, w, nRows)
+			v8dwtDecode(h)
 			for k := uint32(0); k < rw; k++ {
-				for l := uint32(0); l < rh-j; l++ {
+				for l := uint32(0); l < nRows; l++ {
 					fdata[aOff+int(k)+int(w)*int(l)] = h.wavelet[int(k)*nbEltsV8+int(l)]
 				}
 			}
 		}
-
-		v.dn = int32(rh) - v.sn
-		v.cas = res[ri].Y0 % 2
-		v.winLX0 = 0
-		v.winLX1 = uint32(v.sn)
-		v.winHX0 = 0
-		v.winHX1 = uint32(v.dn)
-
-		aOff = 0
-		for j = rw; j > (nbEltsV8 - 1); j -= nbEltsV8 {
-			v8dwtInterleaveV(&v, fdata, aOff, w, nbEltsV8)
-			v8dwtDecode(&v)
-			for k := uint32(0); k < rh; k++ {
-				for e := 0; e < nbEltsV8; e++ {
-					fdata[aOff+int(k)*int(w)+e] = v.wavelet[int(k)*nbEltsV8+e]
-				}
+		parGroupsF32(numThreads, hFullGroups, scratchLen, func(mem []float32, gs, ge uint32) {
+			h := hbase
+			h.wavelet = mem
+			for g := gs; g < ge; g++ {
+				hRow(&h, int(g)*nbEltsV8*int(w), nbEltsV8)
 			}
-			aOff += nbEltsV8
+		})
+		if rem := rh % nbEltsV8; rem != 0 {
+			h := hbase
+			h.wavelet = make([]float32, scratchLen)
+			hRow(&h, int(rh/nbEltsV8)*nbEltsV8*int(w), rem)
 		}
-		if rw&(nbEltsV8-1) != 0 {
-			j = rw & (nbEltsV8 - 1)
-			v8dwtInterleaveV(&v, fdata, aOff, w, j)
-			v8dwtDecode(&v)
+
+		// --- vertical pass over columns, grouped by NB_ELTS_V8 ---
+		vbase := v8dwt{
+			sn: snV, dn: int32(rh) - snV, cas: res[ri].Y0 % 2,
+			winLX0: 0, winLX1: uint32(snV), winHX0: 0, winHX1: uint32(int32(rh) - snV),
+		}
+		vFullGroups := int(rw / nbEltsV8)
+		vCol := func(v *v8dwt, aOff int, nCols uint32) {
+			v8dwtInterleaveV(v, fdata, aOff, w, nCols)
+			v8dwtDecode(v)
 			for k := uint32(0); k < rh; k++ {
-				for e := uint32(0); e < j; e++ {
+				for e := uint32(0); e < nCols; e++ {
 					fdata[aOff+int(k)*int(w)+int(e)] = v.wavelet[int(k)*nbEltsV8+int(e)]
 				}
 			}
+		}
+		parGroupsF32(numThreads, vFullGroups, scratchLen, func(mem []float32, gs, ge uint32) {
+			v := vbase
+			v.wavelet = mem
+			for g := gs; g < ge; g++ {
+				vCol(&v, int(g)*nbEltsV8, nbEltsV8)
+			}
+		})
+		if rem := rw & (nbEltsV8 - 1); rem != 0 {
+			v := vbase
+			v.wavelet = make([]float32, scratchLen)
+			vCol(&v, int(rw/nbEltsV8)*nbEltsV8, rem)
 		}
 	}
 	return true

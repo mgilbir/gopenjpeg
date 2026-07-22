@@ -85,11 +85,11 @@ func TestWholeTileVectors(t *testing.T) {
 		case tEnc53:
 			Encode(tc)
 		case tDec53:
-			DecodeTile(tc, numres)
+			DecodeTile(tc, numres, 1)
 		case tEnc97:
 			EncodeReal(tc)
 		case tDec97:
-			DecodeTile97(tc, numres)
+			DecodeTile97(tc, numres, 1)
 		default:
 			t.Fatalf("case %d: unknown type %d", ci, typ)
 		}
@@ -142,7 +142,7 @@ func TestRoundTrip53(t *testing.T) {
 				}
 				copy(tc.Data, orig)
 				Encode(tc)
-				DecodeTile(tc, numres)
+				DecodeTile(tc, numres, 1)
 				for i := range orig {
 					if tc.Data[i] != orig[i] {
 						t.Fatalf("roundtrip %dx%d origin=(%d,%d) numres=%d data[%d]: got %d want %d",

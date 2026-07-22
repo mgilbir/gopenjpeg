@@ -34,13 +34,13 @@ func (t *TCD) dwtDecode(mgr *event.Manager) error {
 		var ok bool
 		if tccp.Qmfbid == 1 {
 			if t.WholeTileDecoding {
-				ok = dwt.DecodeTile(dc, numres)
+				ok = dwt.DecodeTile(dc, numres, t.NumThreads)
 			} else {
 				ok = dwt.DecodePartialTile(dc, numres)
 			}
 		} else {
 			if t.WholeTileDecoding {
-				ok = dwt.DecodeTile97(dc, numres)
+				ok = dwt.DecodeTile97(dc, numres, t.NumThreads)
 			} else {
 				ok = dwt.DecodePartial97(dc, numres)
 			}
