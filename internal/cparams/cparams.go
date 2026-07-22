@@ -255,6 +255,86 @@ type TCP struct {
 
 	// POC flag: a POC marker was used (O:NO, 1:YES).
 	POC uint32
+
+	// MMctDecodingMatrix ports opj_tcp_t.m_mct_decoding_matrix: the custom MCT
+	// decoding matrix (only used when MCT==2). nil means no matrix.
+	MMctDecodingMatrix []float32
+	// MMctCodingMatrix ports opj_tcp_t.m_mct_coding_matrix (encode side).
+	MMctCodingMatrix []float32
+
+	// ---- j2k decode-side marker/tile-part bookkeeping ----
+
+	// MCurrentTilePartNumber ports m_current_tile_part_number (-1 before the
+	// first tile-part of this tile is seen).
+	MCurrentTilePartNumber int32
+	// MNbTileParts ports m_nb_tile_parts (TNsot).
+	MNbTileParts uint32
+	// MData / MDataSize accumulate the tile's coded data across tile-parts
+	// (opj_j2k_read_sod), with a trailing OPJ_COMMON_CBLK_DATA_EXTRA margin.
+	MData     []byte
+	MDataSize uint32
+	// Cod ports the cod:1 flag (a COD marker was read for this tile).
+	Cod bool
+
+	// PPT marker assembly (opj_j2k_read_ppt / merge_ppt).
+	PptMarkers      []Ppx
+	PptMarkersCount uint32
+	PptBuffer       []byte
+
+	// MCT/MCC records (Part-2 custom transforms).
+	MMctRecords      []MctData
+	MNbMctRecords    uint32
+	MNbMaxMctRecords uint32
+	MccRecords       []MccData
+	MNbMccRecords    uint32
+	MNbMaxMccRecords uint32
+	// MctNorms ports mct_norms (encode side).
+	MctNorms []float64
+}
+
+// Ppx ports opj_ppx: one PPM/PPT marker's raw payload (indexed by Zppm/Zppt).
+type Ppx struct {
+	Data []byte // m_data (nil => not read yet)
+}
+
+// MctElementType ports J2K_MCT_ELEMENT_TYPE.
+type MctElementType uint32
+
+// MCT element types.
+const (
+	MctTypeInt16  MctElementType = 0
+	MctTypeInt32  MctElementType = 1
+	MctTypeFloat  MctElementType = 2
+	MctTypeDouble MctElementType = 3
+)
+
+// MctArrayType ports J2K_MCT_ARRAY_TYPE.
+type MctArrayType uint32
+
+// MCT array types.
+const (
+	MctTypeDependency    MctArrayType = 0
+	MctTypeDecorrelation MctArrayType = 1
+	MctTypeOffset        MctArrayType = 2
+)
+
+// MctData ports opj_mct_data_t: a raw MCT array record from an MCT marker.
+type MctData struct {
+	ElementType MctElementType // m_element_type
+	ArrayType   MctArrayType   // m_array_type
+	Index       uint32         // m_index
+	Data        []byte         // m_data
+}
+
+// MccData ports opj_simple_mcc_decorrelation_data_t. The C code stores pointers
+// into the m_mct_records array; this port stores indices into TCP.MMctRecords
+// (-1 meaning "none") to stay slice-append safe.
+type MccData struct {
+	Index              uint32 // m_index
+	NbComps            uint32 // m_nb_comps
+	DecorrelationArray int32  // index into MMctRecords, or -1
+	OffsetArray        int32  // index into MMctRecords, or -1
+	IsIrreversible     bool   // m_is_irreversible
 }
 
 // EncodingParam ports opj_encoding_param_t (the m_enc arm of the
@@ -299,4 +379,17 @@ type CP struct {
 	// Strict ports cp->strict: OPJ_TRUE if the entire bit stream must be
 	// decoded, OPJ_FALSE if partial bitstream decoding is allowed.
 	Strict bool
+
+	// ---- j2k decode-side marker bookkeeping ----
+
+	// Comment ports cp->comment (COM marker payload).
+	Comment string
+	// PPM marker assembly (opj_j2k_read_ppm / merge_ppm).
+	PpmMarkers      []Ppx
+	PpmMarkersCount uint32
+	PpmBuffer       []byte
+	// MIsDecoder ports m_is_decoder.
+	MIsDecoder bool
+	// AllowDifferentBitDepthSign ports allow_different_bit_depth_sign.
+	AllowDifferentBitDepthSign bool
 }

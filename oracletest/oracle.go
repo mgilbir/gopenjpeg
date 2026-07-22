@@ -57,3 +57,8 @@ func RunOracle(t *testing.T, bin string, args ...string) []byte {
 	}
 	return out
 }
+
+// execOracle runs an oracle binary and returns combined output plus error.
+func execOracle(name string, args ...string) ([]byte, error) {
+	return exec.Command(Bin(name), args...).CombinedOutput()
+}

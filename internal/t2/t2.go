@@ -1074,6 +1074,6 @@ func errorf(manager *event.Manager, format string, args ...any) {
 // warnf emits an EVT_WARNING message through the (optional) event manager.
 func warnf(manager *event.Manager, format string, args ...any) {
 	if manager != nil {
-		warnf(manager, format, args...)
+		manager.Warnf(format, args...)
 	}
 }
