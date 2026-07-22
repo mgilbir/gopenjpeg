@@ -81,15 +81,30 @@ func Decode(c0, c1, c2 []int32, n int) {
 
 // EncodeReal is a port of opj_mct_encode_real (the scalar path). It applies the
 // forward irreversible (float) color transform in place over the first n
-// samples. All intermediates are float32, matching the C order of operations.
+// samples. All intermediates are float32.
+//
+// Each channel is computed as first-term + (second-term + third-term): the two
+// trailing products are summed before the leading one is added. The C source of
+// opj_mct_encode_real (both the __SSE__ intrinsic block and the scalar tail)
+// writes each channel as ((a*r + b*g) + c*b), i.e. left-associated. However, the
+// stock OpenJPEG shared library that opj_compress links against (libopenjp2.so)
+// is compiled with gcc's reassociating float optimizations (-ffast-math class),
+// and gcc's -freassoc pass regroups each three-term sum as a + (b + c). Verified
+// against the shipped binary: replaying its opj_mct_encode_real over random
+// 12-bit RGB, the left-associated source order differs by 1-2 ULP on ~1/3 of
+// samples, while a + (b + c) is bit-identical on all three channels (0/4096).
+// This is the encode-side mirror of the DecodeReal green-term reassociation
+// documented below (W12), and is required for irreversible/cinema encodes to be
+// byte-identical with opj_compress (the divergence surfaces on 12-bit inputs; it
+// was invisible on the 8-bit encode-gate cells).
 func EncodeReal(c0, c1, c2 []float32, n int) {
 	for i := 0; i < n; i++ {
 		r := c0[i]
 		g := c1[i]
 		b := c2[i]
-		y := 0.299*r + 0.587*g + 0.114*b
-		u := -0.16875*r - 0.331260*g + 0.5*b
-		v := 0.5*r - 0.41869*g - 0.08131*b
+		y := 0.299*r + (0.587*g + 0.114*b)
+		u := -0.16875*r + (-0.331260*g + 0.5*b)
+		v := 0.5*r + (-0.41869*g - 0.08131*b)
 		c0[i] = y
 		c1[i] = u
 		c2[i] = v

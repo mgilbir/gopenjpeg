@@ -423,22 +423,6 @@ func (s *synthImage2) toPublic(cs gopenjpeg.ColorSpace) *gopenjpeg.Image {
 	return gopenjpeg.NewImage(cs, 0, 0, s.w, s.h, comps)
 }
 
-// headerUpToMarker returns the codestream bytes up to (and excluding) the first
-// occurrence of the given marker (a 0xFFxx value). For cinema profiles this is
-// used to isolate the profile-coerced coding markers (SIZ/COD/QCD/precincts,
-// with the cinema Rsiz, CPRL order and guard bits) from the TLM marker, whose
-// back-patched tile-part length fields cascade from the (off-limits) tier-2
-// coded-data divergence.
-func headerUpToMarker(b []byte, marker uint16) []byte {
-	hi, lo := byte(marker>>8), byte(marker)
-	for i := 2; i+1 < len(b); i++ {
-		if b[i] == hi && b[i+1] == lo {
-			return b[:i]
-		}
-	}
-	return b
-}
-
 // markerSegment extracts the full marker segment (FFxx + Lmarker + payload) for
 // the first occurrence of marker, or nil if absent.
 func markerSegment(b []byte, marker uint16) []byte {
@@ -550,33 +534,39 @@ func TestEncodeContainerGate(t *testing.T) {
 		requireEqual(t, want, got.Bytes())
 	})
 
-	// 5. Cinema 2K 24 — main-header identity (tile data diverges in tier-2).
-	t.Run("cinema2K_24_mainheader", func(t *testing.T) {
-		s := noisy3(256, 144, 12, 7)
-		in := filepath.Join(dir, "c2k.ppm")
-		if err := s.writePPMn(in); err != nil {
-			t.Fatal(err)
-		}
-		want, err := runCompressOut(t, in, "j2k", []string{"-cinema2K", "24"})
-		if err != nil {
-			t.Fatal(err)
-		}
-		var got bytes.Buffer
-		if err := gopenjpeg.Encode(s.toPublic(gopenjpeg.ColorSpaceSRGB), &got, gopenjpeg.WithCinema2K(24)); err != nil {
-			t.Fatal(err)
-		}
-		// Compare the profile-coerced coding markers (SIZ/COD/QCD/precincts) up
-		// to the TLM (whose length fields cascade from the tier-2 divergence).
-		wh := headerUpToMarker(want, 0xFF55)
-		gh := headerUpToMarker(got.Bytes(), 0xFF55)
-		if !bytes.Equal(wh, gh) {
-			t.Errorf("cinema2K coding-marker header mismatch: want=%d go=%d firstdiff=%d",
-				len(wh), len(gh), firstDiff(wh, gh))
-		}
-		t.Logf("KNOWN: cinema2K coded tile data + TLM lengths diverge "+
-			"(off-limits tier-2 CBR/max-comp-size path); SIZ/COD/QCD/precinct "+
-			"markers (%d bytes) are byte-identical", len(wh))
-	})
+	// 5. Cinema 2K — full-stream byte identity at 24 and 48 fps.
+	//
+	// These streams are irreversible (9-7 + ICT) 12-bit and include ALL coding
+	// passes (the cinema rate is <= 1.0 and is forced to lossless, so
+	// opj_tcd_rateallocate uses goodthresh == -1). Reaching byte-identity here
+	// required matching the stock (-ffast-math) libopenjp2's float arithmetic in
+	// two encode-side spots that the 8-bit rate-truncated cells never exercised:
+	//   - forward ICT (internal/mct EncodeReal): gcc's -freassoc regroups each
+	//     3-term channel sum as a + (b + c);
+	//   - the T1 quantizer (internal/tcd cblkEncodeProcessor): gcc hoists the
+	//     constant division so it computes lrintf(f * (mul/stepsize)) instead of
+	//     lrintf((f/stepsize)*mul).
+	// Both flipped ~1 LSB on a fraction of 12-bit coefficients, invisible once
+	// low bit-planes are truncated (8-bit cells) but fatal to all-pass streams.
+	for _, fps := range []int{24, 48} {
+		fps := fps
+		t.Run(fmt.Sprintf("cinema2K_%d", fps), func(t *testing.T) {
+			s := noisy3(256, 144, 12, int64(7+fps))
+			in := filepath.Join(dir, fmt.Sprintf("c2k_%d.ppm", fps))
+			if err := s.writePPMn(in); err != nil {
+				t.Fatal(err)
+			}
+			want, err := runCompressOut(t, in, "j2k", []string{"-cinema2K", fmt.Sprint(fps)})
+			if err != nil {
+				t.Fatal(err)
+			}
+			var got bytes.Buffer
+			if err := gopenjpeg.Encode(s.toPublic(gopenjpeg.ColorSpaceSRGB), &got, gopenjpeg.WithCinema2K(fps)); err != nil {
+				t.Fatal(err)
+			}
+			requireEqual(t, want, got.Bytes())
+		})
+	}
 
 	// 7. Part-2 custom (array-based) MCT. The oracle opj_compress CLI cannot
 	// exercise this: the '-m' matrix-file option is dead code (absent from the
@@ -619,8 +609,10 @@ func TestEncodeContainerGate(t *testing.T) {
 			"encoder faithfully emits CBD/MCT/MCC/MCO + COD mct=2 matching the C source.")
 	})
 
-	// 6. Cinema 4K — main-header identity (exercises the 4K POC + TLM sizing).
-	t.Run("cinema4K_mainheader", func(t *testing.T) {
+	// 6. Cinema 4K — full-stream byte identity (also exercises the 4K POC marker
+	// and the 2-pocno tier-2 THRESH_CALC path). Byte-identical for the same
+	// reasons documented on the cinema2K cell above.
+	t.Run("cinema4K", func(t *testing.T) {
 		s := noisy3(256, 144, 12, 11)
 		in := filepath.Join(dir, "c4k.ppm")
 		if err := s.writePPMn(in); err != nil {
@@ -634,22 +626,7 @@ func TestEncodeContainerGate(t *testing.T) {
 		if err := gopenjpeg.Encode(s.toPublic(gopenjpeg.ColorSpaceSRGB), &got, gopenjpeg.WithCinema4K()); err != nil {
 			t.Fatal(err)
 		}
-		wh := headerUpToMarker(want, 0xFF55)
-		gh := headerUpToMarker(got.Bytes(), 0xFF55)
-		if !bytes.Equal(wh, gh) {
-			t.Errorf("cinema4K coding-marker header mismatch: want=%d go=%d firstdiff=%d",
-				len(wh), len(gh), firstDiff(wh, gh))
-		}
-		// The 4K POC marker (written after TLM) carries no back-patched fields,
-		// so it must be byte-identical.
-		wp := markerSegment(want, 0xFF5F)
-		gp := markerSegment(got.Bytes(), 0xFF5F)
-		if wp == nil || !bytes.Equal(wp, gp) {
-			t.Errorf("cinema4K POC marker mismatch: want=%x go=%x", wp, gp)
-		}
-		t.Logf("KNOWN: cinema4K coded tile data + TLM lengths diverge "+
-			"(off-limits tier-2 CBR/max-comp-size path); SIZ/COD/QCD/precinct "+
-			"markers (%d bytes) and the 4K POC marker are byte-identical", len(wh))
+		requireEqual(t, want, got.Bytes())
 	})
 }
 

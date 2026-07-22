@@ -29,16 +29,24 @@ import (
 //     conformance files: file5, file7, file8. Affected nonregression file:
 //     issue171.jp2.
 //
-//   - CIELab files (colr method 2 with icc_profile_len == 0): opj_decompress
-//     converts these with color_cielab_to_rgb, a floating-point transform we do
-//     not port. Affected: issue559-eci-090-CIELab.jp2, issue559-eci-091-CIELab.jp2.
+// CMYK files (issue205.jp2, issue208.jp2) are NO LONGER excluded: color.c is
+// compiled into opj_decompress -ffast-math, and gcc reassociates 255.0F*X*K into
+// X*(255.0F*K). colorconv.go's cmykToRGB now mirrors that grouping and is
+// bit-identical with opj_decompress on both files (~1.5M pixels, every channel).
 //
-//   - CMYK files (issue205.jp2, issue208.jp2): color_cmyk_to_rgb is a
-//     float32 transform; our port matches it to <=1 LSB but differs on a
-//     handful of samples (e.g. 22/58/7 bytes of ~350k per component) due to
-//     floating-point rounding order. This is the same rounding-order class as
-//     the irreversible-path exclusions documented in decode_gate_test.go, not a
-//     decode/wiring defect.
+// CIELab files (issue559-eci-090/091-CIELab.jp2) are gated with a TOLERANCE of 1
+// (out of 65535), not bit-exact — see TestJP2CIELab. opj_decompress converts
+// these through LittleCMS (cmsCreateLab4Profile(D50) -> cmsCreate_sRGBProfile,
+// INTENT_PERCEPTUAL, TYPE_Lab_DBL -> TYPE_RGB_16). colorconv.go's cielabToRGB
+// reproduces the colorimetric pipeline in pure Go (Lab D50 -> XYZ -> Bradford-
+// adapted sRGB matrix -> sRGB tone curve -> 16-bit). Bit-exactness is impractical
+// because LittleCMS evaluates the transform through interpolated 16-bit lookup
+// tables with its own rounding, not the reference float pipeline: after matching
+// LCMS's exact D50-adapted matrix (verified against liblcms2 on synthetic Lab
+// probes), the residual is at most 1/65535 on ~0.15% of samples (383/269664 and
+// 425/269664, all off-by-one; every other sample is exact). Embedded ICC
+// profiles (colr meth 2, len>0: file5/7/8, issue171.jp2) remain excluded — those
+// need a full ICC CMS engine, which is out of scope.
 
 // jp2ConformancePass are conformance JP2 files that decode bit-exact end to end.
 // file5/file7/file8 are excluded (ICC/LCMS); see the exclusion notes above.
@@ -69,6 +77,15 @@ var jp2NonregPass = []string{
 	"merged.jp2",
 	"file409752.jp2",
 	"issue206_image-000.jp2",
+	"issue205.jp2", // CMYK -> RGB (color_cmyk_to_rgb, -ffast-math reassociated)
+	"issue208.jp2", // CMYK -> RGB
+	// Additional sYCC coverage (found via a broad corpus sweep, W14): the
+	// double-precision sycc_to_rgb path is bit-exact on every sub-sampled-chroma
+	// JP2 in the corpus that opj_decompress can render to PGX, not only the
+	// curated issue411 trio. (subsampling_1.jp2 / zoo1.jp2 are also sYCC and match
+	// under a direct decode, but opj_decompress declines to write them as PGX, so
+	// they are not usable as gate fixtures.)
+	"issue134.jp2",
 }
 
 // htContainerPass are the HTJ2K container files: a JPH-boxed file and a raw HT
@@ -164,6 +181,70 @@ func TestJP2Nonregression(t *testing.T) {
 		name := name
 		t.Run(name, func(t *testing.T) {
 			runJP2Case(t, DataDir("input", "nonregression", name))
+		})
+	}
+}
+
+// cielabPass are the CIELab JP2 files, gated with a 1-LSB tolerance (see the
+// package-level exclusion notes and cielabToRGB in colorconv.go).
+var cielabPass = []string{
+	"issue559-eci-090-CIELab.jp2",
+	"issue559-eci-091-CIELab.jp2",
+}
+
+// cielabTolerance is the maximum permitted per-sample deviation (out of 65535)
+// between cielabToRGB and opj_decompress's LittleCMS output. A tolerance of 1 is
+// tight: on both corpus files every sample is within 1 and >99.8% are exact; the
+// residual comes from LittleCMS's interpolated 16-bit LUTs (see notes above).
+const cielabTolerance = 1
+
+// TestJP2CIELab decodes the CIELab JP2 files and checks the pure-Go colorimetric
+// conversion is within cielabTolerance of opj_decompress on every sample.
+func TestJP2CIELab(t *testing.T) {
+	Require(t)
+	for _, name := range cielabPass {
+		name := name
+		t.Run(name, func(t *testing.T) {
+			path := DataDir("input", "nonregression", name)
+			comps, err := oracleDecodePGX(t, path)
+			if err != nil {
+				t.Skipf("oracle decode failed: %v", err)
+			}
+			img, err := decodeGoPublic(t, path)
+			if err != nil {
+				t.Fatalf("public API decode failed: %v", err)
+			}
+			if img.NumComponents() != len(comps) {
+				t.Fatalf("component count: go=%d oracle=%d", img.NumComponents(), len(comps))
+			}
+			var maxDiff, nonzero, total int
+			for i := 0; i < len(comps); i++ {
+				gc := img.Component(i)
+				oc := comps[i]
+				if int(gc.W) != oc.w || int(gc.H) != oc.h {
+					t.Fatalf("comp %d dim: go=%dx%d oracle=%dx%d", i, gc.W, gc.H, oc.w, oc.h)
+				}
+				n := oc.w * oc.h
+				for k := 0; k < n; k++ {
+					total++
+					d := int(gc.Data[k]) - int(oc.data[k])
+					if d < 0 {
+						d = -d
+					}
+					if d > maxDiff {
+						maxDiff = d
+					}
+					if d != 0 {
+						nonzero++
+					}
+				}
+			}
+			if maxDiff > cielabTolerance {
+				t.Errorf("%s: max diff %d exceeds tolerance %d (%d/%d samples differ)",
+					name, maxDiff, cielabTolerance, nonzero, total)
+			}
+			t.Logf("%s: max diff %d (<=%d ok); %d/%d samples off-by-one (%.3f%%)",
+				name, maxDiff, cielabTolerance, nonzero, total, 100*float64(nonzero)/float64(total))
 		})
 	}
 }

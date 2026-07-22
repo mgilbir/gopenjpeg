@@ -414,9 +414,22 @@ func (t *TCD) cblkEncodeProcessor(state *t1.T1, cblk *tile.CblkEnc, band *tile.B
 	} else {
 		stepsize := band.Stepsize
 		mul := float32(int32(1) << t1NmsedecFracbits)
+		// The C source computes (f / stepsize) * (1<<T1_NMSEDEC_FRACBITS), but the
+		// stock libopenjp2 that opj_compress links is built -ffast-math, and gcc's
+		// -freassoc pass hoists the constant division: it emits
+		// quantized = lrintf(f * (mul / stepsize)), computing mul/stepsize once per
+		// band as a float32 loop invariant (verified in the shipped binary's
+		// opj_t1_cblk_encode_processor: `movaps xmm0,<64.0f>; divss xmm0,stepsize`
+		// then a per-sample `mulss`). f*(mul/stepsize) rounds differently from
+		// (f/stepsize)*mul by up to 1 ULP, which flips ~1/1000 of quantized
+		// coefficients by 1 LSB. That is invisible when layers truncate the low
+		// bit-planes (the 8-bit rate-limited encode-gate cells), but breaks
+		// byte-identity on all-pass irreversible streams (cinema/IMF, or any -r<=1).
+		// Mirror the binary so those streams are byte-identical with opj_compress.
+		invStep := mul / stepsize
 		conv := func(idx int) int32 {
 			f := math.Float32frombits(uint32(tdata[base+idx]))
-			return int32(lrintf((f / stepsize) * mul))
+			return int32(lrintf(f * invStep))
 		}
 		for j := uint32(0); j < jEnd; j += 4 {
 			for i := uint32(0); i < cblkW; i++ {

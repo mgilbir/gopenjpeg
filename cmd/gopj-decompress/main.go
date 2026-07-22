@@ -40,13 +40,13 @@ func main() {
 
 func run() error {
 	var (
-		in     = flag.String("i", "", "input JPEG 2000 file")
-		out    = flag.String("o", "", "output file (format by extension)")
-		reduce = flag.Uint("r", 0, "discard the N highest resolutions")
-		layers = flag.Uint("l", 0, "decode only the first N quality layers")
-		area   = flag.String("d", "", "decode area x0,y0,x1,y1")
-		comps  = flag.String("c", "", "component subset, comma-separated")
-		tile   = flag.Int("t", -1, "decode only tile index N")
+		in      = flag.String("i", "", "input JPEG 2000 file")
+		out     = flag.String("o", "", "output file (format by extension)")
+		reduce  = flag.Uint("r", 0, "discard the N highest resolutions")
+		layers  = flag.Uint("l", 0, "decode only the first N quality layers")
+		area    = flag.String("d", "", "decode area x0,y0,x1,y1")
+		comps   = flag.String("c", "", "component subset, comma-separated")
+		tile    = flag.Int("t", -1, "decode only tile index N")
 		strict  = flag.Bool("strict", false, "strict conformance mode")
 		quiet   = flag.Bool("quiet", false, "suppress informational output")
 		threads = flag.String("threads", "1", "worker threads for decode, or ALL_CPUS")

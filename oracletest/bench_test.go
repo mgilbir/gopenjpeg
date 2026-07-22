@@ -332,4 +332,3 @@ func BenchmarkGoDecode(b *testing.B) {
 		})
 	}
 }
-

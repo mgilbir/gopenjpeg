@@ -1,7 +1,9 @@
 package gopenjpeg
 
 import (
+	"encoding/binary"
 	"errors"
+	"math"
 
 	"github.com/mgilbir/gopenjpeg/internal/image"
 )
@@ -56,8 +58,15 @@ func (im *Image) ConvertToRGB() error {
 	}
 
 	if img.ICCProfileBuf != nil {
-		// opj_decompress would apply the profile (or the CIELab special case)
-		// via Little CMS here. We cannot reproduce that bit-exactly.
+		// A JP2 colr box with meth==2 and icc_profile_len==0 signals the CIELab
+		// enumerated colour space; the box parameters are packed big-endian into
+		// ICCProfileBuf (see internal/jp2 read_boxes.go). Handle that here; a real
+		// embedded ICC profile (len>0) still requires a CMS engine we do not ship.
+		if img.ICCProfileLen == 0 && isCIELabBuf(img.ICCProfileBuf) {
+			return cielabToRGB(img)
+		}
+		// opj_decompress would apply the profile via Little CMS here. We cannot
+		// reproduce that bit-exactly.
 		return ErrICCUnsupported
 	}
 	return nil
@@ -338,6 +347,18 @@ func syncChroma(img *image.Image) {
 }
 
 // cmykToRGB ports color_cmyk_to_rgb (float32 arithmetic, matching the C floats).
+//
+// The C source computes each channel as 255.0F * X * K, i.e. left-associated
+// (255.0F * X) * K. But opj_decompress (which contains color.c) is built
+// -ffast-math, and gcc's -freassoc pass regroups the three-factor product,
+// hoisting 255.0F * K (shared across the R/G/B of a pixel) and computing each
+// channel as X * (255.0F * K). Verified against the shipped opj_decompress:
+// over the two CMYK conformance files (issue205, issue208, ~1.5M pixels) the
+// left-associated source order mismatches ~1 LSB on a handful of samples, while
+// X * (255.0F * K) is bit-identical on every channel of every pixel. The final
+// (int) cast truncates toward zero (Go int32() does likewise), so no rounding
+// adjustment is needed. This is the same -ffast-math reassociation class as the
+// ICT/quantizer fixes on the encode side.
 func cmykToRGB(img *image.Image) error {
 	c := img.Comps
 	if img.Numcomps < 4 ||
@@ -361,9 +382,10 @@ func cmykToRGB(img *image.Image) error {
 		mm = 1.0 - mm
 		yy = 1.0 - yy
 		kk = 1.0 - kk
-		c[0].Data[i] = int32(255.0 * cc * kk)
-		c[1].Data[i] = int32(255.0 * mm * kk)
-		c[2].Data[i] = int32(255.0 * yy * kk)
+		k255 := 255.0 * kk
+		c[0].Data[i] = int32(cc * k255)
+		c[1].Data[i] = int32(mm * k255)
+		c[2].Data[i] = int32(yy * k255)
 	}
 	c[3].Data = nil
 	c[0].Prec = 8
@@ -379,6 +401,20 @@ func cmykToRGB(img *image.Image) error {
 }
 
 // esyccToRGB ports color_esycc_to_rgb (float32 arithmetic).
+//
+// color.c is compiled into opj_decompress -ffast-math, and disassembly of the
+// shipped color_esycc_to_rgb shows gcc's -freassoc regroups each channel's
+// four-term float32 sum: e.g. green is computed as
+// (1.0003*y + 0.5) - (0.344125*cb + 0.7141128*cr) rather than the left-
+// associated source order 1.0003*y - 0.344125*cb - 0.7141128*cr + 0.5 used
+// below. The only eYCC file in the conformance corpus (issue236-ESYCC-CDEF.jp2)
+// does NOT distinguish the two groupings: replaying both associations over all
+// 307200 pixels of all three channels yields bit-identical results (verified,
+// W14), so the source-order port passes bit-exact and there is no corpus test
+// that would reveal a divergence. The grouping is left in source order because no
+// distinguishing vector exists to validate a change; a maintainer who obtains an
+// eYCC image whose samples straddle a rounding boundary should switch to the
+// -ffast-math grouping above (the shipped binary's actual arithmetic).
 func esyccToRGB(img *image.Image) error {
 	c := img.Comps
 	if img.Numcomps < 3 ||
@@ -420,5 +456,154 @@ func esyccToRGB(img *image.Image) error {
 		c[2].Data[i] = clamp(b)
 	}
 	img.ColorSpace = image.ClrspcSRGB
+	return nil
+}
+
+// isCIELabBuf reports whether buf is the packed CIELab parameter block that
+// internal/jp2 stores in ICCProfileBuf for a colr box with meth==2,
+// icc_profile_len==0 and EnumCS==14 (nine big-endian uint32 words, the first
+// being the enumerated colour-space value 14).
+func isCIELabBuf(buf []byte) bool {
+	return len(buf) >= 36 && binary.BigEndian.Uint32(buf) == 14
+}
+
+// D50-adapted sRGB XYZ->RGB matrix (Bradford chromatic adaptation), matching
+// the matrix Little CMS's cmsCreate_sRGBProfile bakes into the profile: sRGB
+// primaries (R 0.64/0.33, G 0.30/0.60, B 0.15/0.06) with the D65 white point,
+// Bradford-adapted to the D50 PCS white {0.9642, 1.0, 0.8249} and inverted.
+// Computed from first principles (not the rounded published tables) so it maps
+// D50 white exactly to (1,1,1); this drops the worst-case error against LCMS on
+// synthetic Lab probes from ~15/65535 to <=1/65535.
+var cielabXYZ2RGBD50 = [3][3]float64{
+	{3.1341863642, -1.6172089590, -0.4906940640},
+	{-0.9787485042, 1.9161300968, 0.0334333992},
+	{0.0719639278, -0.2289938735, 1.4057537329},
+}
+
+// cielabLabToXYZ converts CIE L*a*b* (D50) to XYZ (D50), the standard inverse
+// Lab transform LittleCMS applies (cmsLab2XYZ) with the D50 white point
+// {0.9642, 1.0, 0.8249}.
+func cielabLabToXYZ(L, a, b float64) (X, Y, Z float64) {
+	const xn, yn, zn = 0.9642, 1.0, 0.8249
+	fy := (L + 16.0) / 116.0
+	fx := fy + a/500.0
+	fz := fy - b/200.0
+	finv := func(t float64) float64 {
+		if t > 6.0/29.0 {
+			return t * t * t
+		}
+		return (t - 16.0/116.0) * 3.0 * (6.0 / 29.0) * (6.0 / 29.0)
+	}
+	return xn * finv(fx), yn * finv(fy), zn * finv(fz)
+}
+
+// cielabSRGBGamma applies the sRGB opto-electronic transfer function
+// (linear -> gamma-encoded), the tone curve LittleCMS's built-in sRGB profile
+// uses.
+func cielabSRGBGamma(v float64) float64 {
+	if v <= 0 {
+		return 0
+	}
+	if v >= 1 {
+		return 1
+	}
+	if v <= 0.0031308 {
+		return 12.92 * v
+	}
+	return 1.055*math.Pow(v, 1.0/2.4) - 0.055
+}
+
+// cielabToRGB reproduces opj_decompress's color_cielab_to_rgb (color.c) for the
+// EnumCS==14 CIELab case. opj_decompress performs this conversion through
+// LittleCMS (cmsCreateLab4Profile -> cmsCreate_sRGBProfile, INTENT_PERCEPTUAL,
+// TYPE_Lab_DBL -> TYPE_RGB_16). We reproduce the colorimetric pipeline in pure
+// Go: scale the integer L*a*b* samples to Lab doubles with the box's range/
+// offset parameters, Lab(D50) -> XYZ(D50) -> linear sRGB via the D50-adapted
+// matrix -> sRGB tone curve -> 16-bit. This is NOT bit-exact with LittleCMS
+// (which evaluates the pipeline through interpolated 16-bit lookup tables with
+// its own rounding); the gate therefore compares with a small documented
+// tolerance (see oracletest/jp2_gate_test.go). Output components are 16-bit sRGB.
+func cielabToRGB(img *image.Image) error {
+	if img.Numcomps != 3 {
+		return ErrColorConvert
+	}
+	c := img.Comps
+	if c[0].Dx != c[1].Dx || c[0].Dx != c[2].Dx ||
+		c[0].Dy != c[1].Dy || c[0].Dy != c[2].Dy ||
+		c[0].W != c[1].W || c[0].W != c[2].W ||
+		c[0].H != c[1].H || c[0].H != c[2].H {
+		return ErrColorConvert
+	}
+	buf := img.ICCProfileBuf
+	row := make([]int32, 9)
+	for i := 0; i < 9; i++ {
+		row[i] = int32(binary.BigEndian.Uint32(buf[i*4:]))
+	}
+	prec0 := float64(c[0].Prec)
+	prec1 := float64(c[1].Prec)
+	prec2 := float64(c[2].Prec)
+
+	var rl, ol, ra, oa, rb, ob float64
+	if uint32(row[1]) == 0x44454600 { // "DEF\0": default ranges/offsets
+		rl, ra, rb = 100, 170, 200
+		ol = 0
+		oa = math.Pow(2, prec1-1)
+		ob = math.Pow(2, prec2-2) + math.Pow(2, prec2-3)
+	} else {
+		rl = float64(row[2])
+		ol = float64(row[3])
+		ra = float64(row[4])
+		oa = float64(row[5])
+		rb = float64(row[6])
+		ob = float64(row[7])
+	}
+
+	minL := -(rl * ol) / (math.Pow(2, prec0) - 1)
+	maxL := minL + rl
+	mina := -(ra * oa) / (math.Pow(2, prec1) - 1)
+	maxa := mina + ra
+	minb := -(rb * ob) / (math.Pow(2, prec2) - 1)
+	maxb := minb + rb
+
+	w := int(c[0].W)
+	h := int(c[0].H)
+	max := w * h
+	L := c[0].Data
+	a := c[1].Data
+	b := c[2].Data
+	red := make([]int32, max)
+	green := make([]int32, max)
+	blue := make([]int32, max)
+
+	denom0 := math.Pow(2, prec0) - 1
+	denom1 := math.Pow(2, prec1) - 1
+	denom2 := math.Pow(2, prec2) - 1
+	for i := 0; i < max; i++ {
+		ll := minL + float64(L[i])*(maxL-minL)/denom0
+		aa := mina + float64(a[i])*(maxa-mina)/denom1
+		bb := minb + float64(b[i])*(maxb-minb)/denom2
+		X, Y, Z := cielabLabToXYZ(ll, aa, bb)
+		out := [3]*[]int32{&red, &green, &blue}
+		for j := 0; j < 3; j++ {
+			lin := cielabXYZ2RGBD50[j][0]*X + cielabXYZ2RGBD50[j][1]*Y + cielabXYZ2RGBD50[j][2]*Z
+			v := int32(math.Floor(cielabSRGBGamma(lin)*65535.0 + 0.5))
+			if v < 0 {
+				v = 0
+			} else if v > 65535 {
+				v = 65535
+			}
+			(*out[j])[i] = v
+		}
+	}
+
+	c[0].Data = red
+	c[1].Data = green
+	c[2].Data = blue
+	c[0].Prec = 16
+	c[1].Prec = 16
+	c[2].Prec = 16
+	img.ColorSpace = image.ClrspcSRGB
+	img.ICCProfileBuf = nil
+	img.ICCProfileLen = 0
 	return nil
 }
