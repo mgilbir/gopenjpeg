@@ -151,3 +151,9 @@ gopenjpeg/               public API: Decode/Encode, options, image.Image interop
   gate exclusions: 9/7+ICT LSB deviations, t2 segment bound,
   chroma-subsampled fixtures), W9 (encode path, gated on
   byte-identical codestreams vs opj_compress).
+- 2026-07-22: W11 landed (public API, gopj-decompress/gopj-dump,
+  jp2<->j2k wiring; 31 public-API parity subtests + CLI byte-parity).
+  Known permanent-ish exclusions: ICC/CIELab color transforms need a
+  CMS engine (oracle links LCMS2; no pure-Go equivalent) — revisit in
+  hardening; CMYK conversion has float-rounding-order LSB diffs
+  (same class as the 9/7 issue W12 is chasing — apply its fix here).
