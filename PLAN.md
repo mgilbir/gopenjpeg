@@ -114,3 +114,9 @@ gopenjpeg/               public API: Decode/Encode, options, image.Image interop
   contract for tcd). W1 landed (opjmath/cio/bio/tgt/event); W4's local
   math helpers reconciled to opjmath. In flight: W3 (dwt+sparse),
   W5 (t1), W6 (pi+t2+cparams+tile shared type packages).
+- 2026-07-22: W5 landed (internal/t1, bit-exact on 2805 vectors).
+  Follow-ups: t1's local Chunk/Seg/CodeBlock types must be mapped to
+  internal/tile by tcd; PTERM leftover-bytes check approximates C
+  (mqc doesn't expose bp/end — consider adding accessors); HT
+  dispatch seam in DecodeCblk awaits the ht worker; specialized
+  64x64 decode variants deferred as a perf follow-up (Phase 7).
