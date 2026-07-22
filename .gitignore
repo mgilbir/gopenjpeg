@@ -1,0 +1,6 @@
+/oracle/
+*.pgm
+*.ppm
+*.raw
+*.out
+/dist/
