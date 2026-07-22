@@ -2,8 +2,6 @@ package tcd
 
 import (
 	"math"
-
-	"github.com/mgilbir/gopenjpeg/internal/event"
 )
 
 // GetDecodedTileSize ports opj_tcd_get_decoded_tile_size: the number of bytes a
@@ -124,11 +122,4 @@ func (t *TCD) UpdateTileData(dest []byte) error {
 		}
 	}
 	return nil
-}
-
-// ---- Encode-side stubs (owned by W9) ----
-
-// EncodeTile ports opj_tcd_encode_tile. Encoding is not implemented in W7.
-func (t *TCD) EncodeTile(tileNo uint32, dest []byte, maxLength uint32, mgr *event.Manager) (uint32, error) {
-	return 0, errEncodeStub
 }

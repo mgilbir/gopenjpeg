@@ -337,13 +337,34 @@ type MccData struct {
 	IsIrreversible     bool   // m_is_irreversible
 }
 
+// Quality-layer allocation strategy, ports J2K_QUALITY_LAYER_ALLOCATION_STRATEGY.
+const (
+	// RateDistortionRatio ports RATE_DISTORTION_RATIO (allocation by rate/distortion).
+	RateDistortionRatio = 0
+	// FixedDistortionRatio ports FIXED_DISTORTION_RATIO (fixed quality / PSNR).
+	FixedDistortionRatio = 1
+	// FixedLayer ports FIXED_LAYER (fixed number of passes per layer/res/subband).
+	FixedLayer = 2
+)
+
+// Matrix sizing constants ported from j2k.h.
+const (
+	// TCDMatrixMaxLayerCount ports J2K_TCD_MATRIX_MAX_LAYER_COUNT.
+	TCDMatrixMaxLayerCount = 10
+	// TCDMatrixMaxResolutionCount ports J2K_TCD_MATRIX_MAX_RESOLUTION_COUNT.
+	TCDMatrixMaxResolutionCount = 10
+)
+
 // EncodingParam ports opj_encoding_param_t (the m_enc arm of the
 // opj_cp_t.m_specific_param union).
 type EncodingParam struct {
-	MMaxCompSize uint32 // m_max_comp_size: max rate per component (0 => unlimited)
-	MTpPos       int32  // m_tp_pos: position of tile-part flag in progression order
-	MTpFlag      byte   // m_tp_flag: flag determining tile-part generation
-	MTpOn        uint32 // m_tp_on: enabling tile-part generation (bitfield in C)
+	MMaxCompSize uint32  // m_max_comp_size: max rate per component (0 => unlimited)
+	MTpPos       int32   // m_tp_pos: position of tile-part flag in progression order
+	MMatrice     []int32 // m_matrice: fixed-layer allocation matrix
+	MTpFlag      byte    // m_tp_flag: flag determining tile-part generation
+	// MQualityLayerAllocStrategy ports m_quality_layer_alloc_strategy.
+	MQualityLayerAllocStrategy int32
+	MTpOn                      uint32 // m_tp_on: enabling tile-part generation (bitfield in C)
 }
 
 // DecodingParam ports opj_decoding_param_t (the m_dec arm of the union).

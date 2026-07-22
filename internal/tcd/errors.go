@@ -8,5 +8,4 @@ var (
 	errAlloc           = errors.New("tcd: allocation failure")
 	errTierDecode      = errors.New("tcd: tier decode failed")
 	errMCT             = errors.New("tcd: MCT step failed")
-	errEncodeStub      = errors.New("tcd: encode path not implemented in W7 (owned by W9)")
 )

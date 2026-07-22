@@ -64,11 +64,11 @@ func TestInitDecodeTileGeometry(t *testing.T) {
 	}
 }
 
-func TestEncodeTileStub(t *testing.T) {
+func TestInitEncodeTile(t *testing.T) {
 	img, cp := buildCP()
 	tc := Create(false)
 	tc.Init(img, cp)
-	if _, err := tc.EncodeTile(0, nil, 0, nil); err == nil {
-		t.Fatal("EncodeTile stub should return an error")
+	if err := tc.InitEncodeTile(0, nil); err != nil {
+		t.Fatalf("InitEncodeTile: %v", err)
 	}
 }
