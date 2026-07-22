@@ -120,3 +120,7 @@ gopenjpeg/               public API: Decode/Encode, options, image.Image interop
   (mqc doesn't expose bp/end — consider adding accessors); HT
   dispatch seam in DecodeCblk awaits the ht worker; specialized
   64x64 decode variants deferred as a perf follow-up (Phase 7).
+- 2026-07-22: W3 landed (internal/dwt + internal/sparse). Follow-ups:
+  dwt local geometry types to be mapped by tcd; C reads OOB on 1x1
+  tiles with >1 level (UB in reference) — tcd/j2k must guard so the
+  Go port never hits that path (would panic, not corrupt).
