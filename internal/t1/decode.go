@@ -447,10 +447,14 @@ func (t *T1) DecodeCblk(cblk *CodeBlockDec, orient, roishift, cblksty uint32, ch
 		}
 
 		buf := cblkdata[cblkdataindex:]
+		var initErr error
 		if typ == t1TypeRAW {
-			t.mqc.RawInitDec(buf, int(seg.Len))
+			initErr = t.mqc.RawInitDec(buf, int(seg.Len))
 		} else {
-			t.mqc.InitDec(buf, int(seg.Len))
+			initErr = t.mqc.InitDec(buf, int(seg.Len))
+		}
+		if initErr != nil {
+			return false, initErr
 		}
 		cblkdataindex += seg.Len
 		lastSegLen = seg.Len

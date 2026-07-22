@@ -1,5 +1,11 @@
 package mqc
 
+import "errors"
+
+// ErrShortBuffer reports a decoder buffer without the required
+// cblkDataExtra writable scratch bytes past the coded length.
+var ErrShortBuffer = errors.New("mqc: decoder buffer needs at least len+2 writable bytes")
+
 // This file ports the decoder half of mqc.c / mqc_inl.h.
 //
 // Buffer model. In the C reference the decoder temporarily overwrites the
@@ -14,11 +20,11 @@ package mqc
 //
 // buf must have at least length+cblkDataExtra bytes; the two bytes at
 // buf[length] and buf[length+1] are backed up and overwritten with 0xFF.
-func (m *MQC) initDecCommon(buf []byte, length int) {
-	if len(buf) < length+cblkDataExtra {
-		// Faithful to the C contract (assert extra_writable_bytes >= EXTRA);
-		// panic rather than read/write out of bounds.
-		panic("mqc: decoder buffer needs at least len+2 writable bytes")
+func (m *MQC) initDecCommon(buf []byte, length int) error {
+	if length < 0 || len(buf) < length+cblkDataExtra {
+		// Faithful to the C contract (assert extra_writable_bytes >= EXTRA),
+		// surfaced as an error rather than a panic or out-of-bounds access.
+		return ErrShortBuffer
 	}
 	m.buf = buf
 	m.start = 0
@@ -29,14 +35,17 @@ func (m *MQC) initDecCommon(buf []byte, length int) {
 	copy(m.backup[:], buf[length:length+cblkDataExtra])
 	buf[length] = 0xff
 	buf[length+1] = 0xff
+	return nil
 }
 
 // InitDec is the port of opj_mqc_init_dec: initialise the decoder for MQ
 // decoding (ISO 15444-1 C.3.5 INITDEC).
 //
 // FinishDec must be called after decoding to restore the overwritten bytes.
-func (m *MQC) InitDec(buf []byte, length int) {
-	m.initDecCommon(buf, length)
+func (m *MQC) InitDec(buf []byte, length int) error {
+	if err := m.initDecCommon(buf, length); err != nil {
+		return err
+	}
 	m.SetCurCtx(0)
 	m.endOfByteStreamCounter = 0
 	if length == 0 {
@@ -49,16 +58,20 @@ func (m *MQC) InitDec(buf []byte, length int) {
 	m.c <<= 7
 	m.ct -= 7
 	m.a = 0x8000
+	return nil
 }
 
 // RawInitDec is the port of opj_mqc_raw_init_dec: initialise the decoder for
 // RAW decoding.
 //
 // FinishDec must be called after decoding to restore the overwritten bytes.
-func (m *MQC) RawInitDec(buf []byte, length int) {
-	m.initDecCommon(buf, length)
+func (m *MQC) RawInitDec(buf []byte, length int) error {
+	if err := m.initDecCommon(buf, length); err != nil {
+		return err
+	}
 	m.c = 0
 	m.ct = 0
+	return nil
 }
 
 // FinishDec is the port of opq_mqc_finish_dec (sic — the C name has a typo):
