@@ -92,6 +92,13 @@ func (e *Encoder) writeHeader(stream *cio.Stream, mgr *event.Manager) error {
 			return err
 		}
 	}
+	// DEVELOPER CORNER: Part-2 custom MCT marker group.
+	if e.CP.Rsiz&(cparams.ProfilePart2|cparams.ExtensionMCT) ==
+		(cparams.ProfilePart2 | cparams.ExtensionMCT) {
+		if err := e.writeMctDataGroup(stream, mgr); err != nil {
+			return err
+		}
+	}
 	// create_tcd
 	e.tcd = tcd.Create(false)
 	if !e.tcd.Init(e.privateImage, &e.CP) {

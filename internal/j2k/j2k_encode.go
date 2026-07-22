@@ -11,14 +11,11 @@ import (
 	"errors"
 	"math"
 
-	_ "github.com/mgilbir/gopenjpeg/internal/cio"
 	"github.com/mgilbir/gopenjpeg/internal/cparams"
 	"github.com/mgilbir/gopenjpeg/internal/dwt"
 	"github.com/mgilbir/gopenjpeg/internal/event"
 	"github.com/mgilbir/gopenjpeg/internal/image"
-	_ "github.com/mgilbir/gopenjpeg/internal/mct"
 	"github.com/mgilbir/gopenjpeg/internal/opjmath"
-	_ "github.com/mgilbir/gopenjpeg/internal/pi"
 	"github.com/mgilbir/gopenjpeg/internal/tcd"
 )
 
@@ -79,7 +76,15 @@ type CParameters struct {
 	// CpComment nil selects the default "Created by OpenJPEG version X" comment.
 	CpComment *string
 
-	TcpMct int32 // 0=none, 1=RCT/ICT, 2=custom (custom unsupported here)
+	TcpMct int32 // 0=none, 1=RCT/ICT, 2=custom (mct_data required)
+
+	// MctData holds the custom MCT coding matrix (numcomps*numcomps float32),
+	// non-nil only when TcpMct==2. Ports the matrix part of
+	// opj_cparameters_t.mct_data (set via opj_set_MCT).
+	MctData []float32
+	// MctDcShift holds the numcomps DC shifts that follow the matrix in the C
+	// mct_data buffer.
+	MctDcShift []int32
 
 	Numpocs uint32
 	POC     [cparams.MaxPocs]POCParam
@@ -90,6 +95,12 @@ type CParameters struct {
 	ResSpec  int32
 	PrcwInit [cparams.MaxRLvls]int32
 	PrchInit [cparams.MaxRLvls]int32
+
+	// ImageOffsetX0/Y0 port image_offset_x0/y0 (set by cinema/IMF coercion).
+	ImageOffsetX0 int32
+	ImageOffsetY0 int32
+	SubsamplingDx int32
+	SubsamplingDy int32
 }
 
 // encoderState ports the opj_j2k_enc_t fields the write path uses.
@@ -239,8 +250,34 @@ func (e *Encoder) SetupEncoder(parameters *CParameters, img *image.Image, mgr *e
 	if cparams.IsCinema(parameters.Rsiz) || cparams.IsIMF(parameters.Rsiz) {
 		e.enc.tlm = true
 	}
-	// NOTE: cinema/IMF profile coercion (opj_j2k_set_cinema_parameters /
-	// is_*_compliant) is not ported here; the encode gate does not exercise it.
+
+	// Manage profiles/applications and coerce parameters. Ports the
+	// OPJ_IS_CINEMA / OPJ_IS_IMF / OPJ_IS_PART2 dispatch of opj_j2k_setup_encoder.
+	switch {
+	case cparams.IsCinema(parameters.Rsiz):
+		if parameters.Rsiz == cparams.ProfileCinemaS2K || parameters.Rsiz == cparams.ProfileCinemaS4K {
+			mgr.Warnf("JPEG 2000 Scalable Digital Cinema profiles not yet supported\n")
+			parameters.Rsiz = cparams.ProfileNone
+		} else {
+			setCinemaParameters(parameters, img, mgr)
+			if !isCinemaCompliant(img, parameters.Rsiz, mgr) {
+				parameters.Rsiz = cparams.ProfileNone
+			}
+		}
+	case cparams.IsIMF(parameters.Rsiz):
+		setIMFParameters(parameters, img, mgr)
+		if !isIMFCompliant(parameters, img, mgr) {
+			parameters.Rsiz = cparams.ProfileNone
+		}
+	case cparams.IsPart2(parameters.Rsiz):
+		if parameters.Rsiz == uint16(cparams.ProfilePart2|cparams.ExtensionNone) {
+			mgr.Warnf("JPEG 2000 Part-2 profile defined\nbut no Part-2 extension enabled.\nProfile set to NONE.\n")
+			parameters.Rsiz = cparams.ProfileNone
+		} else if parameters.Rsiz != uint16(cparams.ProfilePart2|cparams.ExtensionMCT) {
+			mgr.Warnf("Unsupported Part-2 extension enabled\nProfile set to NONE.\n")
+			parameters.Rsiz = cparams.ProfileNone
+		}
+	}
 
 	// copy user encoding parameters
 	cp.MEnc.MMaxCompSize = uint32(parameters.MaxCompSize)
@@ -360,18 +397,25 @@ func (e *Encoder) SetupEncoder(parameters *CParameters, img *image.Image, mgr *e
 
 		tcp.TCCPs = make([]cparams.TCCP, img.Numcomps)
 
-		// Custom MCT (mct==2 / mct_data) path is not ported; standard RCT/ICT only.
-		if tcp.MCT == 1 && img.Numcomps >= 3 {
-			if img.Comps[0].Dx != img.Comps[1].Dx || img.Comps[0].Dx != img.Comps[2].Dx ||
-				img.Comps[0].Dy != img.Comps[1].Dy || img.Comps[0].Dy != img.Comps[2].Dy {
-				mgr.Warnf("Cannot perform MCT on components with different sizes. Disabling MCT.\n")
-				tcp.MCT = 0
+		if parameters.MctData != nil {
+			// Custom (Part-2 array-based) MCT: port of the mct_data branch of
+			// opj_j2k_setup_encoder.
+			if err := e.setupCustomMCT(tcp, parameters, img, mgr); err != nil {
+				return err
 			}
-		}
-		for i := uint32(0); i < img.Numcomps; i++ {
-			tccp := &tcp.TCCPs[i]
-			if img.Comps[i].Sgnd == 0 {
-				tccp.MDcLevelShift = int32(uint32(1) << (img.Comps[i].Prec - 1))
+		} else {
+			if tcp.MCT == 1 && img.Numcomps >= 3 {
+				if img.Comps[0].Dx != img.Comps[1].Dx || img.Comps[0].Dx != img.Comps[2].Dx ||
+					img.Comps[0].Dy != img.Comps[1].Dy || img.Comps[0].Dy != img.Comps[2].Dy {
+					mgr.Warnf("Cannot perform MCT on components with different sizes. Disabling MCT.\n")
+					tcp.MCT = 0
+				}
+			}
+			for i := uint32(0); i < img.Numcomps; i++ {
+				tccp := &tcp.TCCPs[i]
+				if img.Comps[i].Sgnd == 0 {
+					tccp.MDcLevelShift = int32(uint32(1) << (img.Comps[i].Prec - 1))
+				}
 			}
 		}
 

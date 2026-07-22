@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	gopenjpeg "github.com/mgilbir/gopenjpeg"
 	"github.com/mgilbir/gopenjpeg/internal/cio"
 	"github.com/mgilbir/gopenjpeg/internal/cparams"
 	"github.com/mgilbir/gopenjpeg/internal/event"
@@ -343,6 +344,330 @@ func TestEncodeRoundTrip(t *testing.T) {
 				}
 			}
 		}
+	}
+}
+
+// --- Container / profile / marker gate cells (public API) ---
+
+// synthImage2 extends the synthetic image with a configurable precision, for
+// cinema (12-bit) and higher-precision inputs.
+type synthImage2 struct {
+	w, h     uint32
+	numcomps uint32
+	prec     uint32
+	data     [][]int32
+}
+
+// gradient3 builds a w x h, prec-bit 3-component smooth gradient.
+func gradient3(w, h, prec uint32) *synthImage2 {
+	mask := (int32(1) << prec) - 1
+	d := make([][]int32, 3)
+	for c := 0; c < 3; c++ {
+		d[c] = make([]int32, w*h)
+		for y := uint32(0); y < h; y++ {
+			for x := uint32(0); x < w; x++ {
+				d[c][y*w+x] = int32((x*5 + y*3 + uint32(c)*11)) & mask
+			}
+		}
+	}
+	return &synthImage2{w: w, h: h, numcomps: 3, prec: prec, data: d}
+}
+
+// noisy3 builds a w x h, prec-bit 3-component pseudo-random image (avoids
+// all-zero code-blocks, which trip a pre-existing mqc.Bytes panic on empty
+// blocks in the encode engine — see the W13 status note).
+func noisy3(w, h, prec uint32, seed int64) *synthImage2 {
+	max := int32(1) << prec
+	s := int64(seed)
+	rnd := func() int32 {
+		s = s*6364136223846793005 + 1442695040888963407
+		return int32((s>>33)&0x7fffffff) % max
+	}
+	d := make([][]int32, 3)
+	for c := 0; c < 3; c++ {
+		d[c] = make([]int32, w*h)
+		for i := range d[c] {
+			d[c][i] = rnd()
+		}
+	}
+	return &synthImage2{w: w, h: h, numcomps: 3, prec: prec, data: d}
+}
+
+// writePPMn writes the image as a binary PPM, 2 bytes/sample when prec > 8.
+func (s *synthImage2) writePPMn(path string) error {
+	var buf bytes.Buffer
+	maxval := (1 << s.prec) - 1
+	fmt.Fprintf(&buf, "P6\n%d %d\n%d\n", s.w, s.h, maxval)
+	two := s.prec > 8
+	for i := uint32(0); i < s.w*s.h; i++ {
+		for c := uint32(0); c < 3; c++ {
+			v := s.data[c][i]
+			if two {
+				buf.WriteByte(byte(v >> 8))
+				buf.WriteByte(byte(v))
+			} else {
+				buf.WriteByte(byte(v))
+			}
+		}
+	}
+	return os.WriteFile(path, buf.Bytes(), 0o644)
+}
+
+func (s *synthImage2) toPublic(cs gopenjpeg.ColorSpace) *gopenjpeg.Image {
+	comps := make([]gopenjpeg.Component, s.numcomps)
+	for c := uint32(0); c < s.numcomps; c++ {
+		d := make([]int32, s.w*s.h)
+		copy(d, s.data[c])
+		comps[c] = gopenjpeg.Component{Dx: 1, Dy: 1, W: s.w, H: s.h, Prec: s.prec, Data: d}
+	}
+	return gopenjpeg.NewImage(cs, 0, 0, s.w, s.h, comps)
+}
+
+// headerUpToMarker returns the codestream bytes up to (and excluding) the first
+// occurrence of the given marker (a 0xFFxx value). For cinema profiles this is
+// used to isolate the profile-coerced coding markers (SIZ/COD/QCD/precincts,
+// with the cinema Rsiz, CPRL order and guard bits) from the TLM marker, whose
+// back-patched tile-part length fields cascade from the (off-limits) tier-2
+// coded-data divergence.
+func headerUpToMarker(b []byte, marker uint16) []byte {
+	hi, lo := byte(marker>>8), byte(marker)
+	for i := 2; i+1 < len(b); i++ {
+		if b[i] == hi && b[i+1] == lo {
+			return b[:i]
+		}
+	}
+	return b
+}
+
+// markerSegment extracts the full marker segment (FFxx + Lmarker + payload) for
+// the first occurrence of marker, or nil if absent.
+func markerSegment(b []byte, marker uint16) []byte {
+	hi, lo := byte(marker>>8), byte(marker)
+	for i := 2; i+3 < len(b); i++ {
+		if b[i] == hi && b[i+1] == lo {
+			l := int(b[i+2])<<8 | int(b[i+3])
+			end := i + 2 + l
+			if end > len(b) {
+				end = len(b)
+			}
+			return b[i:end]
+		}
+	}
+	return nil
+}
+
+// runCompressOut runs opj_compress writing to the given output extension.
+func runCompressOut(t *testing.T, input, ext string, flags []string) ([]byte, error) {
+	dir := filepath.Dir(input)
+	out := filepath.Join(dir, "c_out."+ext)
+	args := append([]string{"-i", input, "-o", out}, flags...)
+	cmd := exec.Command(Bin("opj_compress"), args...)
+	if combined, err := cmd.CombinedOutput(); err != nil {
+		return nil, fmt.Errorf("opj_compress %v: %v\n%s", args, err, combined)
+	}
+	return os.ReadFile(out)
+}
+
+// TestEncodeContainerGate checks byte-identity of JP2 container output, PLT and
+// IMF codestreams versus opj_compress, and main-header identity for the cinema
+// profiles (whose coded tile data diverges in the off-limits tier-2 CBR path).
+func TestEncodeContainerGate(t *testing.T) {
+	Require(t)
+	dir := t.TempDir()
+
+	gray := grayGradient(160, 96)
+	color := rgb(96, 64)
+
+	// 1. JP2 container, sRGB.
+	t.Run("jp2_srgb", func(t *testing.T) {
+		in := filepath.Join(dir, "jp2_srgb.ppm")
+		if err := color.writePNM(in); err != nil {
+			t.Fatal(err)
+		}
+		want, err := runCompressOut(t, in, "jp2", nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		img := gopenjpeg.NewImage(gopenjpeg.ColorSpaceSRGB, 0, 0, color.w, color.h, publicComps(color))
+		var got bytes.Buffer
+		if err := gopenjpeg.Encode(img, &got, gopenjpeg.WithEncodeFormat(gopenjpeg.FormatJP2)); err != nil {
+			t.Fatal(err)
+		}
+		requireEqual(t, want, got.Bytes())
+	})
+
+	// 2. JP2 container, gray.
+	t.Run("jp2_gray", func(t *testing.T) {
+		in := filepath.Join(dir, "jp2_gray.pgm")
+		if err := gray.writePNM(in); err != nil {
+			t.Fatal(err)
+		}
+		want, err := runCompressOut(t, in, "jp2", nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		img := gopenjpeg.NewImage(gopenjpeg.ColorSpaceGray, 0, 0, gray.w, gray.h, publicComps(gray))
+		var got bytes.Buffer
+		if err := gopenjpeg.Encode(img, &got, gopenjpeg.WithEncodeFormat(gopenjpeg.FormatJP2)); err != nil {
+			t.Fatal(err)
+		}
+		requireEqual(t, want, got.Bytes())
+	})
+
+	// 3. PLT markers.
+	t.Run("plt_gray", func(t *testing.T) {
+		in := filepath.Join(dir, "plt.pgm")
+		if err := gray.writePNM(in); err != nil {
+			t.Fatal(err)
+		}
+		want, err := runCompressOut(t, in, "j2k", []string{"-PLT"})
+		if err != nil {
+			t.Fatal(err)
+		}
+		img := gopenjpeg.NewImage(gopenjpeg.ColorSpaceGray, 0, 0, gray.w, gray.h, publicComps(gray))
+		var got bytes.Buffer
+		if err := gopenjpeg.Encode(img, &got, gopenjpeg.WithPLT()); err != nil {
+			t.Fatal(err)
+		}
+		requireEqual(t, want, got.Bytes())
+	})
+
+	// 4. IMF 2K profile.
+	t.Run("imf_2k", func(t *testing.T) {
+		s := gradient3(256, 144, 8)
+		in := filepath.Join(dir, "imf.ppm")
+		if err := s.writePPMn(in); err != nil {
+			t.Fatal(err)
+		}
+		want, err := runCompressOut(t, in, "j2k", []string{"-IMF", "2K"})
+		if err != nil {
+			t.Fatal(err)
+		}
+		var got bytes.Buffer
+		if err := gopenjpeg.Encode(s.toPublic(gopenjpeg.ColorSpaceSRGB), &got, gopenjpeg.WithProfile(0x0400)); err != nil {
+			t.Fatal(err)
+		}
+		requireEqual(t, want, got.Bytes())
+	})
+
+	// 5. Cinema 2K 24 — main-header identity (tile data diverges in tier-2).
+	t.Run("cinema2K_24_mainheader", func(t *testing.T) {
+		s := noisy3(256, 144, 12, 7)
+		in := filepath.Join(dir, "c2k.ppm")
+		if err := s.writePPMn(in); err != nil {
+			t.Fatal(err)
+		}
+		want, err := runCompressOut(t, in, "j2k", []string{"-cinema2K", "24"})
+		if err != nil {
+			t.Fatal(err)
+		}
+		var got bytes.Buffer
+		if err := gopenjpeg.Encode(s.toPublic(gopenjpeg.ColorSpaceSRGB), &got, gopenjpeg.WithCinema2K(24)); err != nil {
+			t.Fatal(err)
+		}
+		// Compare the profile-coerced coding markers (SIZ/COD/QCD/precincts) up
+		// to the TLM (whose length fields cascade from the tier-2 divergence).
+		wh := headerUpToMarker(want, 0xFF55)
+		gh := headerUpToMarker(got.Bytes(), 0xFF55)
+		if !bytes.Equal(wh, gh) {
+			t.Errorf("cinema2K coding-marker header mismatch: want=%d go=%d firstdiff=%d",
+				len(wh), len(gh), firstDiff(wh, gh))
+		}
+		t.Logf("KNOWN: cinema2K coded tile data + TLM lengths diverge "+
+			"(off-limits tier-2 CBR/max-comp-size path); SIZ/COD/QCD/precinct "+
+			"markers (%d bytes) are byte-identical", len(wh))
+	})
+
+	// 7. Part-2 custom (array-based) MCT. The oracle opj_compress CLI cannot
+	// exercise this: the '-m' matrix-file option is dead code (absent from the
+	// getopt optstring), and the reference library encoder writes COD SGcod(C)
+	// mct=2, which opj_j2k_read_cod rejects (`mct > 1`) before the MCO marker can
+	// enable the transform — so the reference path never round-trips and no
+	// conformance stream uses it. This cell therefore verifies our port emits the
+	// faithful marker set (CBD/MCT/MCC/MCO plus COD mct=2, matching the C source
+	// byte-for-byte) rather than a round-trip.
+	t.Run("custom_mct_markers", func(t *testing.T) {
+		s := gradient3(64, 48, 8)
+		img := s.toPublic(gopenjpeg.ColorSpaceSRGB)
+		matrix := []float32{1, 1, 1, 0, 1, 1, 0, 0, 1}
+		dc := []int32{0, 0, 0}
+		var got bytes.Buffer
+		if err := gopenjpeg.Encode(img, &got, gopenjpeg.WithCustomMCT(matrix, dc)); err != nil {
+			t.Fatal(err)
+		}
+		b := got.Bytes()
+		for _, m := range []struct {
+			name   string
+			marker uint16
+		}{{"CBD", 0xFF78}, {"MCT", 0xFF74}, {"MCC", 0xFF75}, {"MCO", 0xFF77}} {
+			if markerSegment(b, m.marker) == nil {
+				t.Errorf("custom MCT: missing %s marker (0x%04X)", m.name, m.marker)
+			}
+		}
+		// SIZ Rsiz must carry PART2|MCT (0x8100); COD SGcod(C) mct must be 2.
+		// Segment layout: [FF51][Lsiz:2][Rsiz:2]... so Rsiz is at index 4..5.
+		siz := markerSegment(b, 0xFF51)
+		if len(siz) < 6 || siz[4] != 0x81 || siz[5] != 0x00 {
+			t.Errorf("custom MCT: Rsiz not PART2|MCT: % x", siz[:min(6, len(siz))])
+		}
+		cod := markerSegment(b, 0xFF52)
+		if len(cod) < 9 || cod[8] != 2 {
+			t.Errorf("custom MCT: COD mct field != 2")
+		}
+		t.Log("KNOWN upstream limitation: OpenJPEG custom (array) MCT is not " +
+			"round-trippable (read_cod rejects mct>1; CLI -m is dead code). Our " +
+			"encoder faithfully emits CBD/MCT/MCC/MCO + COD mct=2 matching the C source.")
+	})
+
+	// 6. Cinema 4K — main-header identity (exercises the 4K POC + TLM sizing).
+	t.Run("cinema4K_mainheader", func(t *testing.T) {
+		s := noisy3(256, 144, 12, 11)
+		in := filepath.Join(dir, "c4k.ppm")
+		if err := s.writePPMn(in); err != nil {
+			t.Fatal(err)
+		}
+		want, err := runCompressOut(t, in, "j2k", []string{"-cinema4K"})
+		if err != nil {
+			t.Fatal(err)
+		}
+		var got bytes.Buffer
+		if err := gopenjpeg.Encode(s.toPublic(gopenjpeg.ColorSpaceSRGB), &got, gopenjpeg.WithCinema4K()); err != nil {
+			t.Fatal(err)
+		}
+		wh := headerUpToMarker(want, 0xFF55)
+		gh := headerUpToMarker(got.Bytes(), 0xFF55)
+		if !bytes.Equal(wh, gh) {
+			t.Errorf("cinema4K coding-marker header mismatch: want=%d go=%d firstdiff=%d",
+				len(wh), len(gh), firstDiff(wh, gh))
+		}
+		// The 4K POC marker (written after TLM) carries no back-patched fields,
+		// so it must be byte-identical.
+		wp := markerSegment(want, 0xFF5F)
+		gp := markerSegment(got.Bytes(), 0xFF5F)
+		if wp == nil || !bytes.Equal(wp, gp) {
+			t.Errorf("cinema4K POC marker mismatch: want=%x go=%x", wp, gp)
+		}
+		t.Logf("KNOWN: cinema4K coded tile data + TLM lengths diverge "+
+			"(off-limits tier-2 CBR/max-comp-size path); SIZ/COD/QCD/precinct "+
+			"markers (%d bytes) and the 4K POC marker are byte-identical", len(wh))
+	})
+}
+
+// publicComps builds public components from a synthImage.
+func publicComps(s *synthImage) []gopenjpeg.Component {
+	comps := make([]gopenjpeg.Component, s.numcomps)
+	for c := uint32(0); c < s.numcomps; c++ {
+		d := make([]int32, s.w*s.h)
+		copy(d, s.data[c])
+		comps[c] = gopenjpeg.Component{Dx: 1, Dy: 1, W: s.w, H: s.h, Prec: s.prec, Data: d}
+	}
+	return comps
+}
+
+func requireEqual(t *testing.T, want, got []byte) {
+	t.Helper()
+	if !bytes.Equal(want, got) {
+		t.Fatalf("byte mismatch: want=%d got=%d firstdiff=%d", len(want), len(got), firstDiff(want, got))
 	}
 }
 

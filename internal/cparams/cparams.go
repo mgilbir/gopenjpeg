@@ -74,6 +74,10 @@ const (
 	ProfileNone = 0x0000
 	// ProfilePart2 ports OPJ_PROFILE_PART2.
 	ProfilePart2 = 0x8000
+	// ExtensionNone ports OPJ_EXTENSION_NONE.
+	ExtensionNone = 0x0000
+	// ExtensionMCT ports OPJ_EXTENSION_MCT (custom MCT support).
+	ExtensionMCT = 0x0100
 	// ProfileCinema2K ports OPJ_PROFILE_CINEMA_2K.
 	ProfileCinema2K = 0x0003
 	// ProfileCinema4K ports OPJ_PROFILE_CINEMA_4K.
@@ -99,6 +103,9 @@ func IsCinema(rsiz uint16) bool {
 func IsIMF(rsiz uint16) bool {
 	return rsiz >= ProfileIMF2K && rsiz <= (ProfileIMF8KR|0x009b)
 }
+
+// IsPart2 ports the OPJ_IS_PART2(v) macro.
+func IsPart2(rsiz uint16) bool { return rsiz&ProfilePart2 != 0 }
 
 // ProgOrder ports OPJ_PROG_ORDER (enum PROG_ORDER).
 type ProgOrder int32

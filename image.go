@@ -69,6 +69,46 @@ type Image struct {
 // newImage wraps an internal image.Image.
 func newImage(img *image.Image) *Image { return &Image{img: img} }
 
+// internal returns the wrapped internal image, for the encode path.
+func (im *Image) internal() *image.Image { return im.img }
+
+// NewImage builds an Image for encoding from the reference-grid rectangle
+// [x0,y0)-(x1,y1), colour space cs and per-component sample data. Each
+// Component's Data slice must hold W*H samples in raster order. The returned
+// Image can be passed to Encode. It is the encode-side counterpart of the
+// decode Component accessors.
+func NewImage(cs ColorSpace, x0, y0, x1, y1 uint32, comps []Component) *Image {
+	img := &image.Image{
+		X0: x0, Y0: y0, X1: x1, Y1: y1,
+		Numcomps:   uint32(len(comps)),
+		ColorSpace: image.ColorSpace(cs),
+		Comps:      make([]image.Comp, len(comps)),
+	}
+	for i, c := range comps {
+		var sgnd uint32
+		if c.Sgnd {
+			sgnd = 1
+		}
+		img.Comps[i] = image.Comp{
+			Dx: c.Dx, Dy: c.Dy, W: c.W, H: c.H, X0: c.X0, Y0: c.Y0,
+			Prec: c.Prec, Sgnd: sgnd, Alpha: c.Alpha, Data: c.Data,
+		}
+	}
+	return newImage(img)
+}
+
+// SetICCProfile attaches an ICC profile to the image (used for JP2 colr meth=2
+// encoding). A nil or empty slice clears any existing profile.
+func (im *Image) SetICCProfile(profile []byte) {
+	if len(profile) == 0 {
+		im.img.ICCProfileBuf = nil
+		im.img.ICCProfileLen = 0
+		return
+	}
+	im.img.ICCProfileBuf = append([]byte(nil), profile...)
+	im.img.ICCProfileLen = uint32(len(profile))
+}
+
 // NumComponents returns the number of image components.
 func (im *Image) NumComponents() int { return int(im.img.Numcomps) }
 

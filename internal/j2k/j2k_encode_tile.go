@@ -239,7 +239,23 @@ func (e *Encoder) writeSOD(data []byte, totalDataSize uint32, mgr *event.Manager
 		return 0, err
 	}
 	written += 2 // SOD marker
-	// PLT marker writing is not enabled in this port.
+
+	if e.enc.plt {
+		// Serialise PLT marker(s) into a temporary buffer, then move the SOD +
+		// packet data forward and prepend the PLT (opj_j2k_write_sod).
+		pltBuf := make([]byte, e.enc.reservedBytesPLT)
+		pltWritten, perr := writePLTInMemory(markerInfo, pltBuf, mgr)
+		if perr != nil {
+			return 0, perr
+		}
+		if pltWritten > e.enc.reservedBytesPLT {
+			mgr.Errorf("PLT marker overflow\n")
+			return 0, ErrEncodeWrite
+		}
+		copy(data[pltWritten:pltWritten+written], data[:written])
+		copy(data[:pltWritten], pltBuf[:pltWritten])
+		written += pltWritten
+	}
 	return written, nil
 }
 
