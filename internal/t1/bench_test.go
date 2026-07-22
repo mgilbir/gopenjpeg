@@ -70,3 +70,72 @@ func BenchmarkDecodeCblkVectors(b *testing.B) {
 		}
 	}
 }
+
+// benchEncCblk is a preloaded encode vector ready to be replayed.
+type benchEncCblk struct {
+	input                                            []int32
+	w, h                                             uint32
+	orient, compno, level, qmfbid, cblksty, numcomps uint32
+	stepsize                                         float64
+}
+
+// loadEncodeCblks preloads every t1 encode vector so BenchmarkEncodeCblkVectors
+// measures only EncodeCblk (tier-1 + MQC encoder), no I/O.
+func loadEncodeCblks(b *testing.B) []benchEncCblk {
+	c := loadVectors(b, "t1_encode.bin.gz")
+	if m := c.magic(); m != "T1EN0001" {
+		b.Fatalf("bad magic %q", m)
+	}
+	count := c.u32()
+	out := make([]benchEncCblk, 0, count)
+	for rec := uint32(0); rec < count; rec++ {
+		w := c.u32()
+		h := c.u32()
+		orient := c.u32()
+		compno := c.u32()
+		level := c.u32()
+		qmfbid := c.u32()
+		cblksty := c.u32()
+		numcomps := c.u32()
+		stepsize := c.f64()
+		input := make([]int32, w*h)
+		for i := range input {
+			input[i] = c.i32()
+		}
+		// Skip the expected-output portion of the record (numbps, passes, stream).
+		_ = c.u32() // numbps
+		wantTotal := c.u32()
+		for p := uint32(0); p < wantTotal; p++ {
+			c.u32() // rate
+			c.u32() // term
+			c.f64() // dist
+		}
+		wantLen := c.u32()
+		c.bytes(wantLen)
+		out = append(out, benchEncCblk{
+			input: input, w: w, h: h,
+			orient: orient, compno: compno, level: level, qmfbid: qmfbid,
+			cblksty: cblksty, numcomps: numcomps, stepsize: stepsize,
+		})
+	}
+	return out
+}
+
+// BenchmarkEncodeCblkVectors replays every encode vector; low-noise measurement
+// of the tier-1 + MQC encoder hot path in isolation from DWT/MCT/rate control.
+func BenchmarkEncodeCblkVectors(b *testing.B) {
+	vecs := loadEncodeCblks(b)
+	enc := New(true)
+	var cblk CodeBlockEnc
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		for j := range vecs {
+			v := &vecs[j]
+			enc.SetData(v.input, v.w, v.h)
+			cblk = CodeBlockEnc{X0: 0, Y0: 0, X1: int32(v.w), Y1: int32(v.h),
+				Passes: cblk.Passes[:0], Data: cblk.Data[:0]}
+			enc.EncodeCblk(&cblk, v.orient, v.compno, v.level, v.qmfbid,
+				v.stepsize, v.cblksty, v.numcomps, nil, 0)
+		}
+	}
+}

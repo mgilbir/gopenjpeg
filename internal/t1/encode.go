@@ -4,6 +4,7 @@ import (
 	"math"
 
 	"github.com/mgilbir/gopenjpeg/internal/dwt"
+	"github.com/mgilbir/gopenjpeg/internal/mqc"
 	"github.com/mgilbir/gopenjpeg/internal/opjmath"
 )
 
@@ -98,6 +99,150 @@ func (t *T1) encSigpass(bpno int32, nmsedec *int32, typ int, cblksty uint32) {
 	}
 }
 
+// encSigpassStepMQC is the register-resident (MQ, non-RAW) port of
+// opj_t1_enc_sigpass_step_macro. The MQ encoder registers are threaded in the
+// caller's EncState so no per-symbol *MQC method call occurs; the centre flag
+// word is addressed via center (== &t.flags[fp]) so updateFlagsCenter's centre
+// write and the pi-marker are visible to the following steps, exactly as the
+// array-based encSigpassStep re-reads t.flags[fp].
+func (t *T1) encSigpassStepMQC(center *uint32, fp, dp int, bpno, one int32, nmsedec *int32, ci, vsc uint32, s mqc.EncState, ctxs *[mqc.NumCtxs]int32) mqc.EncState {
+	flags := *center
+	if flags&((t1SigmaThis|t1PiThis)<<(ci*3)) == 0 &&
+		flags&(t1SigmaNeighbours<<(ci*3)) != 0 {
+		var v uint32
+		if smrAbs(t.data[dp])&uint32(one) != 0 {
+			v = 1
+		}
+		s = t.mqc.EncodeReg(s, ctxs, int(t.getctxnoZC(flags>>(ci*3))), v)
+		if v != 0 {
+			lu := getctxtnoScOrSpbIndex(flags, t.flags[fp-1], t.flags[fp+1], ci)
+			sign := smrSign(t.data[dp])
+			*nmsedec += getnmsedecSig(smrAbs(t.data[dp]), uint32(bpno))
+			s = t.mqc.EncodeReg(s, ctxs, int(getctxnoSC(lu)), sign^getspb(lu))
+			t.updateFlagsCenter(center, fp, ci, sign, t.w+2, vsc)
+		}
+		*center |= t1PiThis << (ci * 3)
+	}
+	return s
+}
+
+// encSigpassMQC is the register-resident (MQ) port of opj_t1_enc_sigpass: it
+// downloads the MQ encoder registers once (LoadEnc), holds the EncState in a
+// local across the whole pass — the four per-column steps are inlined so the
+// registers stay resident and no step-call arg-spilling occurs (mirrors the
+// decode-side decSigpassMQC / the C DOWNLOAD/UPLOAD_MQC_VARIABLES pattern) — and
+// uploads them once (StoreEnc). The RAW variant stays on encSigpass. The centre
+// flag word is threaded in the local flags (updateFlagsCenter), matching the way
+// the array-based encSigpassStep re-reads t.flags[fp] between steps.
+func (t *T1) encSigpassMQC(bpno int32, nmsedec *int32, cblksty uint32) {
+	one := int32(1) << uint(bpno+t1NmsedecFracbits)
+	stride := t.w + 2
+	f := int(stride) + 1
+	datap := 0
+	vscBlk := uint32(0)
+	if cblksty&CblkstyVSC != 0 {
+		vscBlk = 1
+	}
+	*nmsedec = 0
+	s := t.mqc.LoadEnc()
+	ctxs := t.mqc.Ctxs()
+	var i, j, k uint32
+	for k = 0; k < (t.h &^ 3); k += 4 {
+		for i = 0; i < t.w; i++ {
+			flags := t.flags[f]
+			if flags != 0 {
+				// ci = 0 (carries the block-level vertical-stripe-causal vsc).
+				if flags&((t1SigmaThis|t1PiThis)<<0) == 0 && flags&(t1SigmaNeighbours<<0) != 0 {
+					var v uint32
+					if smrAbs(t.data[datap+0])&uint32(one) != 0 {
+						v = 1
+					}
+					s = t.mqc.EncodeReg(s, ctxs, int(t.getctxnoZC(flags)), v)
+					if v != 0 {
+						lu := getctxtnoScOrSpbIndex(flags, t.flags[f-1], t.flags[f+1], 0)
+						sign := smrSign(t.data[datap+0])
+						*nmsedec += getnmsedecSig(smrAbs(t.data[datap+0]), uint32(bpno))
+						s = t.mqc.EncodeReg(s, ctxs, int(getctxnoSC(lu)), sign^getspb(lu))
+						t.updateFlagsCenter(&flags, f, 0, sign, stride, vscBlk)
+					}
+					flags |= t1PiThis << 0
+				}
+				// ci = 1
+				if flags&((t1SigmaThis|t1PiThis)<<3) == 0 && flags&(t1SigmaNeighbours<<3) != 0 {
+					var v uint32
+					if smrAbs(t.data[datap+1])&uint32(one) != 0 {
+						v = 1
+					}
+					s = t.mqc.EncodeReg(s, ctxs, int(t.getctxnoZC(flags>>3)), v)
+					if v != 0 {
+						lu := getctxtnoScOrSpbIndex(flags, t.flags[f-1], t.flags[f+1], 1)
+						sign := smrSign(t.data[datap+1])
+						*nmsedec += getnmsedecSig(smrAbs(t.data[datap+1]), uint32(bpno))
+						s = t.mqc.EncodeReg(s, ctxs, int(getctxnoSC(lu)), sign^getspb(lu))
+						t.updateFlagsCenter(&flags, f, 1, sign, stride, 0)
+					}
+					flags |= t1PiThis << 3
+				}
+				// ci = 2
+				if flags&((t1SigmaThis|t1PiThis)<<6) == 0 && flags&(t1SigmaNeighbours<<6) != 0 {
+					var v uint32
+					if smrAbs(t.data[datap+2])&uint32(one) != 0 {
+						v = 1
+					}
+					s = t.mqc.EncodeReg(s, ctxs, int(t.getctxnoZC(flags>>6)), v)
+					if v != 0 {
+						lu := getctxtnoScOrSpbIndex(flags, t.flags[f-1], t.flags[f+1], 2)
+						sign := smrSign(t.data[datap+2])
+						*nmsedec += getnmsedecSig(smrAbs(t.data[datap+2]), uint32(bpno))
+						s = t.mqc.EncodeReg(s, ctxs, int(getctxnoSC(lu)), sign^getspb(lu))
+						t.updateFlagsCenter(&flags, f, 2, sign, stride, 0)
+					}
+					flags |= t1PiThis << 6
+				}
+				// ci = 3
+				if flags&((t1SigmaThis|t1PiThis)<<9) == 0 && flags&(t1SigmaNeighbours<<9) != 0 {
+					var v uint32
+					if smrAbs(t.data[datap+3])&uint32(one) != 0 {
+						v = 1
+					}
+					s = t.mqc.EncodeReg(s, ctxs, int(t.getctxnoZC(flags>>9)), v)
+					if v != 0 {
+						lu := getctxtnoScOrSpbIndex(flags, t.flags[f-1], t.flags[f+1], 3)
+						sign := smrSign(t.data[datap+3])
+						*nmsedec += getnmsedecSig(smrAbs(t.data[datap+3]), uint32(bpno))
+						s = t.mqc.EncodeReg(s, ctxs, int(getctxnoSC(lu)), sign^getspb(lu))
+						t.updateFlagsCenter(&flags, f, 3, sign, stride, 0)
+					}
+					flags |= t1PiThis << 9
+				}
+				t.flags[f] = flags
+			}
+			f++
+			datap += 4
+		}
+		f += 2
+	}
+	if k < t.h {
+		for i = 0; i < t.w; i++ {
+			if t.flags[f] == 0 {
+				datap += int(t.h - k)
+				f++
+				continue
+			}
+			for j = k; j < t.h; j++ {
+				vsc := uint32(0)
+				if j == k && cblksty&CblkstyVSC != 0 {
+					vsc = 1
+				}
+				s = t.encSigpassStepMQC(&t.flags[f], f, datap, bpno, one, nmsedec, j-k, vsc, s, ctxs)
+				datap++
+			}
+			f++
+		}
+	}
+	t.mqc.StoreEnc(s)
+}
+
 // ---------------------------------------------------------------------------
 // Refinement pass (encode)
 // ---------------------------------------------------------------------------
@@ -172,12 +317,130 @@ func (t *T1) encRefpass(bpno int32, nmsedec *int32, typ int) {
 	}
 }
 
+// encRefpassStepMQC is the register-resident (MQ) port of
+// opj_t1_enc_refpass_step_macro; flags is the snapshot read once by the caller
+// (the condition never observes the mu updates), and the mu marker accumulates
+// into flagsUpdated via center.
+func (t *T1) encRefpassStepMQC(flags uint32, center *uint32, dp int, bpno, one int32, nmsedec *int32, ci uint32, s mqc.EncState, ctxs *[mqc.NumCtxs]int32) mqc.EncState {
+	if flags&((t1SigmaThis|t1PiThis)<<(ci*3)) == (t1SigmaThis << (ci * 3)) {
+		absData := smrAbs(t.data[dp])
+		*nmsedec += getnmsedecRef(absData, uint32(bpno))
+		var v uint32
+		if int32(absData)&one != 0 {
+			v = 1
+		}
+		s = t.mqc.EncodeReg(s, ctxs, int(getctxnoMag(flags>>(ci*3))), v)
+		*center |= t1MuThis << (ci * 3)
+	}
+	return s
+}
+
+// encRefpassMQC is the register-resident (MQ) port of opj_t1_enc_refpass with
+// the four per-column steps inlined so the EncState stays register-resident
+// across the pass (mirrors decRefpassMQC). The mu markers accumulate into the
+// local flags; the sig/pi conditions never observe them (different bit), so a
+// single local suffices. The RAW variant stays on encRefpass.
+func (t *T1) encRefpassMQC(bpno int32, nmsedec *int32) {
+	one := int32(1) << uint(bpno+t1NmsedecFracbits)
+	f := int(t.w+2) + 1
+	datap := 0
+	*nmsedec = 0
+	const sigMask = t1Sigma4 | t1Sigma7 | t1Sigma10 | t1Sigma13
+	s := t.mqc.LoadEnc()
+	ctxs := t.mqc.Ctxs()
+	var i, j, k uint32
+	for k = 0; k < (t.h &^ 3); k += 4 {
+		for i = 0; i < t.w; i++ {
+			flags := t.flags[f]
+			if flags&sigMask == 0 {
+				f++
+				datap += 4
+				continue
+			}
+			if flags&t1PiAll == t1PiAll {
+				f++
+				datap += 4
+				continue
+			}
+			// ci = 0
+			if flags&((t1SigmaThis|t1PiThis)<<0) == (t1SigmaThis << 0) {
+				absData := smrAbs(t.data[datap+0])
+				*nmsedec += getnmsedecRef(absData, uint32(bpno))
+				var v uint32
+				if int32(absData)&one != 0 {
+					v = 1
+				}
+				s = t.mqc.EncodeReg(s, ctxs, int(getctxnoMag(flags)), v)
+				flags |= t1MuThis << 0
+			}
+			// ci = 1
+			if flags&((t1SigmaThis|t1PiThis)<<3) == (t1SigmaThis << 3) {
+				absData := smrAbs(t.data[datap+1])
+				*nmsedec += getnmsedecRef(absData, uint32(bpno))
+				var v uint32
+				if int32(absData)&one != 0 {
+					v = 1
+				}
+				s = t.mqc.EncodeReg(s, ctxs, int(getctxnoMag(flags>>3)), v)
+				flags |= t1MuThis << 3
+			}
+			// ci = 2
+			if flags&((t1SigmaThis|t1PiThis)<<6) == (t1SigmaThis << 6) {
+				absData := smrAbs(t.data[datap+2])
+				*nmsedec += getnmsedecRef(absData, uint32(bpno))
+				var v uint32
+				if int32(absData)&one != 0 {
+					v = 1
+				}
+				s = t.mqc.EncodeReg(s, ctxs, int(getctxnoMag(flags>>6)), v)
+				flags |= t1MuThis << 6
+			}
+			// ci = 3
+			if flags&((t1SigmaThis|t1PiThis)<<9) == (t1SigmaThis << 9) {
+				absData := smrAbs(t.data[datap+3])
+				*nmsedec += getnmsedecRef(absData, uint32(bpno))
+				var v uint32
+				if int32(absData)&one != 0 {
+					v = 1
+				}
+				s = t.mqc.EncodeReg(s, ctxs, int(getctxnoMag(flags>>9)), v)
+				flags |= t1MuThis << 9
+			}
+			t.flags[f] = flags
+			f++
+			datap += 4
+		}
+		f += 2
+	}
+	if k < t.h {
+		remaining := t.h - k
+		for i = 0; i < t.w; i++ {
+			if t.flags[f]&sigMask == 0 {
+				datap += int(remaining)
+				f++
+				continue
+			}
+			for j = 0; j < remaining; j++ {
+				cur := t.flags[f]
+				s = t.encRefpassStepMQC(cur, &t.flags[f], datap, bpno, one, nmsedec, j, s, ctxs)
+				datap++
+			}
+			f++
+		}
+	}
+	t.mqc.StoreEnc(s)
+}
+
 // ---------------------------------------------------------------------------
 // Clean-up pass (encode)
 // ---------------------------------------------------------------------------
 
-// encClnpassStep ports opj_t1_enc_clnpass_step_macro (the [runlen, lim) range).
-func (t *T1) encClnpassStep(fp, datapStart int, bpno, one int32, nmsedec *int32, agg, runlen, lim, cblksty uint32) {
+// encClnpassStep is the register-resident port of opj_t1_enc_clnpass_step_macro
+// (the [runlen, lim) range). The clean-up pass is never RAW, so the MQ encoder
+// registers are always threaded in the caller's EncState. The flag-word handling
+// (t.flags[fp] reads/writes, updateFlags) is identical to the array-based C code;
+// only the per-symbol MQ calls become the inlinable EncodeReg.
+func (t *T1) encClnpassStep(fp, datapStart int, bpno, one int32, nmsedec *int32, agg, runlen, lim, cblksty uint32, s mqc.EncState, ctxs *[mqc.NumCtxs]int32) mqc.EncState {
 	const check = t1Sigma4 | t1Sigma7 | t1Sigma10 | t1Sigma13 | t1Pi0 | t1Pi1 | t1Pi2 | t1Pi3
 	if t.flags[fp]&check == check {
 		switch runlen {
@@ -190,7 +453,7 @@ func (t *T1) encClnpassStep(fp, datapStart int, bpno, one int32, nmsedec *int32,
 		case 3:
 			t.flags[fp] &^= t1Pi3
 		}
-		return
+		return s
 	}
 	ldatap := datapStart
 	for ci := runlen; ci < lim; ci++ {
@@ -198,12 +461,11 @@ func (t *T1) encClnpassStep(fp, datapStart int, bpno, one int32, nmsedec *int32,
 		if agg != 0 && ci == runlen {
 			gotoPartial = true
 		} else if t.flags[fp]&((t1SigmaThis|t1PiThis)<<(ci*3)) == 0 {
-			t.mqc.SetCurCtx(t.getctxnoZC(t.flags[fp] >> (ci * 3)))
 			var v uint32
 			if smrAbs(t.data[ldatap])&uint32(one) != 0 {
 				v = 1
 			}
-			t.mqc.Encode(v)
+			s = t.mqc.EncodeReg(s, ctxs, int(t.getctxnoZC(t.flags[fp]>>(ci*3))), v)
 			if v != 0 {
 				gotoPartial = true
 			}
@@ -211,9 +473,8 @@ func (t *T1) encClnpassStep(fp, datapStart int, bpno, one int32, nmsedec *int32,
 		if gotoPartial {
 			lu := getctxtnoScOrSpbIndex(t.flags[fp], t.flags[fp-1], t.flags[fp+1], ci)
 			*nmsedec += getnmsedecSig(smrAbs(t.data[ldatap]), uint32(bpno))
-			t.mqc.SetCurCtx(getctxnoSC(lu))
 			v := smrSign(t.data[ldatap])
-			t.mqc.Encode(v ^ getspb(lu))
+			s = t.mqc.EncodeReg(s, ctxs, int(getctxnoSC(lu)), v^getspb(lu))
 			vsc := uint32(0)
 			if cblksty&CblkstyVSC != 0 && ci == 0 {
 				vsc = 1
@@ -223,14 +484,20 @@ func (t *T1) encClnpassStep(fp, datapStart int, bpno, one int32, nmsedec *int32,
 		t.flags[fp] &^= t1PiThis << (3 * ci)
 		ldatap++
 	}
+	return s
 }
 
-// encClnpass ports opj_t1_enc_clnpass.
+// encClnpass is the register-resident port of opj_t1_enc_clnpass. It downloads
+// the MQ encoder registers once (LoadEnc), threads them through the pass — the
+// aggregation/run-length symbols and every per-column step — and uploads them
+// once (StoreEnc). The clean-up pass is always MQ (never RAW).
 func (t *T1) encClnpass(bpno int32, nmsedec *int32, cblksty uint32) {
 	one := int32(1) << uint(bpno+t1NmsedecFracbits)
 	datap := 0
 	f := int(t.w+2) + 1
 	*nmsedec = 0
+	s := t.mqc.LoadEnc()
+	ctxs := t.mqc.Ctxs()
 	var i, k uint32
 	for k = 0; k < (t.h &^ 3); k += 4 {
 		for i = 0; i < t.w; i++ {
@@ -245,23 +512,66 @@ func (t *T1) encClnpass(bpno int32, nmsedec *int32, cblksty uint32) {
 					}
 					datap++
 				}
-				t.mqc.SetCurCtx(t1CtxnoAgg)
 				var b uint32
 				if runlen != 4 {
 					b = 1
 				}
-				t.mqc.Encode(b)
+				s = t.mqc.EncodeReg(s, ctxs, t1CtxnoAgg, b)
 				if runlen == 4 {
 					f++
 					continue
 				}
-				t.mqc.SetCurCtx(t1CtxnoUni)
-				t.mqc.Encode(runlen >> 1)
-				t.mqc.Encode(runlen & 1)
+				s = t.mqc.EncodeReg(s, ctxs, t1CtxnoUni, runlen>>1)
+				s = t.mqc.EncodeReg(s, ctxs, t1CtxnoUni, runlen&1)
 			} else {
 				runlen = 0
 			}
-			t.encClnpassStep(f, datap, bpno, one, nmsedec, agg, runlen, 4, cblksty)
+			// Inlined encClnpassStep(f, datap, ..., agg, runlen, 4, cblksty) so
+			// the MQ registers stay resident (no per-column step call). The
+			// remainder stripe below keeps the shared step form (cold path).
+			const check = t1Sigma4 | t1Sigma7 | t1Sigma10 | t1Sigma13 | t1Pi0 | t1Pi1 | t1Pi2 | t1Pi3
+			if t.flags[f]&check == check {
+				switch runlen {
+				case 0:
+					t.flags[f] &^= t1PiAll
+				case 1:
+					t.flags[f] &^= t1Pi1 | t1Pi2 | t1Pi3
+				case 2:
+					t.flags[f] &^= t1Pi2 | t1Pi3
+				case 3:
+					t.flags[f] &^= t1Pi3
+				}
+			} else {
+				ldatap := datap
+				for ci := runlen; ci < 4; ci++ {
+					gotoPartial := false
+					if agg != 0 && ci == runlen {
+						gotoPartial = true
+					} else if t.flags[f]&((t1SigmaThis|t1PiThis)<<(ci*3)) == 0 {
+						var v uint32
+						if smrAbs(t.data[ldatap])&uint32(one) != 0 {
+							v = 1
+						}
+						s = t.mqc.EncodeReg(s, ctxs, int(t.getctxnoZC(t.flags[f]>>(ci*3))), v)
+						if v != 0 {
+							gotoPartial = true
+						}
+					}
+					if gotoPartial {
+						lu := getctxtnoScOrSpbIndex(t.flags[f], t.flags[f-1], t.flags[f+1], ci)
+						*nmsedec += getnmsedecSig(smrAbs(t.data[ldatap]), uint32(bpno))
+						v := smrSign(t.data[ldatap])
+						s = t.mqc.EncodeReg(s, ctxs, int(getctxnoSC(lu)), v^getspb(lu))
+						vsc := uint32(0)
+						if cblksty&CblkstyVSC != 0 && ci == 0 {
+							vsc = 1
+						}
+						t.updateFlags(f, ci, v, t.w+2, vsc)
+					}
+					t.flags[f] &^= t1PiThis << (3 * ci)
+					ldatap++
+				}
+			}
 			datap += int(4 - runlen)
 			f++
 		}
@@ -269,11 +579,12 @@ func (t *T1) encClnpass(bpno int32, nmsedec *int32, cblksty uint32) {
 	}
 	if k < t.h {
 		for i = 0; i < t.w; i++ {
-			t.encClnpassStep(f, datap, bpno, one, nmsedec, 0, 0, t.h-k, cblksty)
+			s = t.encClnpassStep(f, datap, bpno, one, nmsedec, 0, 0, t.h-k, cblksty, s, ctxs)
 			datap += int(t.h - k)
 			f++
 		}
 	}
+	t.mqc.StoreEnc(s)
 }
 
 // ---------------------------------------------------------------------------
@@ -399,10 +710,19 @@ func (t *T1) EncodeCblk(cblk *CodeBlockEnc, orient, compno, level, qmfbid uint32
 
 		switch passtype {
 		case 0:
-			t.encSigpass(bpno, &nmsedec, typ, cblksty)
+			if typ == t1TypeRAW {
+				t.encSigpass(bpno, &nmsedec, typ, cblksty)
+			} else {
+				t.encSigpassMQC(bpno, &nmsedec, cblksty)
+			}
 		case 1:
-			t.encRefpass(bpno, &nmsedec, typ)
+			if typ == t1TypeRAW {
+				t.encRefpass(bpno, &nmsedec, typ)
+			} else {
+				t.encRefpassMQC(bpno, &nmsedec)
+			}
 		case 2:
+			// The clean-up pass is always MQ (never RAW).
 			t.encClnpass(bpno, &nmsedec, cblksty)
 			if cblksty&CblkstySegsym != 0 {
 				t.mqc.SegmarkEnc()

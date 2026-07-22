@@ -120,6 +120,54 @@ package oracletest
 // encode-side CPU), but the growable output buffer + bit-stuffing byteout make
 // holding bp in registers delicate under the strict byte-identity gate, and
 // lever 2 already addresses encode wall-time (~4x). Clean follow-up.
+//
+// ============================================================================
+// AFTER W18 (2026-07-22, same 16-logical-core Ryzen 9 6900HX; go1.25.5).
+//
+// Lever 1 (encode) — MQ-coder register inlining into the tier-1 ENCODE passes,
+// the mirror image of W17's decode lever. internal/mqc gained an encoder
+// register-block value type (EncState{A,C,Ct,Bp}) plus LoadEnc/StoreEnc, an
+// inlinable-fast-path EncodeReg, and a single renormeEnc call that owns the
+// renorm loop (with byteoutEnc inlined). The three hot MQ encode passes
+// (sig/ref/cln) now Load the registers once, thread them by value with the
+// per-column step bodies inlined directly into the stripe loop (so Go's register
+// ABI keeps a/c/ct/bp resident, no step-call arg-spilling), and Store them once;
+// the cold partial-stripe remainders and the RAW/bypass + flush/termination
+// paths keep the method API. Bit-identical (mqc + 2805 t1 vectors, encode gate,
+// concurrency-encode gate, CLI compress byte-parity, all zero-diff; -race clean).
+//
+// Buffer-growth boundary. W17 flagged the growable output buffer + 0xFF
+// bit-stuffing byteout as the delicacy that made encode-side bp-in-registers
+// risky. The resolution: in this Go port bp is an integer *offset* into m.buf,
+// not a raw pointer (as in C), so a mid-pass grow/realloc leaves a held Bp valid
+// — only the slice header changes, and byteoutEnc re-reads m.buf fresh on every
+// call and never caches it in the hot loop. Growth therefore happens safely at
+// the byteout (ct-wrap) boundary, the one place the buffer is touched, with no
+// pointer fixup; the hot EncodeReg MPS fast path never touches m.buf at all.
+//
+// Isolated tier-1 ENCODE microbench (BenchmarkEncodeCblkVectors, all t1 encode
+// vectors): 29.96ms -> 24.83ms (-17.1%). Incremental: register threading via
+// step methods alone 28.9ms (-3.4%, EncodeReg/DecodeReg are too complex to
+// inline so the win comes from residency, not from inlining the coder itself);
+// +sig main-loop inline 26.7; +ref 25.9; +cln 24.8. Whole-encode CLI walltime,
+// syn2048 2048x2048x3 random (incompressible => MQ-heavy), median-of-3, ms:
+//
+//	setting         C(1)  Go(t1)  Go(t8)  Go1/C1   (was Go(t1) @ W17)
+//	lossless_5x3    1559    2297     628   1.47x     (3045)
+//	rate20_5x3      1553    2241     560   1.44x     (3047)
+//	irrev_9x7_r20   1471    2229     638   1.52x     (2935)
+//
+// Single-thread whole-encode dropped ~25% (rate20 3047->2241) — larger than the
+// 17% tier-1 microbench because this file is incompressible, so the MQ coder is
+// a bigger share of the pipeline than on the mixed vector set. Go(t8) also fell
+// (766->560 on rate20) since tier-1 is the parallelized stage. Environment
+// parity with the W17 tables is confirmed: the decode microbench reproduces at
+// 39.4ms here vs W17's 39.9ms (within noise), so the cross-entry comparison is
+// sound. Profile after the change: EncodeReg ~20% flat (irreducible MQ
+// arithmetic), the three inlined passes ~20% flat combined, and a residual
+// ~15% in the untouched RAW/lazy (BypassEnc) path — a different coder, left
+// as-is per the MQ-only scope. nmsedec LUTs / getctxno are each <3%, so no
+// second lever was warranted.
 // ============================================================================
 
 import (

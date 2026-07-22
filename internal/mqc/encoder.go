@@ -152,6 +152,143 @@ func (m *MQC) Encode(d uint32) {
 	}
 }
 
+// ---------------------------------------------------------------------------
+// Register-resident encode (DOWNLOAD/UPLOAD_MQC_VARIABLES pattern)
+// ---------------------------------------------------------------------------
+//
+// The C reference macro-inlines the whole MQ encoder into each tier-1 pass,
+// keeping a/c/ct/bp in CPU registers across the entire pass. This mirrors the
+// decode-side DecState machinery (see decoder.go): the tier-1 hot encode passes
+// load the registers once (LoadEnc), thread them by value through the pass —
+// Go's register ABI keeps the fields in registers because their address is
+// never taken — and store them back once (StoreEnc). EncodeReg is the inlinable
+// encode fast path (the renormalization loop is factored into renormeEnc, its
+// only call, exactly as opj_mqc_encode_macro expands).
+//
+// Buffer-growth boundary. In the C coder bp is a raw pointer into the output
+// buffer, so growing/reallocating that buffer mid-pass would invalidate a bp
+// held in a register — the delicacy W17 flagged when deferring this. In this Go
+// port bp is an *integer offset* into m.buf, not a pointer, so a reallocation
+// leaves the held Bp valid: only m.buf's slice header changes, and byteoutEnc
+// re-reads m.buf fresh on every call (it never caches the slice in the hot
+// loop). Growth therefore happens safely at the byteout boundary (where ct
+// wraps), the one place the buffer is touched, and needs no pointer fixup. The
+// hot EncodeReg path never touches m.buf at all (the MPS fast path is pure
+// register arithmetic), so bp residency costs nothing there.
+//
+// These produce bit-identical state transitions and output bytes to
+// Encode/codemps/codelps/renorme/byteout; the method forms are retained for the
+// mqc API, the RAW/bypass path, flush/termination and the vector tests.
+
+// EncState is the register block of the MQ encoder (mqc->a/c/ct plus the bp
+// offset), used for register-resident encoding across a whole tier-1 pass.
+type EncState struct {
+	A  uint32 // interval register (mqc->a)
+	C  uint32 // code register (mqc->c)
+	Ct uint32 // free-bit counter (mqc->ct)
+	Bp int    // output position (offset form of mqc->bp)
+}
+
+// LoadEnc captures the current encoder registers (DOWNLOAD_MQC_VARIABLES).
+func (m *MQC) LoadEnc() EncState {
+	return EncState{A: m.a, C: m.c, Ct: m.ct, Bp: m.bp}
+}
+
+// StoreEnc writes back encoder registers held in locals (UPLOAD_MQC_VARIABLES).
+func (m *MQC) StoreEnc(s EncState) {
+	m.a = s.A
+	m.c = s.C
+	m.ct = s.Ct
+	m.bp = s.Bp
+}
+
+// byteoutEnc is the register-resident port of opj_mqc_byteout. It owns all
+// buffer access for the register path: it re-reads m.buf fresh (so a grow is
+// safe with the offset-form Bp) and grows on demand exactly like the method
+// byteout. It is only called from renormeEnc (the cold ct-wrap boundary).
+func (m *MQC) byteoutEnc(s EncState) EncState {
+	m.ensureEncCap(s.Bp + 2)
+	if m.buf[s.Bp] == 0xff {
+		s.Bp++
+		m.buf[s.Bp] = byte(s.C >> 20)
+		s.C &= 0xfffff
+		s.Ct = 7
+	} else {
+		if (s.C & 0x8000000) == 0 {
+			s.Bp++
+			m.buf[s.Bp] = byte(s.C >> 19)
+			s.C &= 0x7ffff
+			s.Ct = 8
+		} else {
+			m.buf[s.Bp]++
+			if m.buf[s.Bp] == 0xff {
+				s.C &= 0x7ffffff
+				s.Bp++
+				m.buf[s.Bp] = byte(s.C >> 20)
+				s.C &= 0xfffff
+				s.Ct = 7
+			} else {
+				s.Bp++
+				m.buf[s.Bp] = byte(s.C >> 19)
+				s.C &= 0x7ffff
+				s.Ct = 8
+			}
+		}
+	}
+	return s
+}
+
+// renormeEnc is the register-resident port of opj_mqc_renorme_macro with
+// opj_mqc_byteout inlined via byteoutEnc; it owns the renormalization loop that
+// blocks inlining of the encode, so EncodeReg (its only caller) stays inlinable.
+func (m *MQC) renormeEnc(s EncState) EncState {
+	for {
+		s.A <<= 1
+		s.C <<= 1
+		s.Ct--
+		if s.Ct == 0 {
+			s = m.byteoutEnc(s)
+		}
+		if (s.A & 0x8000) != 0 {
+			return s
+		}
+	}
+}
+
+// EncodeReg is the register-resident port of opj_mqc_encode_macro: it encodes
+// one decision d (0 or 1) against ctxs[curctx] using the register block s,
+// updates the context in place, and returns the advanced registers. It is
+// inlinable (the renorm loop lives in renormeEnc), so it expands into the
+// tier-1 pass loops the way the C macro does.
+func (m *MQC) EncodeReg(s EncState, ctxs *[numCtxs]int32, curctx int, d uint32) EncState {
+	st := &states[ctxs[curctx]]
+	if st.mps == d {
+		// opj_mqc_codemps_macro
+		s.A -= st.qeval
+		if (s.A & 0x8000) == 0 {
+			if s.A < st.qeval {
+				s.A = st.qeval
+			} else {
+				s.C += st.qeval
+			}
+			ctxs[curctx] = st.nmps
+			return m.renormeEnc(s)
+		}
+		// Common fast path: no renormalization needed.
+		s.C += st.qeval
+		return s
+	}
+	// opj_mqc_codelps_macro
+	s.A -= st.qeval
+	if s.A < st.qeval {
+		s.C += st.qeval
+	} else {
+		s.A = st.qeval
+	}
+	ctxs[curctx] = st.nlps
+	return m.renormeEnc(s)
+}
+
 // setbits is the port of opj_mqc_setbits: fill mqc->c with 1s for flushing.
 func (m *MQC) setbits() {
 	tempc := m.c + m.a
