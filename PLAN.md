@@ -130,3 +130,9 @@ gopenjpeg/               public API: Decode/Encode, options, image.Image interop
   dwt local geometry types to be mapped by tcd; C reads OOB on 1x1
   tiles with >1 level (UB in reference) — tcd/j2k must guard so the
   Go port never hits that path (would panic, not corrupt).
+- 2026-07-22: no-panic rule adopted (user decision): library code
+  never panics; mqc contract assert converted to ErrShortBuffer.
+- 2026-07-22: W8 landed (internal/jp2). Follow-ups: j2k must
+  implement jp2.CodestreamCodec; jp2.DecoderParams/EncoderParams to
+  reconcile with the public API layer; CIELab capture packs the 9
+  words big-endian into ICCProfileBuf (documented in read_boxes.go).
