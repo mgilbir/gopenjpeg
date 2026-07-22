@@ -144,3 +144,10 @@ gopenjpeg/               public API: Decode/Encode, options, image.Image interop
   cleanup-only too); SigProp/MagRef now bit-exact on 1722 records.
   Caveat: synthesized rather than encoder-produced conformance
   streams; revisit if a true multi-pass HT encoder becomes available.
+- 2026-07-22: W7 landed (internal/tcd + internal/j2k decode). Decode
+  differential gate passing (23/23 conformance bit-exact, HT wired
+  directly into tcd and bit-exact e2e). In flight: W11 (public API +
+  CLIs + jp2 wiring + jp2/HT-container gate), W12 (eliminate the 5
+  gate exclusions: 9/7+ICT LSB deviations, t2 segment bound,
+  chroma-subsampled fixtures), W9 (encode path, gated on
+  byte-identical codestreams vs opj_compress).
