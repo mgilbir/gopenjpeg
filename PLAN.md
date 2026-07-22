@@ -157,3 +157,8 @@ gopenjpeg/               public API: Decode/Encode, options, image.Image interop
   CMS engine (oracle links LCMS2; no pure-Go equivalent) — revisit in
   hardening; CMYK conversion has float-rounding-order LSB diffs
   (same class as the 9/7 issue W12 is chasing — apply its fix here).
+- 2026-07-22: W9 landed (encode path): byte-identical .j2k output vs
+  opj_compress on a 20-cell settings matrix; zero module bugs found
+  in the landed encode-side packages. Deferred to W13 (in flight):
+  jp2 encode wiring + public Encode API + gopj-compress CLI,
+  cinema/IMF profiles, PLT emission, Part-2 custom MCT markers.
