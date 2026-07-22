@@ -136,3 +136,8 @@ gopenjpeg/               public API: Decode/Encode, options, image.Image interop
   implement jp2.CodestreamCodec; jp2.DecoderParams/EncoderParams to
   reconcile with the public API layer; CIELab capture packs the 9
   words big-endian into ICCProfileBuf (documented in read_boxes.go).
+- 2026-07-22: W10 landed (internal/ht). tcd must pass mb=band.numbps
+  and route cblksty&HT blocks to ht.Decoder.DecodeCblk. GAP: HT
+  SigProp/MagRef passes have no oracle vectors (corpus HT streams
+  are cleanup-only and OpenJPEG cannot encode HT) — follow-up: build
+  OpenJPH into oracle/ to synthesize multi-pass HT streams.
