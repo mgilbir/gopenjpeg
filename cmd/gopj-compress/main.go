@@ -11,11 +11,25 @@ package main
 import (
 	"fmt"
 	"os"
+	"runtime"
 	"strconv"
 	"strings"
 
 	gopenjpeg "github.com/mgilbir/gopenjpeg"
 )
+
+// parseThreads parses the -threads value: a positive integer, or "ALL_CPUS"
+// for runtime.NumCPU() (mirroring opj_compress -threads).
+func parseThreads(v string) (int, error) {
+	if v == "ALL_CPUS" {
+		return runtime.NumCPU(), nil
+	}
+	n, err := strconv.Atoi(v)
+	if err != nil || n < 1 {
+		return 0, fmt.Errorf("threads: value must be a positive integer or ALL_CPUS")
+	}
+	return n, nil
+}
 
 func main() {
 	if err := run(os.Args[1:]); err != nil {
@@ -284,6 +298,16 @@ func run(args []string) error {
 				return err
 			}
 			p.rawGeom = g
+		case "threads":
+			v, err := next()
+			if err != nil {
+				return err
+			}
+			n, err := parseThreads(v)
+			if err != nil {
+				return err
+			}
+			p.opts = append(p.opts, gopenjpeg.WithEncodeConcurrency(n))
 		case "quiet":
 			p.quiet = true
 		default:

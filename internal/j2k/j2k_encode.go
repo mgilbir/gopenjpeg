@@ -135,6 +135,10 @@ type Encoder struct {
 
 	currentTileNumber uint32
 	tcd               *tcd.TCD
+
+	// numThreads ports the encode-side worker count (opj_j2k_set_threads),
+	// applied to the tile coder for per-code-block tier-1 encode parallelism.
+	numThreads int
 }
 
 // CreateCompress ports opj_j2k_create_compress.
@@ -143,6 +147,11 @@ func CreateCompress() *Encoder {
 	e.CP.MIsDecoder = false
 	return e
 }
+
+// SetThreads records the worker count for the parallelizable encode stages
+// (per-code-block tier-1). n<=1 keeps the single-threaded path. Mirrors
+// opj_j2k_set_threads on the compressor.
+func (e *Encoder) SetThreads(n int) { e.numThreads = n }
 
 // intPow2 returns 1<<n as int32.
 func intPow2(n int32) int32 { return int32(1) << uint(n) }

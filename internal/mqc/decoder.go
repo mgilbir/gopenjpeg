@@ -160,6 +160,127 @@ func (m *MQC) Decode() uint32 {
 	return d
 }
 
+// ---------------------------------------------------------------------------
+// Register-resident decode (DOWNLOAD/UPLOAD_MQC_VARIABLES pattern)
+// ---------------------------------------------------------------------------
+//
+// The C reference macro-inlines the whole MQ decoder into each tier-1 pass,
+// keeping a/c/ct/bp (and the current-context pointer) in CPU registers across
+// the entire pass via DOWNLOAD_MQC_VARIABLES / UPLOAD_MQC_VARIABLES. Go cannot
+// inline the method form of Decode (its renormalization contains a loop, and
+// the per-call traffic through the *MQC pointer defeats register residency).
+//
+// DecState mirrors the DOWNLOAD_MQC_VARIABLES register block. The tier-1 hot
+// passes load it once (LoadDec), thread it by value through the pass — Go's
+// register ABI keeps the fields in registers because its address is never
+// taken — and store it back once (StoreDec). DecodeReg is the inlinable decode
+// fast path (the renorm loop is factored into renormDec, the only call), so it
+// expands into the pass loops exactly as opj_mqc_decode_macro does.
+//
+// These produce bit-identical state transitions to Decode/renormd/bytein; the
+// method forms are retained for the mqc API, the RAW path and the vector tests.
+
+// DecState is the register block of the MQ decoder (mqc->a/c/ct plus the bp
+// offset), used for register-resident decoding across a whole tier-1 pass.
+type DecState struct {
+	A  uint32 // interval register (mqc->a)
+	C  uint32 // code register (mqc->c)
+	Ct uint32 // bit counter (mqc->ct)
+	Bp int    // input position (offset form of mqc->bp)
+}
+
+// LoadDec captures the current decoder registers (DOWNLOAD_MQC_VARIABLES).
+func (m *MQC) LoadDec() DecState {
+	return DecState{A: m.a, C: m.c, Ct: m.ct, Bp: m.bp}
+}
+
+// StoreDec writes back decoder registers held in locals (UPLOAD_MQC_VARIABLES).
+func (m *MQC) StoreDec(s DecState) {
+	m.a = s.A
+	m.c = s.C
+	m.ct = s.Ct
+	m.bp = s.Bp
+}
+
+// Ctxs returns a pointer to the context-state-index array so the hot passes can
+// select and update the active context directly (the C code holds a pointer
+// into mqc->ctxs); mutations remain visible to ResetStates/SetState.
+func (m *MQC) Ctxs() *[numCtxs]int32 { return &m.ctxs }
+
+// renormDec is the register-resident port of opj_mqc_renormd_macro with
+// opj_mqc_bytein_macro inlined; it owns the loop that blocks inlining of the
+// decode, so DecodeReg (its only caller besides itself) stays inlinable.
+func (m *MQC) renormDec(s DecState) DecState {
+	buf := m.buf
+	for {
+		if s.Ct == 0 {
+			// opj_mqc_bytein_macro
+			lc := buf[s.Bp+1]
+			if buf[s.Bp] == 0xff {
+				if lc > 0x8f {
+					s.C += 0xff00
+					s.Ct = 8
+					m.endOfByteStreamCounter++
+				} else {
+					s.Bp++
+					s.C += uint32(lc) << 9
+					s.Ct = 7
+				}
+			} else {
+				s.Bp++
+				s.C += uint32(lc) << 8
+				s.Ct = 8
+			}
+		}
+		s.A <<= 1
+		s.C <<= 1
+		s.Ct--
+		if s.A >= 0x8000 {
+			return s
+		}
+	}
+}
+
+// DecodeReg is the register-resident port of opj_mqc_decode_macro: it decodes
+// one decision against ctxs[curctx] using the register block s, updates the
+// context in place, and returns the decoded symbol plus the advanced registers.
+// It is inlinable (the renorm loop lives in renormDec), so it expands into the
+// tier-1 pass loops the way the C macro does.
+func (m *MQC) DecodeReg(s DecState, ctxs *[numCtxs]int32, curctx int) (uint32, DecState) {
+	var d uint32
+	st := &states[ctxs[curctx]]
+	s.A -= st.qeval
+	if (s.C >> 16) < st.qeval {
+		// opj_mqc_lpsexchange_macro
+		if s.A < st.qeval {
+			s.A = st.qeval
+			d = st.mps
+			ctxs[curctx] = st.nmps
+		} else {
+			s.A = st.qeval
+			d = 1 - st.mps
+			ctxs[curctx] = st.nlps
+		}
+	} else {
+		s.C -= st.qeval << 16
+		if (s.A & 0x8000) != 0 {
+			// MPS, no renormalization needed (the common fast path).
+			return st.mps, s
+		}
+		// opj_mqc_mpsexchange_macro
+		if s.A < st.qeval {
+			d = 1 - st.mps
+			ctxs[curctx] = st.nlps
+		} else {
+			d = st.mps
+			ctxs[curctx] = st.nmps
+		}
+	}
+	// Single renormalization site (the only remaining call) keeps DecodeReg
+	// small enough for the inliner, so it expands into the tier-1 pass loops.
+	return d, m.renormDec(s)
+}
+
 // RawDecode is the port of opj_mqc_raw_decode: decode a single bit using the
 // raw decoder (cf. p.506 Taubman). Returns the decoded symbol (0 or 1).
 func (m *MQC) RawDecode() uint32 {

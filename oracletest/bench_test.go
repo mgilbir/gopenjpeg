@@ -52,6 +52,74 @@ package oracletest
 // needs manually inlining the MQC registers into the tier-1 passes (the C
 // DOWNLOAD/UPLOAD_MQC_VARIABLES pattern) — deferred as a large, bit-exactness-
 // sensitive refactor. See the worker report.
+//
+// ============================================================================
+// AFTER W17 (2026-07-22, same 16-logical-core Ryzen 9 6900HX, Go 1.26).
+//
+// Lever 1 — MQ-coder register inlining into the tier-1 DECODE passes (the C
+// DOWNLOAD/UPLOAD_MQC_VARIABLES pattern). internal/mqc gained a register-block
+// value type (DecState) plus an inlinable-fast-path DecodeReg + a single
+// renormDec call; the three hot MQC decode passes (sig/ref/cln) now Load the
+// registers once, thread them by value with the per-column step logic inlined
+// directly into the loop (so Go's register ABI keeps a/c/ct/bp resident and no
+// step-call arg-spilling occurs), and Store them once. Bit-identical (mqc + t1
+// vectors, decode gate zero-exclusions, race-clean). Isolated tier-1 decode
+// microbench (BenchmarkDecodeCblkVectors over all t1 decode vectors):
+// 47.9ms -> 39.9ms (-16.7%). Whole-decode single-thread, median-of-3, ms:
+//
+//	file          C(1)  Go(1)  Go1/C1  Go(16)  C(16)  Go16-spdup   (was Go1/C1)
+//	Bretagne2      582    888   1.53x     179    133     4.96x       (1.78x)
+//	p0_08          412    659   1.60x      94     56     7.02x       (1.96x)
+//	zoo1.jp2       491    841   1.71x     179     86     4.71x       (1.99x)
+//	issue135       277    496   1.79x     134     57     3.71x       (2.05x)
+//	Bretagne1_ht    10     18   1.77x       6      4     3.04x       (1.68x, HT: no MQ)
+//	syn2048        108    256   2.37x      68     48     3.78x       (2.45x)
+//
+// Single-thread gap closed from 1.68-2.45x to 1.53-2.37x of C; the MQ-heavy
+// 5/3 files gained most (p0_08 1.96->1.60, Bretagne2 1.78->1.53). Bretagne1_ht
+// is unchanged because HTJ2K uses a different entropy coder, not the MQ coder.
+// BCE note: after inlining, the dominant remaining cost is the DecodeReg
+// arithmetic + call, NOT bounds checks (ctxs[curctx], states[..], buf[bp]);
+// eliminating those safely (no unsafe, no panic, bit-identical) has poor
+// reward, so left in place.
+//
+// Lever 2 — per-code-block tier-1 ENCODE parallelism (mirrors the decode pool
+// in internal/tcd: encodeCblks now fans code-blocks across NumThreads workers,
+// each with a private t1.T1 encode state, and sums per-cblk distortion in
+// canonical code-block order so tile.Distotile — hence rate allocation and the
+// output bytes — is bit-identical to the sequential encode for every worker
+// count). Wired through WithEncodeConcurrency + gopj-compress -threads.
+// Empirical C finding: opj_compress DOES sum distotile under a mutex in
+// completion order (nondeterministic float order), yet its output is byte-
+// stable across -threads 1/2/8 for all tested settings — the tiny float
+// differences never cross the discrete rate-allocation truncation boundaries.
+// Our deterministic cblk-order sum sidesteps the dependency entirely.
+// gopj-compress output is byte-identical across -threads and equals
+// opj_compress. Encode CLI walltime on syn2048 2048x2048x3, ms (full pipeline;
+// only tier-1 is parallelized, so DWT/rate-alloc/T2 bound the speedup):
+//
+//	setting          C(1)  Go(t1)  Go(t8)  t1/t8
+//	rate20           1762    3047     730   4.17x
+//	multilayer       1668    3052     777   3.92x
+//	irrev_9x7 r20    1531    2935     763   3.84x
+//	lossless         1703    3045     766   3.97x
+//
+// Go(8) (~760ms) now beats C(1) (~1700ms). Peak scaling is ~8 workers on this
+// 8-core/16-thread box; -threads 16 oversubscribes given the sequential stages.
+//
+// Lever 3 — in-place 9/7 float handling: DEFERRED with evidence. The whole-
+// buffer int32<->float32 bit-cast round-trips (dwt.DecodeTile97's convert-
+// in/out and tcd's bitsToFloat/floatToBits MCT bridge) measure ~2-5% of decode
+// and ONLY on 9/7 images (issue135: bitsToFloat 0.9% + floatToBits 0.9% +
+// DecodeTile97 convert loops ~2%). Eliminating them cleanly needs either unsafe
+// aliasing (forbidden) or a float-typed tcd pipeline (large, risky); the payoff
+// does not clear the task's "only if it matters after lever 1" bar.
+//
+// Lever 1 (encode) — DEFERRED with evidence. The encode tier-1 has the same MQ
+// structure and register inlining would help (encode MQ coder is ~half of
+// encode-side CPU), but the growable output buffer + bit-stuffing byteout make
+// holding bp in registers delicate under the strict byte-identity gate, and
+// lever 2 already addresses encode wall-time (~4x). Clean follow-up.
 // ============================================================================
 
 import (

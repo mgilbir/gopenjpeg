@@ -3,6 +3,8 @@ package t1
 import (
 	"fmt"
 	"math"
+
+	"github.com/mgilbir/gopenjpeg/internal/mqc"
 )
 
 // This file ports the tier-1 decoder: the significance, refinement and clean-up
@@ -78,18 +80,20 @@ func (t *T1) decSigpassRaw(bpno int32, cblksty uint32) {
 	}
 }
 
-// decSigpassStepMQC ports opj_t1_dec_sigpass_step_mqc_macro. center points to
-// the caller's register-held copy of the centre flag word.
-func (t *T1) decSigpassStepMQC(center *uint32, fp int, flagsStride uint32, dp, dataStride int, ci uint32, oneplushalf int32, vsc uint32) {
+// decSigpassStepMQCReg ports opj_t1_dec_sigpass_step_mqc_macro with the MQ
+// decoder registers threaded in the caller's DecState. It is used only for the
+// cold partial-stripe remainder; the hot main loop inlines the same body (see
+// decSigpassMQC) to keep the registers resident and avoid argument spilling.
+func (t *T1) decSigpassStepMQCReg(center *uint32, fp int, flagsStride uint32, dp, dataStride int, ci uint32, oneplushalf int32, vsc uint32, s mqc.DecState, ctxs *[mqc.NumCtxs]int32) mqc.DecState {
 	f := *center
 	if f&((t1SigmaThis|t1PiThis)<<(ci*3)) == 0 &&
 		f&(t1SigmaNeighbours<<(ci*3)) != 0 {
-		t.mqc.SetCurCtx(t.getctxnoZC(f >> (ci * 3)))
-		v := t.mqc.Decode()
+		var v uint32
+		v, s = t.mqc.DecodeReg(s, ctxs, int(t.getctxnoZC(f>>(ci*3))))
 		if v != 0 {
 			lu := getctxtnoScOrSpbIndex(f, t.flags[fp-1], t.flags[fp+1], ci)
-			t.mqc.SetCurCtx(getctxnoSC(lu))
-			v = t.mqc.Decode() ^ getspb(lu)
+			v, s = t.mqc.DecodeReg(s, ctxs, int(getctxnoSC(lu)))
+			v ^= getspb(lu)
 			if v != 0 {
 				t.data[dp+int(ci)*dataStride] = -oneplushalf
 			} else {
@@ -99,9 +103,14 @@ func (t *T1) decSigpassStepMQC(center *uint32, fp int, flagsStride uint32, dp, d
 		}
 		*center |= t1PiThis << (ci * 3)
 	}
+	return s
 }
 
-// decSigpassMQC ports opj_t1_dec_sigpass_mqc (generic path).
+// decSigpassMQC ports opj_t1_dec_sigpass_mqc (generic path). The MQ decoder
+// registers are downloaded once (LoadDec), held in the local DecState s across
+// the whole pass — the four per-column steps are inlined so s stays in
+// registers (the C DOWNLOAD/UPLOAD_MQC_VARIABLES pattern) — and uploaded at the
+// end (StoreDec).
 func (t *T1) decSigpassMQC(bpno int32, cblksty uint32) {
 	one := int32(1) << uint(bpno)
 	half := one >> 1
@@ -113,6 +122,8 @@ func (t *T1) decSigpassMQC(bpno int32, cblksty uint32) {
 		vsc = 1
 	}
 
+	s := t.mqc.LoadDec()
+	ctxs := t.mqc.Ctxs()
 	data := 0
 	flagsp := int(stride) + 1
 	var i, j, k uint32
@@ -120,10 +131,74 @@ func (t *T1) decSigpassMQC(bpno int32, cblksty uint32) {
 		for i = 0; i < t.w; i++ {
 			flags := t.flags[flagsp]
 			if flags != 0 {
-				t.decSigpassStepMQC(&flags, flagsp, stride, data, lw, 0, oneplushalf, vsc)
-				t.decSigpassStepMQC(&flags, flagsp, stride, data, lw, 1, oneplushalf, 0)
-				t.decSigpassStepMQC(&flags, flagsp, stride, data, lw, 2, oneplushalf, 0)
-				t.decSigpassStepMQC(&flags, flagsp, stride, data, lw, 3, oneplushalf, 0)
+				// ci = 0 (with vertical-stripe-causal vsc)
+				if flags&((t1SigmaThis|t1PiThis)<<0) == 0 && flags&(t1SigmaNeighbours<<0) != 0 {
+					var v uint32
+					v, s = t.mqc.DecodeReg(s, ctxs, int(t.getctxnoZC(flags)))
+					if v != 0 {
+						lu := getctxtnoScOrSpbIndex(flags, t.flags[flagsp-1], t.flags[flagsp+1], 0)
+						v, s = t.mqc.DecodeReg(s, ctxs, int(getctxnoSC(lu)))
+						v ^= getspb(lu)
+						if v != 0 {
+							t.data[data] = -oneplushalf
+						} else {
+							t.data[data] = oneplushalf
+						}
+						t.updateFlagsCenter(&flags, flagsp, 0, v, stride, vsc)
+					}
+					flags |= t1PiThis << 0
+				}
+				// ci = 1
+				if flags&((t1SigmaThis|t1PiThis)<<3) == 0 && flags&(t1SigmaNeighbours<<3) != 0 {
+					var v uint32
+					v, s = t.mqc.DecodeReg(s, ctxs, int(t.getctxnoZC(flags>>3)))
+					if v != 0 {
+						lu := getctxtnoScOrSpbIndex(flags, t.flags[flagsp-1], t.flags[flagsp+1], 1)
+						v, s = t.mqc.DecodeReg(s, ctxs, int(getctxnoSC(lu)))
+						v ^= getspb(lu)
+						if v != 0 {
+							t.data[data+lw] = -oneplushalf
+						} else {
+							t.data[data+lw] = oneplushalf
+						}
+						t.updateFlagsCenter(&flags, flagsp, 1, v, stride, 0)
+					}
+					flags |= t1PiThis << 3
+				}
+				// ci = 2
+				if flags&((t1SigmaThis|t1PiThis)<<6) == 0 && flags&(t1SigmaNeighbours<<6) != 0 {
+					var v uint32
+					v, s = t.mqc.DecodeReg(s, ctxs, int(t.getctxnoZC(flags>>6)))
+					if v != 0 {
+						lu := getctxtnoScOrSpbIndex(flags, t.flags[flagsp-1], t.flags[flagsp+1], 2)
+						v, s = t.mqc.DecodeReg(s, ctxs, int(getctxnoSC(lu)))
+						v ^= getspb(lu)
+						if v != 0 {
+							t.data[data+2*lw] = -oneplushalf
+						} else {
+							t.data[data+2*lw] = oneplushalf
+						}
+						t.updateFlagsCenter(&flags, flagsp, 2, v, stride, 0)
+					}
+					flags |= t1PiThis << 6
+				}
+				// ci = 3
+				if flags&((t1SigmaThis|t1PiThis)<<9) == 0 && flags&(t1SigmaNeighbours<<9) != 0 {
+					var v uint32
+					v, s = t.mqc.DecodeReg(s, ctxs, int(t.getctxnoZC(flags>>9)))
+					if v != 0 {
+						lu := getctxtnoScOrSpbIndex(flags, t.flags[flagsp-1], t.flags[flagsp+1], 3)
+						v, s = t.mqc.DecodeReg(s, ctxs, int(getctxnoSC(lu)))
+						v ^= getspb(lu)
+						if v != 0 {
+							t.data[data+3*lw] = -oneplushalf
+						} else {
+							t.data[data+3*lw] = oneplushalf
+						}
+						t.updateFlagsCenter(&flags, flagsp, 3, v, stride, 0)
+					}
+					flags |= t1PiThis << 9
+				}
 				t.flags[flagsp] = flags
 			}
 			flagsp++
@@ -135,12 +210,13 @@ func (t *T1) decSigpassMQC(bpno int32, cblksty uint32) {
 	if k < t.h {
 		for i = 0; i < t.w; i++ {
 			for j = 0; j < t.h-k; j++ {
-				t.decSigpassStepMQC(&t.flags[flagsp], flagsp, stride, data+int(j)*lw, 0, j, oneplushalf, vsc)
+				s = t.decSigpassStepMQCReg(&t.flags[flagsp], flagsp, stride, data+int(j)*lw, 0, j, oneplushalf, vsc, s, ctxs)
 			}
 			flagsp++
 			data++
 		}
 	}
+	t.mqc.StoreDec(s)
 }
 
 // ---------------------------------------------------------------------------
@@ -199,12 +275,14 @@ func (t *T1) decRefpassRaw(bpno int32) {
 	}
 }
 
-// decRefpassStepMQC ports opj_t1_dec_refpass_step_mqc_macro.
-func (t *T1) decRefpassStepMQC(center *uint32, dp, dataStride int, ci uint32, poshalf int32) {
+// decRefpassStepMQCReg ports opj_t1_dec_refpass_step_mqc_macro with the MQ
+// decoder registers threaded in the caller's DecState; used only for the cold
+// partial-stripe remainder (the hot main loop inlines the same body).
+func (t *T1) decRefpassStepMQCReg(center *uint32, dp, dataStride int, ci uint32, poshalf int32, s mqc.DecState, ctxs *[mqc.NumCtxs]int32) mqc.DecState {
 	f := *center
 	if f&((t1SigmaThis|t1PiThis)<<(ci*3)) == (t1SigmaThis << (ci * 3)) {
-		t.mqc.SetCurCtx(getctxnoMag(f >> (ci * 3)))
-		v := t.mqc.Decode()
+		var v uint32
+		v, s = t.mqc.DecodeReg(s, ctxs, int(getctxnoMag(f>>(ci*3))))
 		idx := dp + int(ci)*dataStride
 		neg := uint32(0)
 		if t.data[idx] < 0 {
@@ -217,15 +295,20 @@ func (t *T1) decRefpassStepMQC(center *uint32, dp, dataStride int, ci uint32, po
 		}
 		*center |= t1MuThis << (ci * 3)
 	}
+	return s
 }
 
-// decRefpassMQC ports opj_t1_dec_refpass_mqc (generic path).
+// decRefpassMQC ports opj_t1_dec_refpass_mqc (generic path) with the MQ decoder
+// registers held resident across the pass (DOWNLOAD/UPLOAD_MQC_VARIABLES). The
+// four per-column steps are inlined so the DecState stays in registers.
 func (t *T1) decRefpassMQC(bpno int32) {
 	one := int32(1) << uint(bpno)
 	poshalf := one >> 1
 	lw := int(t.w)
 	stride := t.w + 2
 
+	s := t.mqc.LoadDec()
+	ctxs := t.mqc.Ctxs()
 	data := 0
 	flagsp := int(stride) + 1
 	var i, j, k uint32
@@ -233,10 +316,69 @@ func (t *T1) decRefpassMQC(bpno int32) {
 		for i = 0; i < t.w; i++ {
 			flags := t.flags[flagsp]
 			if flags != 0 {
-				t.decRefpassStepMQC(&flags, data, lw, 0, poshalf)
-				t.decRefpassStepMQC(&flags, data, lw, 1, poshalf)
-				t.decRefpassStepMQC(&flags, data, lw, 2, poshalf)
-				t.decRefpassStepMQC(&flags, data, lw, 3, poshalf)
+				// ci = 0
+				if flags&((t1SigmaThis|t1PiThis)<<0) == (t1SigmaThis << 0) {
+					var v uint32
+					v, s = t.mqc.DecodeReg(s, ctxs, int(getctxnoMag(flags)))
+					neg := uint32(0)
+					if t.data[data] < 0 {
+						neg = 1
+					}
+					if v^neg != 0 {
+						t.data[data] += poshalf
+					} else {
+						t.data[data] -= poshalf
+					}
+					flags |= t1MuThis << 0
+				}
+				// ci = 1
+				if flags&((t1SigmaThis|t1PiThis)<<3) == (t1SigmaThis << 3) {
+					var v uint32
+					v, s = t.mqc.DecodeReg(s, ctxs, int(getctxnoMag(flags>>3)))
+					idx := data + lw
+					neg := uint32(0)
+					if t.data[idx] < 0 {
+						neg = 1
+					}
+					if v^neg != 0 {
+						t.data[idx] += poshalf
+					} else {
+						t.data[idx] -= poshalf
+					}
+					flags |= t1MuThis << 3
+				}
+				// ci = 2
+				if flags&((t1SigmaThis|t1PiThis)<<6) == (t1SigmaThis << 6) {
+					var v uint32
+					v, s = t.mqc.DecodeReg(s, ctxs, int(getctxnoMag(flags>>6)))
+					idx := data + 2*lw
+					neg := uint32(0)
+					if t.data[idx] < 0 {
+						neg = 1
+					}
+					if v^neg != 0 {
+						t.data[idx] += poshalf
+					} else {
+						t.data[idx] -= poshalf
+					}
+					flags |= t1MuThis << 6
+				}
+				// ci = 3
+				if flags&((t1SigmaThis|t1PiThis)<<9) == (t1SigmaThis << 9) {
+					var v uint32
+					v, s = t.mqc.DecodeReg(s, ctxs, int(getctxnoMag(flags>>9)))
+					idx := data + 3*lw
+					neg := uint32(0)
+					if t.data[idx] < 0 {
+						neg = 1
+					}
+					if v^neg != 0 {
+						t.data[idx] += poshalf
+					} else {
+						t.data[idx] -= poshalf
+					}
+					flags |= t1MuThis << 9
+				}
 				t.flags[flagsp] = flags
 			}
 			flagsp++
@@ -248,34 +390,37 @@ func (t *T1) decRefpassMQC(bpno int32) {
 	if k < t.h {
 		for i = 0; i < t.w; i++ {
 			for j = 0; j < t.h-k; j++ {
-				t.decRefpassStepMQC(&t.flags[flagsp], data+int(j)*lw, 0, j, poshalf)
+				s = t.decRefpassStepMQCReg(&t.flags[flagsp], data+int(j)*lw, 0, j, poshalf, s, ctxs)
 			}
 			flagsp++
 			data++
 		}
 	}
+	t.mqc.StoreDec(s)
 }
 
 // ---------------------------------------------------------------------------
 // Clean-up pass (decode)
 // ---------------------------------------------------------------------------
 
-// decClnpassStep ports opj_t1_dec_clnpass_step_macro. checkFlags/partial mirror
-// the compile-time flags of the C macro.
-func (t *T1) decClnpassStep(center *uint32, fp int, flagsStride uint32, dp, dataStride int, ci uint32, oneplushalf int32, vsc uint32, checkFlags, partial bool) {
+// decClnpassStepReg ports opj_t1_dec_clnpass_step_macro (checkFlags=true,
+// partial=false variant) with the MQ decoder registers threaded in the caller's
+// DecState; used only for the cold partial-stripe remainder. The hot main loop
+// inlines the equivalent bodies to keep the registers resident.
+func (t *T1) decClnpassStepReg(center *uint32, fp int, flagsStride uint32, dp, dataStride int, ci uint32, oneplushalf int32, vsc uint32, s mqc.DecState, ctxs *[mqc.NumCtxs]int32) mqc.DecState {
 	f := *center
-	if checkFlags && f&((t1SigmaThis|t1PiThis)<<(ci*3)) != 0 {
-		return
+	if f&((t1SigmaThis|t1PiThis)<<(ci*3)) != 0 {
+		return s
 	}
-	if !partial {
-		t.mqc.SetCurCtx(t.getctxnoZC(f >> (ci * 3)))
-		if t.mqc.Decode() == 0 {
-			return
-		}
+	var d uint32
+	d, s = t.mqc.DecodeReg(s, ctxs, int(t.getctxnoZC(f>>(ci*3))))
+	if d == 0 {
+		return s
 	}
 	lu := getctxtnoScOrSpbIndex(f, t.flags[fp-1], t.flags[fp+1], ci)
-	t.mqc.SetCurCtx(getctxnoSC(lu))
-	v := t.mqc.Decode() ^ getspb(lu)
+	var v uint32
+	v, s = t.mqc.DecodeReg(s, ctxs, int(getctxnoSC(lu)))
+	v ^= getspb(lu)
 	idx := dp + int(ci)*dataStride
 	if v != 0 {
 		t.data[idx] = -oneplushalf
@@ -283,11 +428,16 @@ func (t *T1) decClnpassStep(center *uint32, fp int, flagsStride uint32, dp, data
 		t.data[idx] = oneplushalf
 	}
 	t.updateFlagsCenter(center, fp, ci, v, flagsStride, vsc)
+	return s
 }
 
 const t1PiAll = t1Pi0 | t1Pi1 | t1Pi2 | t1Pi3
 
-// decClnpass ports opj_t1_dec_clnpass (generic path + segsym check).
+// decClnpass ports opj_t1_dec_clnpass (generic path + segsym check) with the MQ
+// decoder registers held resident across the pass (DOWNLOAD/UPLOAD_MQC_VARIABLES).
+// The per-column steps are inlined so the DecState stays in registers; the two
+// context variants (aggregated all-zero column vs. the checked dense column)
+// mirror the compile-time checkFlags/partial template of the C macro.
 func (t *T1) decClnpass(bpno int32, cblksty uint32) {
 	one := int32(1) << uint(bpno)
 	half := one >> 1
@@ -299,6 +449,8 @@ func (t *T1) decClnpass(bpno int32, cblksty uint32) {
 		vsc = 1
 	}
 
+	s := t.mqc.LoadDec()
+	ctxs := t.mqc.Ctxs()
 	data := 0
 	flagsp := int(stride) + 1
 	var i, j, k, runlen uint32
@@ -306,38 +458,85 @@ func (t *T1) decClnpass(bpno int32, cblksty uint32) {
 		for i = 0; i < t.w; i++ {
 			flags := t.flags[flagsp]
 			if flags == 0 {
-				t.mqc.SetCurCtx(t1CtxnoAgg)
-				if t.mqc.Decode() == 0 {
+				var d uint32
+				d, s = t.mqc.DecodeReg(s, ctxs, t1CtxnoAgg)
+				if d == 0 {
 					flagsp++
 					data++
 					continue
 				}
-				t.mqc.SetCurCtx(t1CtxnoUni)
-				runlen = t.mqc.Decode()
-				runlen = (runlen << 1) | t.mqc.Decode()
+				var r0, r1 uint32
+				r0, s = t.mqc.DecodeReg(s, ctxs, t1CtxnoUni)
+				r1, s = t.mqc.DecodeReg(s, ctxs, t1CtxnoUni)
+				runlen = (r0 << 1) | r1
 
-				partial := true
-				switch runlen {
-				case 0:
-					t.decClnpassStep(&flags, flagsp, stride, data, lw, 0, oneplushalf, vsc, false, partial)
-					partial = false
-					fallthrough
-				case 1:
-					t.decClnpassStep(&flags, flagsp, stride, data, lw, 1, oneplushalf, 0, false, partial)
-					partial = false
-					fallthrough
-				case 2:
-					t.decClnpassStep(&flags, flagsp, stride, data, lw, 2, oneplushalf, 0, false, partial)
-					partial = false
-					fallthrough
-				default: // case 3
-					t.decClnpassStep(&flags, flagsp, stride, data, lw, 3, oneplushalf, 0, false, partial)
+				// Partial (entry) step at ci = runlen: the run points straight
+				// at the first significant coefficient, so the ZC decode is
+				// skipped and only the sign is decoded.
+				ci := runlen
+				lu := getctxtnoScOrSpbIndex(flags, t.flags[flagsp-1], t.flags[flagsp+1], ci)
+				var v uint32
+				v, s = t.mqc.DecodeReg(s, ctxs, int(getctxnoSC(lu)))
+				v ^= getspb(lu)
+				idx := data + int(ci)*lw
+				if v != 0 {
+					t.data[idx] = -oneplushalf
+				} else {
+					t.data[idx] = oneplushalf
+				}
+				vv := uint32(0)
+				if ci == 0 {
+					vv = vsc
+				}
+				t.updateFlagsCenter(&flags, flagsp, ci, v, stride, vv)
+
+				// Remaining columns (ci = runlen+1 .. 3): non-partial, no flag
+				// pre-check (checkFlags=false), so the ZC decode always runs.
+				for ci = runlen + 1; ci <= 3; ci++ {
+					var d0 uint32
+					d0, s = t.mqc.DecodeReg(s, ctxs, int(t.getctxnoZC(flags>>(ci*3))))
+					if d0 != 0 {
+						lu := getctxtnoScOrSpbIndex(flags, t.flags[flagsp-1], t.flags[flagsp+1], ci)
+						var w uint32
+						w, s = t.mqc.DecodeReg(s, ctxs, int(getctxnoSC(lu)))
+						w ^= getspb(lu)
+						idx := data + int(ci)*lw
+						if w != 0 {
+							t.data[idx] = -oneplushalf
+						} else {
+							t.data[idx] = oneplushalf
+						}
+						t.updateFlagsCenter(&flags, flagsp, ci, w, stride, 0)
+					}
 				}
 			} else {
-				t.decClnpassStep(&flags, flagsp, stride, data, lw, 0, oneplushalf, vsc, true, false)
-				t.decClnpassStep(&flags, flagsp, stride, data, lw, 1, oneplushalf, 0, true, false)
-				t.decClnpassStep(&flags, flagsp, stride, data, lw, 2, oneplushalf, 0, true, false)
-				t.decClnpassStep(&flags, flagsp, stride, data, lw, 3, oneplushalf, 0, true, false)
+				// Dense column: four checked (checkFlags=true) steps. ci = 0
+				// carries the vsc value; ci > 0 never consults it.
+				for ci := uint32(0); ci <= 3; ci++ {
+					if flags&((t1SigmaThis|t1PiThis)<<(ci*3)) != 0 {
+						continue
+					}
+					var d0 uint32
+					d0, s = t.mqc.DecodeReg(s, ctxs, int(t.getctxnoZC(flags>>(ci*3))))
+					if d0 == 0 {
+						continue
+					}
+					lu := getctxtnoScOrSpbIndex(flags, t.flags[flagsp-1], t.flags[flagsp+1], ci)
+					var w uint32
+					w, s = t.mqc.DecodeReg(s, ctxs, int(getctxnoSC(lu)))
+					w ^= getspb(lu)
+					idx := data + int(ci)*lw
+					if w != 0 {
+						t.data[idx] = -oneplushalf
+					} else {
+						t.data[idx] = oneplushalf
+					}
+					vv := uint32(0)
+					if ci == 0 {
+						vv = vsc
+					}
+					t.updateFlagsCenter(&flags, flagsp, ci, w, stride, vv)
+				}
 			}
 			t.flags[flagsp] = flags &^ t1PiAll
 			flagsp++
@@ -349,7 +548,7 @@ func (t *T1) decClnpass(bpno int32, cblksty uint32) {
 	if k < t.h {
 		for i = 0; i < t.w; i++ {
 			for j = 0; j < t.h-k; j++ {
-				t.decClnpassStep(&t.flags[flagsp], flagsp, stride, data+int(j)*lw, 0, j, oneplushalf, vsc, true, false)
+				s = t.decClnpassStepReg(&t.flags[flagsp], flagsp, stride, data+int(j)*lw, 0, j, oneplushalf, vsc, s, ctxs)
 			}
 			t.flags[flagsp] &^= t1PiAll
 			flagsp++
@@ -359,12 +558,12 @@ func (t *T1) decClnpass(bpno int32, cblksty uint32) {
 
 	// opj_t1_dec_clnpass_check_segsym
 	if cblksty&CblkstySegsym != 0 {
-		t.mqc.SetCurCtx(t1CtxnoUni)
-		t.mqc.Decode()
-		t.mqc.Decode()
-		t.mqc.Decode()
-		t.mqc.Decode()
+		_, s = t.mqc.DecodeReg(s, ctxs, t1CtxnoUni)
+		_, s = t.mqc.DecodeReg(s, ctxs, t1CtxnoUni)
+		_, s = t.mqc.DecodeReg(s, ctxs, t1CtxnoUni)
+		_, s = t.mqc.DecodeReg(s, ctxs, t1CtxnoUni)
 	}
+	t.mqc.StoreDec(s)
 }
 
 // ---------------------------------------------------------------------------

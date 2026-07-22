@@ -101,6 +101,7 @@ func (e *Encoder) writeHeader(stream *cio.Stream, mgr *event.Manager) error {
 	}
 	// create_tcd
 	e.tcd = tcd.Create(false)
+	e.tcd.SetNumThreads(e.numThreads)
 	if !e.tcd.Init(e.privateImage, &e.CP) {
 		mgr.Errorf("Cannot instantiate the tile coder\n")
 		return ErrEncodeWrite

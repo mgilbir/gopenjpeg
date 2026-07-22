@@ -4,6 +4,9 @@ package mqc
 const (
 	// numCtxs is MQC_NUMCTXS (mqc.h).
 	numCtxs = 19
+	// NumCtxs exports numCtxs so callers can size the context array they get
+	// from Ctxs() for register-resident decoding.
+	NumCtxs = numCtxs
 	// cblkDataExtra is OPJ_COMMON_CBLK_DATA_EXTRA (opj_common.h): the margin
 	// of writable bytes past the input that the decoder temporarily
 	// overwrites with a fake 0xFF 0xFF marker.

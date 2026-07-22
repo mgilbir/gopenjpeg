@@ -9,6 +9,8 @@ package tcd
 
 import (
 	"math"
+	"sync"
+	"sync/atomic"
 
 	"github.com/mgilbir/gopenjpeg/internal/cparams"
 	"github.com/mgilbir/gopenjpeg/internal/dwt"
@@ -333,13 +335,36 @@ func (t *TCD) t1Encode() error {
 	return t.encodeCblks(mctNorms, mctNumcomps)
 }
 
-// encodeCblks ports opj_t1_encode_cblks (scalar; the C reference parallelises
-// per code-block but the coding result is identical).
+// encCblkJob is one per-code-block tier-1 encode unit, mirroring the C
+// opj_t1_cblk_encode_processor job. Jobs are enumerated in the canonical
+// component/resolution/band/precinct/code-block order so distortion can be
+// re-summed deterministically regardless of worker scheduling.
+type encCblkJob struct {
+	cblk          *tile.CblkEnc
+	band          *tile.Band
+	tilec         *tile.TileComp
+	tccp          *cparams.TCCP
+	resno, compno uint32
+}
+
+// encodeCblks ports opj_t1_encode_cblks. Each code-block is coded independently
+// into its own CblkEnc, so with NumThreads>1 the jobs fan out across N workers
+// (each with a private t1.T1 encode state) exactly like the C thread pool.
+//
+// Determinism / byte-identity: the C reference sums per-code-block distortion
+// into tile->distotile under a mutex in worker-completion order, so its float
+// summation order varies with scheduling; empirically opj_compress output is
+// nonetheless byte-stable across -threads because the tiny float differences do
+// not cross the discrete rate-allocation truncation boundaries. Rather than
+// depend on that, this port accumulates each job's distortion into a slot and
+// sums the slots in canonical code-block order afterwards, so tile.Distotile —
+// and therefore rate allocation and the output bytes — is bit-identical to the
+// sequential encode (and thus to C -threads 1) for every worker count.
 func (t *TCD) encodeCblks(mctNorms []float64, mctNumcomps uint32) error {
 	tl := t.tile()
 	tl.Distotile = 0
-	state := t1.New(true)
 
+	var jobs []encCblkJob
 	for compno := uint32(0); compno < tl.Numcomps; compno++ {
 		tilec := &tl.Comps[compno]
 		tccp := &t.TCP.TCCPs[compno]
@@ -353,14 +378,62 @@ func (t *TCD) encodeCblks(mctNorms []float64, mctNumcomps uint32) error {
 				for precno := uint32(0); precno < res.Pw*res.Ph; precno++ {
 					prc := &band.Precincts[precno]
 					for cblkno := uint32(0); cblkno < prc.Cw*prc.Ch; cblkno++ {
-						cblk := &prc.CblksEnc[cblkno]
-						cum := t.cblkEncodeProcessor(state, cblk, band, tilec, tccp,
-							resno, compno, mctNorms, mctNumcomps)
-						tl.Distotile += cum
+						jobs = append(jobs, encCblkJob{
+							cblk:   &prc.CblksEnc[cblkno],
+							band:   band,
+							tilec:  tilec,
+							tccp:   tccp,
+							resno:  resno,
+							compno: compno,
+						})
 					}
 				}
 			}
 		}
+	}
+
+	dist := make([]float64, len(jobs))
+	n := t.NumThreads
+	if n < 1 {
+		n = 1
+	}
+	if n > len(jobs) {
+		n = len(jobs)
+	}
+	if n <= 1 {
+		state := t1.New(true)
+		for i := range jobs {
+			j := &jobs[i]
+			dist[i] = t.cblkEncodeProcessor(state, j.cblk, j.band, j.tilec, j.tccp,
+				j.resno, j.compno, mctNorms, mctNumcomps)
+		}
+	} else {
+		var (
+			next int64
+			wg   sync.WaitGroup
+		)
+		for k := 0; k < n; k++ {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				state := t1.New(true)
+				for {
+					idx := int(atomic.AddInt64(&next, 1)) - 1
+					if idx >= len(jobs) {
+						return
+					}
+					j := &jobs[idx]
+					dist[idx] = t.cblkEncodeProcessor(state, j.cblk, j.band, j.tilec, j.tccp,
+						j.resno, j.compno, mctNorms, mctNumcomps)
+				}
+			}()
+		}
+		wg.Wait()
+	}
+
+	// Sum in canonical code-block order for a scheduling-independent result.
+	for i := range dist {
+		tl.Distotile += dist[i]
 	}
 	return nil
 }
