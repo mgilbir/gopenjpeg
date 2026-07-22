@@ -1,8 +1,14 @@
 # HT (HTJ2K) code-block decode vectors
 
-`cleanup_vectors.bin.gz` is a gzip-compressed stream of per-code-block vectors
-captured from an **instrumented OpenJPEG** `opj_t1_ht_decode_cblk` (the C
-reference), used by `internal/ht` to prove bit-exact decoding.
+Two gzip-compressed streams of per-code-block vectors captured from an
+**instrumented OpenJPEG** `opj_t1_ht_decode_cblk` (the C reference), used by
+`internal/ht` to prove bit-exact decoding:
+
+- `cleanup_vectors.bin.gz` — cleanup-pass-only records captured by decoding the
+  HTJ2K conformance corpus with the instrumented `opj_decompress`.
+- `multipass_vectors.bin.gz` — multi-pass records (CUP+SPP and CUP+SPP+MRP)
+  captured by driving `opj_t1_ht_decode_cblk` directly with synthesized
+  code-blocks (see "Multi-pass vectors" below).
 
 Each record is (all integers little-endian):
 
@@ -30,12 +36,37 @@ code-block sizes present in the corpus (including partial blocks such as 20x15,
 16x60, 32x64), both HT and HT+VSC styles, and `Mb` 9-14. The Go test replays the
 full 574-record set locally when regenerated; the subset is what ships.
 
+## Multi-pass vectors
+
 **All available HT conformance streams are cleanup-pass-only** (`numsegs=1`,
-`num_passes=1`). The corpus contains no multi-pass HT (SigProp/MagRef) streams
-and OpenJPEG has no HT *encoder* to synthesize them, so the SigProp/MagRef
-refinement paths in `internal/ht` are validated only by the fuzz target
-(`FuzzDecodeCblk`, which drives 2-segment multi-pass cases for panic-safety),
-not by oracle vectors. This is a known coverage gap.
+`num_passes=1`, and `numbps==1` i.e. `zero_bplanes == Mb`, which would force
+multi-pass decoding off anyway). No open-source encoder emits HT SigProp/MagRef
+passes: OpenJPEG has no HT encoder at all, and OpenJPH's block encoder asserts
+`num_passes == 1`.
+
+`multipass_vectors.bin.gz` therefore comes from the module-level harness
+`oracle/harness/w10/gen_multipass.c`, which calls the instrumented
+`opj_t1_ht_decode_cblk` directly with synthesized code-blocks built from the
+574 real corpus records:
+
+- the real cleanup segment is kept verbatim (it stays a valid cleanup segment
+  for any `(Mb', numbps')` with unchanged `zero_bplanes = Mb'+1-numbps'`,
+  because cleanup decoding uses only `p = numbps` as a shift and
+  `zero_bplanes+1` as a bound);
+- `numbps'` is raised to 2/3/8 (with `Mb' = zero_bplanes + numbps' - 1`) so the
+  SPP/MRP passes are legal (`p >= 2`);
+- a deterministic pseudorandom segment 2 of varied length (including 0-length
+  for the "zero length for 2nd pass" warning path) is appended, and
+  `segs[1].real_num_passes` is 1 (CUP+SPP) or 2 (CUP+SPP+MRP);
+- the VSC (stripe-causal) bit is flipped on one variant per record.
+
+Any byte string is a decodable refinement segment (SPP/MRP consume bits on
+demand; exhaustion fills zeros), so the C decoder's output on these inputs is
+well-defined ground truth. The checked-in subset holds 189 records (up to 3 per
+`(w, h, cblksty, numbps, num_passes, seg2==0)` signature; 162 with active
+SPP/MRP data, 574 CUP+SPP + 1148 CUP+SPP+MRP in the full set). A cleanup-only
+Go decode differs from the expected output on 1603 of the 1630 non-empty-seg2
+records, confirming the refinement passes carry real effect.
 
 ## Regeneration
 
@@ -62,6 +93,23 @@ not by oracle vectors. This is a known coverage gap.
    done
    ```
 
-3. Subsample (up to 3 per signature) and gzip into
+3. Subsample (up to 3 per `(w,h,cblksty,Mb,numbps)` signature) and gzip into
    `testdata/vectors/ht/cleanup_vectors.bin.gz` (see the git history of this
    directory for the selection script).
+
+4. Multi-pass vectors: build and run the direct harness against the *raw*
+   (unsubsampled) dump from step 2:
+
+   ```
+   cd oracle/harness/w10
+   gcc -O2 -o gen_multipass gen_multipass.c \
+     -I openjpeg-instr/src/lib/openjp2 \
+     -I openjpeg-instr/build/src/lib/openjp2 \
+     openjpeg-instr/build/bin/libopenjp2.a -lm -lpthread
+   # (build the static lib first: cmake -DBUILD_STATIC_LIBS=ON && make openjp2_static)
+   OPJ_W10_DUMP=/tmp/multipass.bin ./gen_multipass /tmp/vectors.bin
+   ```
+
+   Then subsample (up to 3 per `(w,h,cblksty,numbps,num_passes,seg2==0)`
+   signature, 1 for zero-length-seg2 records) and gzip into
+   `testdata/vectors/ht/multipass_vectors.bin.gz`.

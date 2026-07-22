@@ -91,10 +91,27 @@ func (v vector) cblk() *t1.CodeBlockDec {
 	}
 }
 
+// vectorFiles lists the oracle vector sets: cleanup-only records captured from
+// decoding the HTJ2K conformance corpus, and synthesized multi-pass records
+// (CUP+SPP and CUP+SPP+MRP) captured from the instrumented C decoder driven
+// directly by the W10 harness (see testdata/vectors/ht/README.md).
+var vectorFiles = []string{
+	"../../testdata/vectors/ht/cleanup_vectors.bin.gz",
+	"../../testdata/vectors/ht/multipass_vectors.bin.gz",
+}
+
+func readAllVectors(t testing.TB) []vector {
+	var vecs []vector
+	for _, f := range vectorFiles {
+		vecs = append(vecs, readVectors(t, f)...)
+	}
+	return vecs
+}
+
 // TestDecodeVectors replays every oracle vector through DecodeCblk and requires
 // the decoded raster to be bit-exact against the C reference output.
 func TestDecodeVectors(t *testing.T) {
-	vecs := readVectors(t, "../../testdata/vectors/ht/cleanup_vectors.bin.gz")
+	vecs := readAllVectors(t)
 	if len(vecs) == 0 {
 		t.Fatal("no vectors loaded")
 	}
@@ -124,7 +141,7 @@ func TestDecodeVectors(t *testing.T) {
 // TestDecodeVectorsDecodedData checks the sub-tile decode path (cblk.DecodedData
 // set): the same output must land in the caller-provided buffer.
 func TestDecodeVectorsDecodedData(t *testing.T) {
-	vecs := readVectors(t, "../../testdata/vectors/ht/cleanup_vectors.bin.gz")
+	vecs := readAllVectors(t)
 	dec := New()
 	for i, v := range vecs {
 		n := int(v.width * v.height)
@@ -147,7 +164,7 @@ func TestDecodeVectorsDecodedData(t *testing.T) {
 // decoder; per the project no-panic rule it must never panic, OOB, or hang.
 func FuzzDecodeCblk(f *testing.F) {
 	// Seed with a couple of real vectors.
-	vecs := readVectors(f, "../../testdata/vectors/ht/cleanup_vectors.bin.gz")
+	vecs := readAllVectors(f)
 	for i := 0; i < len(vecs) && i < 8; i++ {
 		v := vecs[i]
 		f.Add(v.coded, uint8(v.width), uint8(v.height), uint32(v.cblksty),
