@@ -293,3 +293,19 @@ func BenchmarkDecode64x64(b *testing.B) {
 		_, _ = dec.DecodeCblk(cblk, 0, 0, 0, false)
 	}
 }
+
+// TestEncodeCblkAllZero encodes an all-zero code-block. The C reference emits
+// no passes and no data for such blocks (t2 then codes it as not included);
+// this must not panic (regression: mqc.Bytes on a zero-pass block used to
+// slice [start:start-1]).
+func TestEncodeCblkAllZero(t *testing.T) {
+	enc := New(true)
+	input := make([]int32, 16*16)
+	enc.SetData(input, 16, 16)
+	var cblk CodeBlockEnc
+	cblk = CodeBlockEnc{X0: 0, Y0: 0, X1: 16, Y1: 16}
+	enc.EncodeCblk(&cblk, 0, 0, 3, 1, 1.0, 0, 1, nil, 0)
+	if cblk.Totalpasses != 0 {
+		t.Fatalf("all-zero block: totalpasses = %d, want 0", cblk.Totalpasses)
+	}
+}

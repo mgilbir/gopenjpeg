@@ -33,8 +33,13 @@ func (m *MQC) InitEnc() {
 	m.endOfByteStreamCounter = 0
 }
 
-// Bytes returns the encoded output produced since InitEnc.
+// Bytes returns the encoded output produced since InitEnc. When nothing was
+// encoded (bp still at the fake leading byte, i.e. a zero-pass code-block)
+// it returns nil instead of slicing [start:start-1].
 func (m *MQC) Bytes() []byte {
+	if m.bp < m.start {
+		return nil
+	}
 	return m.buf[m.start:m.bp]
 }
 
