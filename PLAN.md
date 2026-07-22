@@ -139,5 +139,8 @@ gopenjpeg/               public API: Decode/Encode, options, image.Image interop
 - 2026-07-22: W10 landed (internal/ht). tcd must pass mb=band.numbps
   and route cblksty&HT blocks to ht.Decoder.DecodeCblk. GAP: HT
   SigProp/MagRef passes have no oracle vectors (corpus HT streams
-  are cleanup-only and OpenJPEG cannot encode HT) — follow-up: build
-  OpenJPH into oracle/ to synthesize multi-pass HT streams.
+  are cleanup-only and OpenJPEG cannot encode HT) — CLOSED same day:
+  multi-pass segments synthesized via instrumented oracle (OpenJPH is
+  cleanup-only too); SigProp/MagRef now bit-exact on 1722 records.
+  Caveat: synthesized rather than encoder-produced conformance
+  streams; revisit if a true multi-pass HT encoder becomes available.
