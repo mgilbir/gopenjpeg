@@ -8,6 +8,8 @@ package image
 import (
 	"errors"
 	"math"
+
+	"github.com/mgilbir/gopenjpeg/internal/opjmath"
 )
 
 // ColorSpace is a port of OPJ_COLOR_SPACE.
@@ -179,23 +181,23 @@ type CompHeaderUpdateParams struct {
 // component's W/H/X0/Y0 from the image bounds, the tile grid in cp, and the
 // per-component sub-sampling (Dx/Dy) and reduce Factor.
 func (image *Image) CompHeaderUpdate(cp *CompHeaderUpdateParams) {
-	lX0 := uintMax(cp.Tx0, image.X0)
-	lY0 := uintMax(cp.Ty0, image.Y0)
+	lX0 := opjmath.UintMax(cp.Tx0, image.X0)
+	lY0 := opjmath.UintMax(cp.Ty0, image.Y0)
 	// validity of cp members used here checked in opj_j2k_read_siz; can't overflow.
 	lX1 := cp.Tx0 + (cp.Tw-1)*cp.Tdx
 	lY1 := cp.Ty0 + (cp.Th-1)*cp.Tdy
 	// use add saturated to prevent overflow
-	lX1 = uintMin(uintAdds(lX1, cp.Tdx), image.X1)
-	lY1 = uintMin(uintAdds(lY1, cp.Tdy), image.Y1)
+	lX1 = opjmath.UintMin(opjmath.UintAdds(lX1, cp.Tdx), image.X1)
+	lY1 = opjmath.UintMin(opjmath.UintAdds(lY1, cp.Tdy), image.Y1)
 
 	for i := uint32(0); i < image.Numcomps; i++ {
 		imgComp := &image.Comps[i]
-		lCompX0 := uintCeildiv(lX0, imgComp.Dx)
-		lCompY0 := uintCeildiv(lY0, imgComp.Dy)
-		lCompX1 := uintCeildiv(lX1, imgComp.Dx)
-		lCompY1 := uintCeildiv(lY1, imgComp.Dy)
-		lWidth := uintCeildivpow2(lCompX1-lCompX0, imgComp.Factor)
-		lHeight := uintCeildivpow2(lCompY1-lCompY0, imgComp.Factor)
+		lCompX0 := opjmath.UintCeildiv(lX0, imgComp.Dx)
+		lCompY0 := opjmath.UintCeildiv(lY0, imgComp.Dy)
+		lCompX1 := opjmath.UintCeildiv(lX1, imgComp.Dx)
+		lCompY1 := opjmath.UintCeildiv(lY1, imgComp.Dy)
+		lWidth := opjmath.UintCeildivpow2(lCompX1-lCompX0, imgComp.Factor)
+		lHeight := opjmath.UintCeildivpow2(lCompY1-lCompY0, imgComp.Factor)
 		imgComp.W = lWidth
 		imgComp.H = lHeight
 		imgComp.X0 = lCompX0

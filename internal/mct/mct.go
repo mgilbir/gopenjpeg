@@ -9,7 +9,11 @@
 // decode-real path uses float32 with the exact constant order-of-operations.
 package mct
 
-import "math"
+import (
+	"math"
+
+	"github.com/mgilbir/gopenjpeg/internal/opjmath"
+)
 
 // opj_mct_norms — norms of the basis functions of the reversible MCT.
 var mctNorms = [3]float64{1.732, .8292, .8292}
@@ -109,16 +113,6 @@ func DecodeReal(c0, c1, c2 []float32, n int) {
 	}
 }
 
-// intFixMul is a port of opj_int_fix_mul from opj_intmath.h. It multiplies two
-// fixed-point rationals with 13 fractional bits and rounding.
-//
-// TODO: switch to internal/opjmath once that package lands.
-func intFixMul(a, b int32) int32 {
-	temp := int64(a) * int64(b)
-	temp += 4096
-	return int32(temp >> 13)
-}
-
 // EncodeCustom is a port of opj_mct_encode_custom. It applies an arbitrary
 // forward NxN component transform to integer sample data.
 //
@@ -144,7 +138,7 @@ func EncodeCustom(matrix []float32, n int, data [][]int32, nbComp uint32) {
 		for j := uint32(0); j < nbComp; j++ {
 			var acc int32
 			for k := uint32(0); k < nbComp; k++ {
-				acc += intFixMul(currentMatrix[mctPtr], currentData[k])
+				acc += opjmath.IntFixMul(currentMatrix[mctPtr], currentData[k])
 				mctPtr++
 			}
 			data[j][i] = acc
