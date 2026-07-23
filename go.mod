@@ -1,5 +1,5 @@
 module github.com/mgilbir/gopenjpeg
 
-go 1.26
+go 1.25
 
-require github.com/mgilbir/golittlecms v0.0.0-20260723114542-9fd0e1a706f3
+require github.com/mgilbir/golittlecms v0.0.0-20260723125238-2845cbfd270b
