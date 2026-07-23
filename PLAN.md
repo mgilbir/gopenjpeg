@@ -122,8 +122,10 @@ gopenjpeg/               public API: Decode/Encode, options, image.Image interop
   and the byte-identity gates as verifier. Hand-written assembly
   (Avo/vek) rejected: same ceiling, cuts against the pure-Go
   security posture.
-- ICC color management (colr meth 2): needs a CMS engine; the only
-  remaining gate exclusion.
+- ~~ICC color management~~ DONE 2026-07-23: embedded ICC profiles
+  applied via github.com/mgilbir/golittlecms (pure-Go lcms2 port);
+  all ICC gate files bit-exact vs opj_decompress. Zero gate
+  exclusions remain anywhere.
 
 ## Status log
 
