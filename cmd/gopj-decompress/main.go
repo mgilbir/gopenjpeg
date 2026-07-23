@@ -111,9 +111,11 @@ func run() error {
 		return err
 	}
 
-	// Reproduce opj_decompress's post-decode colour handling (sYCC/CMYK/eYCC to
-	// sRGB, plus the colour-space label heuristic). ICC-managed images cannot be
-	// colour-converted by this port; warn and write the raw components.
+	// Reproduce opj_decompress's post-decode colour handling (the colour-space
+	// label heuristic, then sYCC/CMYK/eYCC to sRGB, then CIELab or embedded-ICC
+	// colour management via Little CMS) in the exact order opj_decompress.c uses.
+	// The conversion is best-effort: a profile that cannot be applied leaves the
+	// raw components in place, exactly as the C CLI does; warn and continue.
 	if err := img.ConvertToRGB(); err != nil {
 		if !*quiet {
 			fmt.Fprintf(os.Stderr, "[WARNING] colour conversion skipped: %v\n", err)
