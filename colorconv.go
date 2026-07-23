@@ -8,11 +8,12 @@ import (
 	"github.com/mgilbir/gopenjpeg/internal/image"
 )
 
-// ErrICCUnsupported is returned by ConvertToRGB when the image carries an ICC
-// profile. The reference opj_decompress applies such profiles through Little
-// CMS (an external colour-management library); this pure-Go port does not embed
-// a CMS engine, so ICC-managed images cannot be rendered to sRGB identically.
-// Callers that only need the raw decoded components can ignore this error.
+// ErrICCUnsupported is retained for backward compatibility. Embedded ICC
+// profiles are now colour-managed by ApplyICCProfile (via the pure-Go Little CMS
+// port), so ConvertToRGB no longer returns this error; a profile that cannot be
+// applied yields ErrICCApply instead (see icc.go).
+//
+// Deprecated: ConvertToRGB no longer returns ErrICCUnsupported.
 var ErrICCUnsupported = errors.New("gopenjpeg: ICC profile colour management is not supported")
 
 // ErrColorConvert is returned when a colour transform cannot be applied because
@@ -21,14 +22,18 @@ var ErrICCUnsupported = errors.New("gopenjpeg: ICC profile colour management is 
 var ErrColorConvert = errors.New("gopenjpeg: cannot convert colour space")
 
 // ConvertToRGB reproduces the post-decode colour handling that opj_decompress
-// performs before writing an output file: it first normalises the colour-space
-// label with the same heuristic the CLI uses, then converts sYCC, eYCC or CMYK
-// images to sRGB in place. It is a no-op for images that are already sRGB or
-// greyscale.
+// performs before writing an output file, in the exact order of opj_decompress.c:
+// it first normalises the colour-space label with the same heuristic the CLI
+// uses, then converts sYCC, eYCC or CMYK images to sRGB in place, and finally
+// applies any colr-box colour management — CIELab (cielabToRGB) for the
+// enumerated CIELab space, or an embedded ICC profile (ApplyICCProfile, via the
+// pure-Go Little CMS port) for a real profile. It is a no-op for images that are
+// already sRGB or greyscale with no profile.
 //
-// It returns ErrICCUnsupported when the image carries an ICC profile (the C CLI
-// would defer to Little CMS), and ErrColorConvert when the component layout is
-// not one the built-in transforms handle.
+// It returns ErrColorConvert when the component layout is not one the built-in
+// transforms handle, or ErrICCApply when an embedded ICC profile cannot be
+// applied (a malformed profile or one whose transform cannot be built); like
+// opj_decompress those are best-effort and leave the components untouched.
 func (im *Image) ConvertToRGB() error {
 	img := im.img
 
@@ -58,16 +63,16 @@ func (im *Image) ConvertToRGB() error {
 	}
 
 	if img.ICCProfileBuf != nil {
-		// A JP2 colr box with meth==2 and icc_profile_len==0 signals the CIELab
-		// enumerated colour space; the box parameters are packed big-endian into
-		// ICCProfileBuf (see internal/jp2 read_boxes.go). Handle that here; a real
-		// embedded ICC profile (len>0) still requires a CMS engine we do not ship.
+		// Mirror opj_decompress.c: with an ICC profile buffer present, a non-zero
+		// icc_profile_len is a real embedded ICC profile handled through Little CMS
+		// (color_apply_icc_profile); a zero length is the CIELab enumerated colour
+		// space (colr meth 2), whose box parameters are packed big-endian into
+		// ICCProfileBuf (see internal/jp2 read_boxes.go) and handled by
+		// color_cielab_to_rgb.
 		if img.ICCProfileLen == 0 && isCIELabBuf(img.ICCProfileBuf) {
 			return cielabToRGB(img)
 		}
-		// opj_decompress would apply the profile via Little CMS here. We cannot
-		// reproduce that bit-exactly.
-		return ErrICCUnsupported
+		return applyICCProfile(img)
 	}
 	return nil
 }

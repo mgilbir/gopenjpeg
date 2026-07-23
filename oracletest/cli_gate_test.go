@@ -70,6 +70,7 @@ func TestCLIByteParity(t *testing.T) {
 		{in: "file1.jp2", dir: []string{"conformance"}, ext: "pgx"},
 		{in: "file4.jp2", dir: []string{"conformance"}, ext: "pgm"},
 		{in: "file3.jp2", dir: []string{"conformance"}, ext: "ppm"}, // sYCC -> RGB
+		{in: "file5.jp2", dir: []string{"conformance"}, ext: "ppm"}, // embedded ICC -> sRGB via golittlecms
 		{in: "p0_02.j2k", dir: []string{"conformance"}, ext: "raw"},
 		{in: "p0_01.j2k", dir: []string{"conformance"}, ext: "pgx", flags: []string{"-r", "1"}},
 		{in: "p0_01.j2k", dir: []string{"conformance"}, ext: "pgx", flags: []string{"-d", "32,32,96,96"}},

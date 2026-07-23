@@ -356,3 +356,59 @@ func FuzzEncodeDecodeRoundTrip(f *testing.F) {
 		}
 	})
 }
+
+// FuzzApplyICCProfile drives ApplyICCProfile (icc.go), and through it the
+// pure-Go Little CMS profile parser and transform builder, over arbitrary
+// profile bytes attached to a small fixed decoded image. golittlecms is
+// documented to never panic on malformed profiles; this target enforces that
+// end to end through our wiring, and exercises both the RGB and the grey->RGB
+// component-expansion branches (selected by a control byte) so a mutated
+// profile that opens but produces an odd transform cannot slip a panic through.
+// It must never panic regardless of the profile bytes; a successful apply is
+// not required.
+func FuzzApplyICCProfile(f *testing.F) {
+	f.Add([]byte{})
+	f.Add(make([]byte, 128))
+	// A byte pattern that looks vaguely like an ICC header (size + 'acsp').
+	hdr := make([]byte, 132)
+	copy(hdr[36:], []byte("acsp"))
+	f.Add(hdr)
+
+	f.Fuzz(func(t *testing.T, profile []byte) {
+		defer func() {
+			if r := recover(); r != nil {
+				t.Fatalf("panic on %d-byte profile: %v", len(profile), r)
+			}
+		}()
+
+		// Build a tiny fixed image whose component count depends on the first
+		// profile byte, so both the RGB (>2 comps) and grey (<=2 comps) branches
+		// of ApplyICCProfile are reached. 2x2 samples per component.
+		nc := 3
+		if len(profile) > 0 {
+			nc = int(profile[0]%4) + 1 // 1..4
+		}
+		const w, h = 2, 2
+		comps := make([]Component, nc)
+		for i := range comps {
+			data := make([]int32, w*h)
+			for k := range data {
+				data[k] = int32((i*7 + k*3) & 0xff)
+			}
+			comps[i] = Component{Dx: 1, Dy: 1, W: w, H: h, Prec: 8, Data: data}
+		}
+		img := NewImage(ColorSpaceSRGB, 0, 0, w, h, comps)
+		img.SetICCProfile(profile)
+		// Best-effort: an inapplicable profile returns ErrICCApply, an applicable
+		// one returns nil. Either way it must not panic and must not corrupt the
+		// component slices' lengths.
+		_ = img.ApplyICCProfile()
+		for i := 0; i < img.NumComponents(); i++ {
+			c := img.Component(i)
+			if len(c.Data) != int(c.W)*int(c.H) {
+				t.Fatalf("comp %d data length %d != %dx%d after apply",
+					i, len(c.Data), c.W, c.H)
+			}
+		}
+	})
+}

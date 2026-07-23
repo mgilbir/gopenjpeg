@@ -19,15 +19,23 @@ import (
 // decoded component samples must be bit-exact with the PGX that opj_decompress
 // writes.
 //
-// EXCLUSIONS (documented; the goal is zero unexplained ones):
+// EXCLUSIONS: none. Every color path opj_decompress uses is now reproduced.
 //
-//   - ICC-managed files (colr method 2, non-zero ICC profile length): the
-//     reference opj_decompress renders these to sRGB through Little CMS
-//     (OPJ_HAVE_LIBLCMS2 is enabled in the oracle build). This pure-Go port
-//     embeds no colour-management engine, so ConvertToRGB reports
-//     ErrICCUnsupported and cannot reproduce LCMS output bit-exactly. Affected
-//     conformance files: file5, file7, file8. Affected nonregression file:
-//     issue171.jp2.
+// Embedded ICC profiles (colr method 2, non-zero ICC profile length) are NO
+// LONGER excluded. ConvertToRGB now applies them through ApplyICCProfile
+// (icc.go), a faithful port of color_apply_icc_profile backed by the pure-Go
+// Little CMS port github.com/mgilbir/golittlecms. golittlecms is bit-exact
+// against liblcms2 2.19 (commit e2c0840); the shipped oracle links the system
+// liblcms2 2.14 (Ubuntu 24.04). For every ICC file in the corpus the two lcms
+// versions agree bit-for-bit, so these files are gated BIT-EXACT against the
+// shipped oracle with no tolerance: file5 (RGB 8-bit), file7 (RGB 16-bit),
+// file8 (RGB 8-bit) conformance, and issue171.jp2 (RGB 8-bit) nonregression --
+// verified maxdiff=0 on every sample of every component (see TestJP2Conformance
+// / TestJP2Nonregression). The 2.14-vs-2.19 agreement was confirmed empirically
+// on the corpus; should a future corpus ICC file (e.g. a grey- or YCbCr-input
+// profile, or a v2 profile lcms rebuilt its LUTs for) expose a version delta,
+// re-decode it with an opj_decompress relinked against lcms2 e2c0840 to isolate
+// version drift from a port bug before adjusting the gate.
 //
 // CMYK files (issue205.jp2, issue208.jp2) are NO LONGER excluded: color.c is
 // compiled into opj_decompress -ffast-math, and gcc reassociates 255.0F*X*K into
@@ -44,18 +52,20 @@ import (
 // tables with its own rounding, not the reference float pipeline: after matching
 // LCMS's exact D50-adapted matrix (verified against liblcms2 on synthetic Lab
 // probes), the residual is at most 1/65535 on ~0.15% of samples (383/269664 and
-// 425/269664, all off-by-one; every other sample is exact). Embedded ICC
-// profiles (colr meth 2, len>0: file5/7/8, issue171.jp2) remain excluded — those
-// need a full ICC CMS engine, which is out of scope.
+// 425/269664, all off-by-one; every other sample is exact). (Embedded ICC
+// profiles — colr meth 2, len>0: file5/7/8, issue171.jp2 — are now handled
+// bit-exact through golittlecms; see the ICC note above.)
 
 // jp2ConformancePass are conformance JP2 files that decode bit-exact end to end.
-// file5/file7/file8 are excluded (ICC/LCMS); see the exclusion notes above.
 var jp2ConformancePass = []string{
 	"file1.jp2", // sRGB, 3 comp
 	"file2.jp2", // sRGB
 	"file3.jp2", // sYCC 4:2:0 (chroma dx=dy=2) -> RGB
 	"file4.jp2", // grayscale
+	"file5.jp2", // embedded ICC profile (RGB 8-bit) -> sRGB via golittlecms
 	"file6.jp2", // grayscale 12-bit
+	"file7.jp2", // embedded ICC profile (RGB 16-bit) -> sRGB via golittlecms
+	"file8.jp2", // embedded ICC profile (RGB 8-bit) -> sRGB via golittlecms
 	"file9.jp2", // palette (pclr) -> 3 comp sRGB
 }
 
@@ -79,6 +89,7 @@ var jp2NonregPass = []string{
 	"issue206_image-000.jp2",
 	"issue205.jp2", // CMYK -> RGB (color_cmyk_to_rgb, -ffast-math reassociated)
 	"issue208.jp2", // CMYK -> RGB
+	"issue171.jp2", // embedded ICC profile (RGB 8-bit) -> sRGB via golittlecms
 	// Additional sYCC coverage (found via a broad corpus sweep, W14): the
 	// double-precision sycc_to_rgb path is bit-exact on every sub-sampled-chroma
 	// JP2 in the corpus that opj_decompress can render to PGX, not only the
@@ -108,13 +119,18 @@ func decodeGoPublic(t *testing.T, path string) (*gopenjpeg.Image, error) {
 	if err != nil {
 		return nil, err
 	}
-	// Mirror the CLI: attempt the opj_decompress-style colour conversion. An
-	// ICC/CMYK/CIELab file that we cannot colour-manage is left with its raw
-	// components (ErrICCUnsupported / ErrColorConvert are tolerated here); the
-	// subsequent byte comparison decides parity. Files whose oracle output is
-	// actually altered by Little CMS are excluded from the curated lists.
+	// Mirror the CLI and opj_decompress: attempt the post-decode colour
+	// conversion, which is best-effort. ErrColorConvert (a "CAN NOT CONVERT"
+	// layout) and ErrICCApply (color_apply_icc_profile's void failure path — e.g.
+	// relax.jp2, whose profile carries an invalid rendering intent that makes
+	// both golittlecms and the oracle's liblcms2 decline to build the transform)
+	// leave the components untouched, exactly as the C code does; the subsequent
+	// byte comparison then decides parity against the oracle, which left the same
+	// pixels untouched for the same reason. Real, applicable ICC profiles return
+	// nil here and are transformed to sRGB bit-exact.
 	if cerr := img.ConvertToRGB(); cerr != nil &&
 		!errors.Is(cerr, gopenjpeg.ErrICCUnsupported) &&
+		!errors.Is(cerr, gopenjpeg.ErrICCApply) &&
 		!errors.Is(cerr, gopenjpeg.ErrColorConvert) {
 		return nil, cerr
 	}
