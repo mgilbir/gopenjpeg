@@ -116,3 +116,19 @@ gates are skipped automatically when the oracle is absent, so `go test ./...`
 works without it. See the package for the documented exclusions (ICC/CIELab
 colour management and CMYK float-rounding, which a pure-Go port cannot
 reproduce bit-exactly).
+
+### Bit-exactness across architectures
+
+Bit-exactness holds on every `GOARCH`, not only the one the gates run on. Go's
+specification lets the compiler contract `x*y + z` into a single-rounding FMA,
+and gc does so on arm64, ppc64, s390x, riscv64 and loong64 — but never on amd64.
+The C oracle rounds each product separately, so a contracted kernel would diverge
+on those architectures while the amd64 gates stayed green. Every float product
+that feeds an add or a subtract in the float pipeline (the irreversible 9/7 DWT,
+the irreversible MCT and custom-MCT matrix paths, and the sYCC/eYCC/CMYK colour
+conversions) is therefore wrapped in an explicit `float32(...)`/`float64(...)`
+conversion, which the spec defines as a rounding step and hence an FMA barrier.
+The barriers forbid fusion only — operand order and associativity are unchanged,
+and the amd64 code generation is identical, so the byte-identical gate results
+are unaffected. Compiling for each fusing `GOARCH` confirms no FMA instruction
+remains in those kernels.

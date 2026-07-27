@@ -278,7 +278,13 @@ func (t *TCD) rateallocate(dest []byte, length uint32, mgr *event.Manager) bool 
 			}
 		}
 		precF := float64(uint64(1) << t.Image.Comps[compno].Prec)
-		maxSE += (precF - 1.0) * (precF - 1.0) * float64(tilec.Numpix)
+		// The outer float64(...) is an FMA barrier. Go's spec lets gc contract
+		// `x*y + z` into a single-rounding FMA (it does on arm64/ppc64/s390x/
+		// riscv64, never on amd64); C rounds the product first. For prec>26 the
+		// squared term already exceeds 2^53, so the product is inexact and a
+		// fused accumulate would drift maxSE — and with it the distortion
+		// targets and the emitted rate-allocation bytes. No-op on amd64.
+		maxSE += float64((precF - 1.0) * (precF - 1.0) * float64(tilec.Numpix))
 	}
 
 	for layno := uint32(0); layno < tcdTcp.Numlayers; layno++ {
@@ -303,6 +309,10 @@ func (t *TCD) rateallocate(dest []byte, length uint32, mgr *event.Manager) bool 
 			lastLayerAllocationOk := false
 
 			for i := 0; i < 128; i++ {
+				// gc fuses the strength-reduced `(lo+hi)*0.5 - thresh` into an
+				// FMA on arm64/ppc64/s390x/riscv64. No barrier is needed:
+				// halving a finite normal is exact, so the fused and unfused
+				// results are bit-identical (lo/hi are positive R-D slopes).
 				newThresh := (lo + hi) / 2
 				if math.Abs(newThresh-thresh) <= 0.5*1e-5*thresh {
 					break

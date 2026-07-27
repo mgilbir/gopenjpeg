@@ -3,6 +3,14 @@ package mct
 // This file is a faithful port of invert.c: LU-decomposition based inversion
 // of a square float32 matrix, used to invert custom MCT matrices. All
 // arithmetic is float32 to match the C reference bit-for-bit.
+//
+// The inverse matrix produced here is what DecodeCustom applies to sample data,
+// so it is part of the bit-exact contract. Every float32 product that feeds an
+// add or a subtract is therefore wrapped in an explicit float32(...) conversion:
+// per the Go spec that rounds the product to float32 and so forbids the
+// compiler from contracting the expression into a single-rounding FMA (which gc
+// does on arm64/ppc64/s390x/riscv64, but never on amd64 — so the conversions
+// change no amd64 code). Operand order and associativity are unchanged.
 
 // MatrixInversionF is a port of opj_matrix_inversion_f. It inverts the nbComp x
 // nbComp row-major matrix src into dest. src is modified in place (it receives
@@ -68,7 +76,7 @@ func lupDecompose(matrix []float32, permutations []uint32, pSwapArea []float32, 
 			p = matrix[i*nbCompo+k] / temp
 			matrix[i*nbCompo+k] = p
 			for j := k + 1; j < nbCompo; j++ {
-				matrix[i*nbCompo+j] -= p * matrix[k*nbCompo+j]
+				matrix[i*nbCompo+j] -= float32(p * matrix[k*nbCompo+j])
 			}
 		}
 	}
@@ -83,7 +91,7 @@ func lupSolve(result, matrix, vector []float32, permutations []uint32, nbCompo u
 	for i := uint32(0); i < nbCompo; i++ {
 		var sum float32
 		for m := uint32(0); m < i; m++ {
-			sum += matrix[i*nbCompo+m] * intermediate[m]
+			sum += float32(matrix[i*nbCompo+m] * intermediate[m])
 		}
 		intermediate[i] = vector[permutations[i]] - sum
 	}
@@ -94,7 +102,7 @@ func lupSolve(result, matrix, vector []float32, permutations []uint32, nbCompo u
 		var sum float32
 		u := matrix[uk*nbCompo+uk]
 		for j := uk + 1; j < nbCompo; j++ {
-			sum += matrix[uk*nbCompo+j] * result[j]
+			sum += float32(matrix[uk*nbCompo+j] * result[j])
 		}
 		result[uk] = (intermediate[uk] - sum) / u
 	}

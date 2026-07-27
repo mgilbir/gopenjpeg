@@ -200,6 +200,11 @@ func (t *TCD) initTile(tileNo uint32, isEncoder bool, mgr *event.Manager) error 
 					log2Gain = 1
 				}
 				rb := int32(imageComp.Prec) + log2Gain
+				// No FMA barrier needed here even though gc contracts
+				// `1.0 + mant/2048` into an FMA on arm64/ppc64/s390x/riscv64:
+				// Mant is always masked to 11 bits (markers.go, norms.go), so
+				// mant/2048 is exact in float64 and the fused and unfused forms
+				// are bit-identical. See the barrier notes in mct/dwt97.
 				band.Stepsize = float32((1.0 + float64(stepSize.Mant)/2048.0) *
 					math.Pow(2.0, float64(rb-stepSize.Expn)))
 				band.Numbps = stepSize.Expn + int32(tccp.Numgbits) - 1

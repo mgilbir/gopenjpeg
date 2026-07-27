@@ -7,6 +7,17 @@
 // int32 integer arithmetic, the encode-real path uses int32 fixed-point via
 // opj_int_fix_mul for the custom matrix and float32 for the RGB ICT, and the
 // decode-real path uses float32 with the exact constant order-of-operations.
+//
+// FMA barriers: Go's spec lets the compiler contract `x*y + z` (and the
+// `x*y - z` / `z - x*y` shapes) into a single-rounding FMA, and gc does so on
+// arm64/ppc64/s390x/riscv64. The C reference rounds each product separately, so
+// every product below that feeds an add or a subtract is wrapped in an explicit
+// float32(...)/float64(...) conversion; per the Go spec an explicit
+// floating-point conversion rounds to the target type's precision and so
+// forbids the fusion. On amd64 gc never fuses, making the conversions a no-op
+// there — the byte-identical oracle parity is unchanged. The barriers forbid
+// fusion only: operand order and associativity (including the deliberate
+// gcc-reassociated grouping documented on EncodeReal/DecodeReal) are untouched.
 package mct
 
 import (
@@ -102,9 +113,9 @@ func EncodeReal(c0, c1, c2 []float32, n int) {
 		r := c0[i]
 		g := c1[i]
 		b := c2[i]
-		y := 0.299*r + (0.587*g + 0.114*b)
-		u := -0.16875*r + (-0.331260*g + 0.5*b)
-		v := 0.5*r + (-0.41869*g - 0.08131*b)
+		y := float32(0.299*r) + (float32(0.587*g) + float32(0.114*b))
+		u := float32(-0.16875*r) + (float32(-0.331260*g) + float32(0.5*b))
+		v := float32(0.5*r) + (float32(-0.41869*g) - float32(0.08131*b))
 		c0[i] = y
 		c1[i] = u
 		c2[i] = v
@@ -136,9 +147,9 @@ func DecodeReal(c0, c1, c2 []float32, n int) {
 		y := c0[i]
 		u := c1[i]
 		v := c2[i]
-		r := y + (v * 1.402)
-		g := y - (u*0.34413 + v*0.71414)
-		b := y + (u * 1.772)
+		r := y + float32(v*1.402)
+		g := y - (float32(u*0.34413) + float32(v*0.71414))
+		b := y + float32(u*1.772)
 		c0[i] = r
 		c1[i] = g
 		c2[i] = b
@@ -196,7 +207,7 @@ func DecodeCustom(matrix []float32, n int, data [][]float32, nbComp uint32) {
 		for j := uint32(0); j < nbComp; j++ {
 			currentResult[j] = 0
 			for k := uint32(0); k < nbComp; k++ {
-				currentResult[j] += matrix[mctPtr] * currentData[k]
+				currentResult[j] += float32(matrix[mctPtr] * currentData[k])
 				mctPtr++
 			}
 			data[j][i] = currentResult[j]
@@ -207,7 +218,13 @@ func DecodeCustom(matrix []float32, n int, data [][]float32, nbComp uint32) {
 // CalculateNorms is a port of opj_calculate_norms. It computes, for each of the
 // nbComps columns of the row-major matrix, the Euclidean norm of that column
 // and stores it into norms. The accumulation uses float64 with the values read
-// as float32, matching the C reference.
+// as float32, matching the C reference (`lNorms[i] += (OPJ_FLOAT64)lCurrentValue
+// * lCurrentValue`, where the cast on the left promotes both operands).
+//
+// The norms feed the encoder's rate allocation and therefore the emitted bytes,
+// so the float64 square gets the same explicit-conversion FMA barrier as the
+// float32 kernels: without it gc would contract square-and-accumulate into
+// FMADDD on arm64 and drift from the C reference's separately rounded product.
 func CalculateNorms(norms []float64, nbComps uint32, matrix []float32) {
 	for i := uint32(0); i < nbComps; i++ {
 		norms[i] = 0
@@ -215,7 +232,7 @@ func CalculateNorms(norms []float64, nbComps uint32, matrix []float32) {
 		for j := uint32(0); j < nbComps; j++ {
 			currentValue := matrix[index]
 			index += nbComps
-			norms[i] += float64(currentValue) * float64(currentValue)
+			norms[i] += float64(float64(currentValue) * float64(currentValue))
 		}
 		norms[i] = math.Sqrt(norms[i])
 	}

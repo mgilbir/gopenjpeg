@@ -93,6 +93,13 @@ func (im *Image) ConvertToRGB() error {
 // syccToRGBsample ports the static sycc_to_rgb helper in color.c. The
 // multiplications use double precision to match the C code (the constants are
 // C double literals).
+//
+// The green term wraps each product in an explicit float64(...) conversion: Go's
+// spec lets the compiler contract `x*y + z` into a single-rounding FMA (gc does
+// so on arm64/ppc64/s390x/riscv64, never on amd64), which would round the sum
+// differently from the C reference and can flip the truncation to int. The
+// conversion forces the product to be rounded first; it changes no amd64 code
+// and preserves the operand order exactly.
 func syccToRGBsample(offset, upb, y, cb, cr int) (r, g, b int) {
 	cb -= offset
 	cr -= offset
@@ -102,7 +109,7 @@ func syccToRGBsample(offset, upb, y, cb, cr int) (r, g, b int) {
 	} else if r > upb {
 		r = upb
 	}
-	g = y - int(0.344*float64(cb)+0.714*float64(cr))
+	g = y - int(float64(0.344*float64(cb))+float64(0.714*float64(cr)))
 	if g < 0 {
 		g = 0
 	} else if g > upb {
@@ -448,10 +455,15 @@ func cmykToRGB(img *image.Image) error {
 	sY := float32(1.0) / float32((uint32(1)<<c[2].Prec)-1)
 	sK := float32(1.0) / float32((uint32(1)<<c[3].Prec)-1)
 	for i := 0; i < max; i++ {
-		cc := float32(c[0].Data[i]) * sC
-		mm := float32(c[1].Data[i]) * sM
-		yy := float32(c[2].Data[i]) * sY
-		kk := float32(c[3].Data[i]) * sK
+		// The explicit float32(...) around each scaling product is an FMA
+		// barrier: the products feed the `1.0 - x` inversions below, a shape gc
+		// contracts into a single-rounding FNMSUB on arm64/ppc64/s390x/riscv64.
+		// C rounds the product first; the conversion makes Go do the same on
+		// every GOARCH (and is a no-op on amd64, which never fuses).
+		cc := float32(float32(c[0].Data[i]) * sC)
+		mm := float32(float32(c[1].Data[i]) * sM)
+		yy := float32(float32(c[2].Data[i]) * sY)
+		kk := float32(float32(c[3].Data[i]) * sK)
 		cc = 1.0 - cc
 		mm = 1.0 - mm
 		yy = 1.0 - yy
@@ -522,11 +534,17 @@ func esyccToRGB(img *image.Image) error {
 		if !sign2 {
 			cr -= flip
 		}
-		r := int32(float32(y) - 0.0000368*float32(cb) + 1.40199*float32(cr) + 0.5)
+		// Each product is wrapped in an explicit float32(...) conversion: an FMA
+		// barrier (Go spec) that stops gc contracting these multiply-accumulate
+		// chains into single-rounding FMADDS/FMSUBS on arm64/ppc64/s390x/riscv64.
+		// The C reference rounds every product separately. The barriers forbid
+		// fusion only — the left-associated source order above is preserved, and
+		// on amd64 (which never fuses) the emitted code is unchanged.
+		r := int32(float32(y) - float32(0.0000368*float32(cb)) + float32(1.40199*float32(cr)) + 0.5)
 		c[0].Data[i] = clamp(r)
-		g := int32(1.0003*float32(y) - 0.344125*float32(cb) - 0.7141128*float32(cr) + 0.5)
+		g := int32(float32(1.0003*float32(y)) - float32(0.344125*float32(cb)) - float32(0.7141128*float32(cr)) + 0.5)
 		c[1].Data[i] = clamp(g)
-		b := int32(0.999823*float32(y) + 1.77204*float32(cb) - 0.000008*float32(cr) + 0.5)
+		b := int32(float32(0.999823*float32(y)) + float32(1.77204*float32(cb)) - float32(0.000008*float32(cr)) + 0.5)
 		c[2].Data[i] = clamp(b)
 	}
 	img.ColorSpace = image.ClrspcSRGB
@@ -584,7 +602,10 @@ func cielabSRGBGamma(v float64) float64 {
 	if v <= 0.0031308 {
 		return 12.92 * v
 	}
-	return 1.055*math.Pow(v, 1.0/2.4) - 0.055
+	// float64(...) is an FMA barrier (see the eYCC/sYCC notes above): without it
+	// gc contracts this into FMSUBD on arm64 and the CIELab output becomes
+	// GOARCH-dependent. No-op on amd64.
+	return float64(1.055*math.Pow(v, 1.0/2.4)) - 0.055
 }
 
 // cielabToRGB reproduces opj_decompress's color_cielab_to_rgb (color.c) for the
@@ -659,8 +680,10 @@ func cielabToRGB(img *image.Image) error {
 		X, Y, Z := cielabLabToXYZ(ll, aa, bb)
 		out := [3]*[]int32{&red, &green, &blue}
 		for j := 0; j < 3; j++ {
-			lin := cielabXYZ2RGBD50[j][0]*X + cielabXYZ2RGBD50[j][1]*Y + cielabXYZ2RGBD50[j][2]*Z
-			v := int32(math.Floor(cielabSRGBGamma(lin)*65535.0 + 0.5))
+			// float64(...) around each product is an FMA barrier, keeping the
+			// matrix multiply and the 16-bit quantisation GOARCH-independent.
+			lin := float64(cielabXYZ2RGBD50[j][0]*X) + float64(cielabXYZ2RGBD50[j][1]*Y) + float64(cielabXYZ2RGBD50[j][2]*Z)
+			v := int32(math.Floor(float64(cielabSRGBGamma(lin)*65535.0) + 0.5))
 			if v < 0 {
 				v = 0
 			} else if v > 65535 {
