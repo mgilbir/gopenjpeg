@@ -155,7 +155,19 @@ func WithPrecincts(sizes ...[2]int) EncodeOption {
 	}
 }
 
-// WithSubsampling sets the component sub-sampling factors (the -s flag).
+// WithSubsampling declares the component sub-sampling factors (the -s flag of
+// opj_compress).
+//
+// Sub-sampling is a property of the *image*, not of the coding parameters:
+// OpenJPEG's cparameters.subsampling_dx/dy is consumed only by the opj_compress
+// image loaders, which stamp it onto every component and widen the reference
+// grid accordingly; the encoder itself never reads the field. This port behaves
+// the same way, so setting it here cannot make Encode sub-sample anything.
+//
+// To encode a sub-sampled image, set Component.Dx/Dy (and size the reference
+// grid as x1 = x0 + (w-1)*dx + 1) when building the Image. This option is
+// accepted only when it agrees with the components already carried by the
+// image; a disagreement is rejected by Encode rather than silently ignored.
 func WithSubsampling(dx, dy int) EncodeOption {
 	return func(o *encodeOptions) { o.params.SubsamplingDx = int32(dx); o.params.SubsamplingDy = int32(dy) }
 }
@@ -381,6 +393,21 @@ func Encode(img *Image, w io.Writer, opts ...EncodeOption) error {
 	}
 
 	internalImg := img.internal()
+
+	// A non-default WithSubsampling that the image does not actually carry
+	// would otherwise be a silent no-op: the encoder reads the factors from the
+	// components, never from the parameters (C14).
+	if o.params.SubsamplingDx != 1 || o.params.SubsamplingDy != 1 {
+		for i := range internalImg.Comps {
+			c := &internalImg.Comps[i]
+			if int32(c.Dx) != o.params.SubsamplingDx || int32(c.Dy) != o.params.SubsamplingDy {
+				return fmt.Errorf("gopenjpeg: encode: WithSubsampling(%d,%d) disagrees with component %d "+
+					"(dx=%d dy=%d): sub-sampling is a property of the image, set Component.Dx/Dy "+
+					"and the reference grid when building it",
+					o.params.SubsamplingDx, o.params.SubsamplingDy, i, c.Dx, c.Dy)
+			}
+		}
+	}
 
 	// Resolve the MCT default the way opj_compress does.
 	if o.params.TcpMct == mctSentinel {
