@@ -215,6 +215,63 @@ func validateEncodeInputs(parameters *CParameters, img *image.Image, mgr *event.
 	return nil
 }
 
+// warnLayerOrdering ports the two diagnostic loops of opj_j2k_setup_encoder that
+// follow the "no explicit layers" defaulting: rate allocation wants strictly
+// decreasing tcp_rates and fixed-quality allocation wants strictly increasing
+// tcp_distoratio. Both are message-only — C never alters the parameters here, so
+// neither does this port (C29).
+func warnLayerOrdering(parameters *CParameters, mgr *event.Manager) {
+	numlayers := parameters.TcpNumlayers
+	switch {
+	case parameters.CpDistoAlloc != 0:
+		for i := int32(1); i < numlayers; i++ {
+			// C clamps each rate to >= 1.0 before comparing, because a rate of
+			// 1 or less means lossless; the four message variants report which
+			// of the two operands was corrected.
+			rateI := parameters.TcpRates[i]
+			ratePrev := parameters.TcpRates[i-1]
+			rateICorr := rateI
+			if rateICorr <= 1.0 {
+				rateICorr = 1.0
+			}
+			ratePrevCorr := ratePrev
+			if ratePrevCorr <= 1.0 {
+				ratePrevCorr = 1.0
+			}
+			if rateICorr < ratePrevCorr {
+				continue
+			}
+			switch {
+			case rateICorr != rateI && ratePrevCorr != ratePrev:
+				mgr.Warnf("tcp_rates[%d]=%f (corrected as %f) should be strictly lesser "+
+					"than tcp_rates[%d]=%f (corrected as %f)\n",
+					i, rateI, rateICorr, i-1, ratePrev, ratePrevCorr)
+			case rateICorr != rateI:
+				mgr.Warnf("tcp_rates[%d]=%f (corrected as %f) should be strictly lesser "+
+					"than tcp_rates[%d]=%f\n", i, rateI, rateICorr, i-1, ratePrev)
+			case ratePrevCorr != ratePrev:
+				mgr.Warnf("tcp_rates[%d]=%f should be strictly lesser "+
+					"than tcp_rates[%d]=%f (corrected as %f)\n",
+					i, rateI, i-1, ratePrev, ratePrevCorr)
+			default:
+				mgr.Warnf("tcp_rates[%d]=%f should be strictly lesser "+
+					"than tcp_rates[%d]=%f\n", i, rateI, i-1, ratePrev)
+			}
+		}
+	case parameters.CpFixedQuality != 0:
+		for i := int32(1); i < numlayers; i++ {
+			// A trailing 0 distoratio is the "lossless final layer" idiom and is
+			// exempt.
+			if parameters.TcpDistoratio[i] < parameters.TcpDistoratio[i-1] &&
+				!(i == numlayers-1 && parameters.TcpDistoratio[i] == 0) {
+				mgr.Warnf("tcp_distoratio[%d]=%f should be strictly greater "+
+					"than tcp_distoratio[%d]=%f\n",
+					i, parameters.TcpDistoratio[i], i-1, parameters.TcpDistoratio[i-1])
+			}
+		}
+	}
+}
+
 // SetupEncoder ports opj_j2k_setup_encoder.
 func (e *Encoder) SetupEncoder(parameters *CParameters, img *image.Image, mgr *event.Manager) error {
 	if parameters == nil || img == nil {
@@ -291,6 +348,11 @@ func (e *Encoder) SetupEncoder(parameters *CParameters, img *image.Image, mgr *e
 		parameters.TcpRates[0] = 0
 	}
 
+	// Diagnostics only (they never change the codestream): C warns when the
+	// requested layer rates are not strictly decreasing, or when the requested
+	// fixed-quality distortion ratios are not strictly increasing (C29).
+	warnLayerOrdering(parameters, mgr)
+
 	// see if max_codestream_size does limit input rate
 	if parameters.MaxCsSize <= 0 {
 		if parameters.TcpRates[parameters.TcpNumlayers-1] > 0 {
@@ -317,10 +379,16 @@ func (e *Encoder) SetupEncoder(parameters *CParameters, img *image.Image, mgr *e
 			float64(img.Comps[0].H) * float64(img.Comps[0].Prec)) /
 			(float64(parameters.MaxCsSize) * 8 * float64(img.Comps[0].Dx) *
 				float64(img.Comps[0].Dy)))
+		capped := false
 		for i := int32(0); i < parameters.TcpNumlayers; i++ {
 			if parameters.TcpRates[i] < tempRate {
 				parameters.TcpRates[i] = tempRate
+				capped = true
 			}
+		}
+		if capped {
+			mgr.Warnf("The desired maximum codestream size has limited\n" +
+				"at least one of the desired quality layers\n")
 		}
 	}
 
@@ -341,6 +409,14 @@ func (e *Encoder) SetupEncoder(parameters *CParameters, img *image.Image, mgr *e
 				parameters.Rsiz = cparams.ProfileNone
 			}
 		}
+	case cparams.IsStorage(parameters.Rsiz):
+		// C cannot encode the long-term-storage profile, so it falls back to
+		// PROFILE_NONE instead of writing the unsupported Rsiz into SIZ (C26).
+		mgr.Warnf("JPEG 2000 Long Term Storage profile not yet supported\n")
+		parameters.Rsiz = cparams.ProfileNone
+	case cparams.IsBroadcast(parameters.Rsiz):
+		mgr.Warnf("JPEG 2000 Broadcast profiles not yet supported\n")
+		parameters.Rsiz = cparams.ProfileNone
 	case cparams.IsIMF(parameters.Rsiz):
 		setIMFParameters(parameters, img, mgr)
 		if !isIMFCompliant(parameters, img, mgr) {
@@ -379,10 +455,15 @@ func (e *Encoder) SetupEncoder(parameters *CParameters, img *image.Image, mgr *e
 	cp.Tx0 = uint32(parameters.CpTx0)
 	cp.Ty0 = uint32(parameters.CpTy0)
 
+	// C's cp->comment is either NULL (no COM marker) or a non-NULL string that
+	// may be empty; opj_compress -C "" therefore writes an empty COM. Mirror
+	// that by keeping the pointer (C53).
 	if parameters.CpComment != nil {
-		cp.Comment = *parameters.CpComment
+		comment := *parameters.CpComment
+		cp.Comment = &comment
 	} else {
-		cp.Comment = "Created by OpenJPEG version " + OpenJPEGVersion
+		comment := "Created by OpenJPEG version " + OpenJPEGVersion
+		cp.Comment = &comment
 	}
 
 	if parameters.TileSizeOn {

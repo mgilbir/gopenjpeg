@@ -18,15 +18,22 @@ import (
 func (e *Encoder) StartCompress(stream *cio.Stream, img *image.Image, mgr *event.Manager) error {
 	e.privateImage = image.Create0()
 	image.CopyHeader(img, e.privateImage)
-	// Move the component data pointers into the private image (as C does).
+	// C moves the component data pointers into the private image and NULLs the
+	// caller's, because two opj_image_t owning the same malloc'd buffer would
+	// double-free. Go has no such hazard, and the encode pipeline only ever
+	// reads these samples: opj_tcd_get_tile_data packs them into a scratch byte
+	// buffer that opj_tcd_copy_tile_data unpacks into the tile-component
+	// buffers, and every transform (MCT, DWT, T1) runs on those tile buffers.
+	// So share the slice instead of stealing it, leaving the caller's image
+	// intact and re-encodable (C12).
 	for i := uint32(0); i < img.Numcomps; i++ {
-		if img.Comps[i].Data != nil {
-			e.privateImage.Comps[i].Data = img.Comps[i].Data
-			img.Comps[i].Data = nil
-		}
+		e.privateImage.Comps[i].Data = img.Comps[i].Data
 	}
 
 	if err := e.encodingValidation(mgr); err != nil {
+		return err
+	}
+	if err := e.mctValidation(mgr); err != nil {
 		return err
 	}
 	return e.writeHeader(stream, mgr)
@@ -46,6 +53,52 @@ func (e *Encoder) encodingValidation(mgr *event.Manager) error {
 	if e.CP.Tdy < uint32(1)<<(numres-1) {
 		mgr.Errorf("Number of resolutions is too high in comparison to the size of tiles\n")
 		return ErrEncodeSetup
+	}
+	return nil
+}
+
+// mctValidation ports opj_j2k_mct_validation, the second procedure installed by
+// opj_j2k_setup_encoding_validation. It rejects the two custom-MCT (Part-2
+// array-based MCT) configurations that would otherwise produce a codestream no
+// decoder accepts: a custom MCT without a coding matrix, and a custom MCT
+// combined with a reversible (5/3) transform. C returns a bare boolean here; the
+// port keeps the diagnostics so the caller learns which rule was broken.
+//
+// Deliberate deviation: C guards the whole body with (rsiz & 0x8200) == 0x8200,
+// but OPJ_EXTENSION_MCT is 0x0100, so opj_j2k_setup_encoder never produces an
+// rsiz that satisfies it — the check is dead code upstream, which is exactly why
+// both invalid configurations "encode successfully" today. This port keys the
+// checks on tcp->mct == 2 itself (the condition C's inner loop tests), so they
+// actually fire. No valid configuration is newly rejected: an array-based MCT is
+// meaningless without a matrix and is undefined over the reversible transform.
+func (e *Encoder) mctValidation(mgr *event.Manager) error {
+	nbTiles := e.CP.Th * e.CP.Tw
+	if int(nbTiles) > len(e.CP.Tcps) {
+		nbTiles = uint32(len(e.CP.Tcps))
+	}
+	numcomps := uint32(0)
+	if e.privateImage != nil {
+		numcomps = e.privateImage.Numcomps
+	}
+	for i := uint32(0); i < nbTiles; i++ {
+		tcp := &e.CP.Tcps[i]
+		if tcp.MCT != 2 {
+			continue
+		}
+		if tcp.MMctCodingMatrix == nil {
+			mgr.Errorf("Custom MCT (mct=2) requested but no MCT coding matrix was provided\n")
+			return ErrEncodeSetup
+		}
+		n := numcomps
+		if int(n) > len(tcp.TCCPs) {
+			n = uint32(len(tcp.TCCPs))
+		}
+		for j := uint32(0); j < n; j++ {
+			if tcp.TCCPs[j].Qmfbid&1 != 0 {
+				mgr.Errorf("Custom MCT (mct=2) is incompatible with the reversible 5/3 transform\n")
+				return ErrEncodeSetup
+			}
+		}
 	}
 	return nil
 }
@@ -87,7 +140,9 @@ func (e *Encoder) writeHeader(stream *cio.Stream, mgr *event.Manager) error {
 	if err := e.writeRegions(stream, mgr); err != nil {
 		return err
 	}
-	if e.CP.Comment != "" {
+	// C tests cp->comment for NULL, not for emptiness: an explicitly set empty
+	// comment still writes an empty COM marker (C53).
+	if e.CP.Comment != nil {
 		if err := e.writeCOM(stream, mgr); err != nil {
 			return err
 		}
@@ -508,7 +563,10 @@ func (e *Encoder) writeRGN(tileno, compno, nbComps uint32, stream *cio.Stream, m
 
 // writeCOM ports opj_j2k_write_com.
 func (e *Encoder) writeCOM(stream *cio.Stream, mgr *event.Manager) error {
-	comment := []byte(e.CP.Comment)
+	var comment []byte
+	if e.CP.Comment != nil {
+		comment = []byte(*e.CP.Comment)
+	}
 	total := uint32(len(comment)) + 6
 	buf := make([]byte, total)
 	p := buf
@@ -747,9 +805,13 @@ func (e *Encoder) updateRates(stream *cio.Stream, mgr *event.Manager) error {
 			y1 := opjmath.IntMin(int32(cp.Ty0+(i+1)*cp.Tdy), int32(img.Y1))
 			for k := uint32(0); k < tcp.Numlayers; k++ {
 				if tcp.Rates[k] > 0.0 {
+					// C computes the denominator as (*l_rates) * (OPJ_FLOAT32)
+					// l_bits_empty, i.e. a float32 product that is only then
+					// widened for the double division. Multiplying in float64
+					// can differ by 1 ulp and shift the rate threshold (C28).
 					tcp.Rates[k] = float32((float64(sizePixel)*float64(uint32(x1-x0))*
 						float64(uint32(y1-y0)))/
-						(float64(tcp.Rates[k])*float64(bitsEmpty))) - offset
+						float64(tcp.Rates[k]*float32(bitsEmpty))) - offset
 				}
 			}
 			tIdx++

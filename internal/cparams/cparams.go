@@ -86,8 +86,14 @@ const (
 	ProfileCinemaS2K = 0x0005
 	// ProfileCinemaS4K ports OPJ_PROFILE_CINEMA_S4K.
 	ProfileCinemaS4K = 0x0006
-	// ProfileCinemaLTS ports OPJ_PROFILE_CINEMA_LTS.
+	// ProfileCinemaLTS ports OPJ_PROFILE_CINEMA_LTS (long term storage).
 	ProfileCinemaLTS = 0x0007
+	// ProfileBCSingle ports OPJ_PROFILE_BC_SINGLE.
+	ProfileBCSingle = 0x0100
+	// ProfileBCMulti ports OPJ_PROFILE_BC_MULTI.
+	ProfileBCMulti = 0x0200
+	// ProfileBCMultiR ports OPJ_PROFILE_BC_MULTI_R.
+	ProfileBCMultiR = 0x0300
 	// ProfileIMF2K ports OPJ_PROFILE_IMF_2K.
 	ProfileIMF2K = 0x0400
 	// ProfileIMF8KR ports OPJ_PROFILE_IMF_8K_R.
@@ -97,6 +103,15 @@ const (
 // IsCinema ports the OPJ_IS_CINEMA(v) macro.
 func IsCinema(rsiz uint16) bool {
 	return rsiz >= ProfileCinema2K && rsiz <= ProfileCinemaS4K
+}
+
+// IsStorage ports the OPJ_IS_STORAGE(v) macro.
+func IsStorage(rsiz uint16) bool { return rsiz == ProfileCinemaLTS }
+
+// IsBroadcast ports the OPJ_IS_BROADCAST(v) macro: the broadcast profiles carry
+// a main level in the low nibble, so the range runs to BC_MULTI_R|0x000b.
+func IsBroadcast(rsiz uint16) bool {
+	return rsiz >= ProfileBCSingle && rsiz <= (ProfileBCMultiR|0x000b)
 }
 
 // IsIMF ports the OPJ_IS_IMF(v) macro.
@@ -410,8 +425,11 @@ type CP struct {
 
 	// ---- j2k decode-side marker bookkeeping ----
 
-	// Comment ports cp->comment (COM marker payload).
-	Comment string
+	// Comment ports cp->comment (COM marker payload). C distinguishes a NULL
+	// comment (no COM marker at all) from a non-NULL empty one (an empty COM is
+	// still written), so this is a pointer: nil means "no COM marker", a non-nil
+	// pointer to "" means "write an empty COM" (C53).
+	Comment *string
 	// PPM marker assembly (opj_j2k_read_ppm / merge_ppm).
 	PpmMarkers      []Ppx
 	PpmMarkersCount uint32
