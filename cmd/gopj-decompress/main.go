@@ -53,11 +53,15 @@ func run() error {
 	)
 	flag.Parse()
 
+	// Same contract as gopj-compress: an invalid value is an error, not a
+	// silent fallback to 1 (C47).
 	nThreads := 1
 	if *threads == "ALL_CPUS" {
 		nThreads = runtime.NumCPU()
 	} else if n, perr := strconv.Atoi(*threads); perr == nil && n > 0 {
 		nThreads = n
+	} else {
+		return fmt.Errorf("threads: value must be a positive integer or ALL_CPUS")
 	}
 
 	if *in == "" || *out == "" {

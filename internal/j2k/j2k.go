@@ -223,11 +223,11 @@ func (d *Decoder) SetDecodedComponents(compsIndices []uint32) error {
 	mapped := make([]bool, d.privateImage.Numcomps)
 	for _, ci := range compsIndices {
 		if ci >= d.privateImage.Numcomps {
-			d.mgr.Errorf("Invalid component index: %u\n", ci)
+			d.mgr.Errorf("Invalid component index: %d\n", ci)
 			return ErrBadParams
 		}
 		if mapped[ci] {
-			d.mgr.Errorf("Component index %u used several times\n", ci)
+			d.mgr.Errorf("Component index %d used several times\n", ci)
 			return ErrBadParams
 		}
 		mapped[ci] = true
