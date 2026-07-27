@@ -28,11 +28,18 @@
 //     code is unchanged. Verified by compiling this package for each fusing
 //     GOARCH and confirming no FMADD/FMSUB/FNMADD/FNMSUB is emitted.
 //   - Only the scalar code paths are ported. The C file additionally contains
-//     SSE/AVX/NEON intrinsic paths and an opj_thread pool; these are omitted.
-//     They are pure performance variants that produce identical results, so the
-//     scalar port is bit-exact with the C library. The per-row / per-column
-//     kernels are kept as separate package-level functions so a caller can
-//     later parallelize them per row/column.
+//     SSE/AVX/NEON intrinsic paths; those are omitted. They are pure performance
+//     variants that produce identical results, so the scalar port is bit-exact
+//     with the C library.
+//   - The C thread pool (opj_thread_pool, used by opj_dwt_decode_tile and
+//     opj_dwt_decode_tile_97 to split the horizontal pass over rows and the
+//     vertical pass over columns) IS reproduced, with goroutines, in parallel.go.
+//     The per-row / per-column kernels are separate package-level functions
+//     precisely so they can be chunked that way. Each worker owns a private
+//     scratch buffer and the rows (respectively columns) of a pass are mutually
+//     independent, so any worker count produces bit-identical output; the
+//     horizontal pass completes before the vertical pass begins, mirroring C's
+//     wait-for-completion barrier.
 //
 // # Geometry input types
 //

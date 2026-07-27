@@ -18,13 +18,20 @@ Two oracle strategies, used together:
 1. **Module-level vectors.** For each ported module (MQ coder, DWT, T1, …)
    a tiny C harness is compiled against `libopenjp2.a` (or directly against
    the relevant `.c` file) to dump input/output vectors. Vectors small
-   enough to check in live under `testdata/vectors/<module>/`; harness
-   sources live under `oracle/harness/` (gitignored, regenerable).
-2. **End-to-end differential tests.** `oracletest/` runs the Go decoder and
+   enough to check in live under `testdata/vectors/<module>/`; the harness
+   sources are tracked under `tools/oracle-harness/`, with a `regen.sh`
+   that rebuilds every vector from an OpenJPEG checkout. They are outside
+   the Go build.
+2. **End-to-end differential tests.** `oracletest/` runs the Go codec and
    `opj_decompress`/`opj_compress` over `oracle/data` and compares outputs
-   bit-for-bit (decode) or by oracle re-decode + PSNR/codestream-dump
-   comparison (encode). Guarded by a build tag / env var so `go test ./...`
-   works without the oracle present.
+   bit-for-bit: decoded samples must equal opj_decompress's, and encoded
+   codestreams must be **byte-identical** to opj_compress's (a stronger
+   check than the re-decode/PSNR comparison originally planned). The gates
+   skip themselves at run time when `oracle/` is absent — a plain
+   `os.Stat` of the binaries and the corpus in `oracletest.Require`, not a
+   build tag — so `go test ./...` works without the oracle. Once the
+   oracle IS present, a gate never skips: an oracle that fails mid-test
+   fails the gate.
 
 ## Package layout
 
@@ -33,6 +40,9 @@ gopenjpeg/               public API: Decode/Encode, options, image.Image interop
   internal/opjmath/      opj_intmath.h, fixed point helpers
   internal/cio/          cio.c   — byte stream reader/writer
   internal/bio/          bio.c   — bit I/O
+  internal/event/        event.c — error/warning/info handler manager
+  internal/cparams/      opj_codec.h/openjpeg.h — shared coding-parameter types
+  internal/tile/         tcd.h   — shared tile/code-block types (t1<->tcd)
   internal/tgt/          tgt.c   — tag trees
   internal/mqc/          mqc.c, mqc_inl.h — MQ arithmetic coder (enc+dec, RAW)
   internal/sparse/       sparse_array.c
@@ -51,6 +61,7 @@ gopenjpeg/               public API: Decode/Encode, options, image.Image interop
   cmd/gopj-dump/         opj_dump parity CLI
   oracletest/            differential harness vs C binaries
   testdata/vectors/      checked-in module-level oracle vectors
+  tools/oracle-harness/  the C sources that generate those vectors + regen.sh
 ```
 
 ## Porting rules
@@ -99,8 +110,9 @@ gopenjpeg/               public API: Decode/Encode, options, image.Image interop
 - **Phase 4 — encode parity**:
   - W9: `tcd` rate allocation + `j2k`/`jp2` encode, `opj_compress` parity
     (quality layers, tile parts, POC, MCT, ROI, cinema/IMF profiles).
-  - Gate: oracle `opj_decompress` decodes our streams bit-exact vs its
-    decode of C-encoded streams at same settings; `opj_dump` structural diff.
+  - Gate (delivered stronger than planned): our codestream is **byte-identical**
+    to `opj_compress`'s over a settings matrix, so no re-decode or structural
+    diff is needed.
 - **Phase 5 — HTJ2K**: W10: `ht` decode (`ht_dec.c`), HT conformance files.
 - **Phase 6 — CLIs + hardening**: `cmd/*` parity flags, corpus-wide fuzzing
   (seed from `oracle/data`), sanitizer-style invariant checks.

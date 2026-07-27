@@ -17,6 +17,22 @@ import (
 // If rd is an io.ReadSeeker it is read on demand and never fully buffered. Any
 // other io.Reader is read entirely into memory before format detection; use
 // WithMaxInputSize to bound that buffer for untrusted, non-seekable inputs.
+//
+// # Which options apply
+//
+// ReadInfo accepts the same Option values as Decode, but only those that affect
+// header parsing change anything (C54):
+//
+//   - WithFormat, WithMaxInputSize, WithStrictMode, WithWarningHandler,
+//     WithErrorHandler and WithInfoHandler are honoured exactly as in Decode.
+//   - WithReduce is forwarded to the decoder and is validated against the
+//     codestream: a reduce level at or above a component's resolution count
+//     makes ReadInfo fail, just as it makes Decode fail. It does not change the
+//     reported geometry — Info always describes the full reference grid.
+//   - WithLayers is forwarded but has no observable effect: layer truncation
+//     happens at tile-decode time.
+//   - WithDecodeArea, WithComponents, WithTile and WithConcurrency are accepted
+//     and ignored. They govern sample decoding, which ReadInfo never performs.
 func ReadInfo(rd io.Reader, opts ...Option) (*Info, error) {
 	o := defaultOptions()
 	for _, fn := range opts {
@@ -80,12 +96,15 @@ func ReadInfo(rd io.Reader, opts ...Option) (*Info, error) {
 }
 
 // fillImageInfo copies the image and tile-grid geometry into an Info.
+//
+// It is always called on a freshly built Info, before the JP2 branch overwrites
+// ICCLen with the authoritative colr-box length, so the ICC length is assigned
+// unconditionally (C54: the former "if info.ICCLen == 0" guard could never be
+// false and merely suggested an ordering constraint that does not exist).
 func fillImageInfo(info *Info, img *image.Image, cp *cparams.CP) {
 	info.X0, info.Y0, info.X1, info.Y1 = img.X0, img.Y0, img.X1, img.Y1
 	info.ColorSpace = ColorSpace(img.ColorSpace)
-	if info.ICCLen == 0 {
-		info.ICCLen = img.ICCProfileLen
-	}
+	info.ICCLen = img.ICCProfileLen
 	info.Components = make([]ComponentInfo, img.Numcomps)
 	for i := range info.Components {
 		c := &img.Comps[i]

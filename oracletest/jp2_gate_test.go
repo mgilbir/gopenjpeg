@@ -165,10 +165,14 @@ func comparePublic(img *gopenjpeg.Image, comps []*pgx) error {
 	return nil
 }
 
+// runJP2Case decodes one curated-pass-list file with both codecs and requires
+// bit-exact equality. Every file reaching here is on a pass list, so an oracle
+// that cannot decode it is a broken oracle or a stale list — a hard failure, not
+// a skip (C23: skipping here silently disabled the whole JP2 gate surface).
 func runJP2Case(t *testing.T, in string) {
 	comps, err := oracleDecodePGX(t, in)
 	if err != nil {
-		t.Skipf("oracle decode failed: %v", err)
+		t.Fatalf("oracle decode failed on a curated pass-list file: %v", err)
 	}
 	img, err := decodeGoPublic(t, in)
 	if err != nil {
@@ -224,7 +228,7 @@ func TestJP2CIELab(t *testing.T) {
 			path := DataDir("input", "nonregression", name)
 			comps, err := oracleDecodePGX(t, path)
 			if err != nil {
-				t.Skipf("oracle decode failed: %v", err)
+				t.Fatalf("oracle decode failed on a curated pass-list file: %v", err)
 			}
 			img, err := decodeGoPublic(t, path)
 			if err != nil {

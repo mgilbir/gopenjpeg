@@ -33,7 +33,7 @@ values in [0,20), covering both the `decode==1` and `decode==0` outcomes.
 gcc -O2 -DNDEBUG \
     -I oracle/openjpeg/src/lib/openjp2 \
     -I oracle/openjpeg/build/src/lib/openjp2 \
-    oracle/harness/w1/tgt_vectors.c \
+    tools/oracle-harness/w1/tgt_vectors.c \
     oracle/openjpeg/build/bin/libopenjp2.a -lm -lpthread -o /tmp/tgt_vectors
 /tmp/tgt_vectors > testdata/vectors/tgt/tgt.txt
 ```

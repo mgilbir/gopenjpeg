@@ -44,7 +44,7 @@ serialiser for partial widths; partial-width LE is covered by Go-native tests.
 gcc -O2 -DNDEBUG \
     -I oracle/openjpeg/src/lib/openjp2 \
     -I oracle/openjpeg/build/src/lib/openjp2 \
-    oracle/harness/w1/cio_vectors.c \
+    tools/oracle-harness/w1/cio_vectors.c \
     oracle/openjpeg/build/bin/libopenjp2.a -lm -lpthread -o /tmp/cio_vectors
 /tmp/cio_vectors > testdata/vectors/cio/bytes.txt
 ```

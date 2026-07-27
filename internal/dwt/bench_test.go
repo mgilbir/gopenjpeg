@@ -41,3 +41,20 @@ func BenchmarkDecodeTile97(b *testing.B) {
 		DecodeTile97(tc, tc.Numresolutions, 1)
 	}
 }
+
+// BenchmarkDecodePartial97 benchmarks the region-constrained inverse 9/7
+// transform: a 256x256 window of a 1024x1024, 6-level tile. It is the shape that
+// exposes the cost of the int32<->float32 round trip between the sparse array
+// and the lifting scratch, which is per-group work independent of the window.
+func BenchmarkDecodePartial97(b *testing.B) {
+	const w, h = 1024, 1024
+	const numres = 6
+	tc := buildPartialTile(w, h, 0, 0, numres, true)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		setWindow(tc, 384, 384, 640, 640)
+		if !DecodePartial97(tc, numres) {
+			b.Fatal("DecodePartial97 failed")
+		}
+	}
+}

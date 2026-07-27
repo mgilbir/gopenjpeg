@@ -18,7 +18,10 @@ import (
 // public API forwards the full parameter set to opj_j2k_setup_encoder.
 //
 // Only the encode methods are implemented; the decode methods return
-// ErrNotImplemented and the decode-side field accessors are inert.
+// ErrNotImplemented and the decode-side field accessors are inert. SetThreads is
+// the exception: it is declared on the decode half of the C interface
+// (opj_j2k_set_threads) but the compressor has parallelizable stages too, so it
+// forwards to the encoder rather than being discarded (C57).
 type j2kEncodeAdapter struct {
 	e      *j2k.Encoder
 	params *j2k.CParameters
@@ -62,11 +65,19 @@ func (a *j2kEncodeAdapter) EncoderSetExtraOptions(options []string, mgr *event.M
 	return a.e.EncoderSetExtraOptions(options, mgr)
 }
 
+// SetThreads forwards the worker count to the compressor, mirroring what
+// j2kAdapter.SetThreads does for the decompressor. The count drives the
+// parallelizable encode stage (per-code-block tier-1); n<=1 is sequential and
+// the codestream bytes are identical at any count.
+func (a *j2kEncodeAdapter) SetThreads(numThreads uint32) error {
+	a.e.SetThreads(int(numThreads))
+	return nil
+}
+
 // --- decode methods: not used on the encode path ---
 
 func (a *j2kEncodeAdapter) SetupDecoder(params *jp2.DecoderParams) {}
 func (a *j2kEncodeAdapter) SetDecoderStrictMode(strict bool)       {}
-func (a *j2kEncodeAdapter) SetThreads(numThreads uint32) error     { return nil }
 func (a *j2kEncodeAdapter) ReadHeader(stream *cio.Stream, mgr *event.Manager) (*image.Image, error) {
 	return nil, ErrNotImplemented
 }

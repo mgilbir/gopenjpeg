@@ -476,9 +476,13 @@ func runCompressOut(t *testing.T, input, ext string, flags []string) ([]byte, er
 	return os.ReadFile(out)
 }
 
-// TestEncodeContainerGate checks byte-identity of JP2 container output, PLT and
-// IMF codestreams versus opj_compress, and main-header identity for the cinema
-// profiles (whose coded tile data diverges in the off-limits tier-2 CBR path).
+// TestEncodeContainerGate checks byte-identity versus opj_compress of the JP2
+// container output, the PLT and IMF codestreams, and the Digital Cinema 2K/4K
+// profiles — the cinema cells compare the FULL stream, not just the main header
+// (see the comment on the cinema2K cell for the two -ffast-math encode-side
+// arithmetic matches that made all-pass cinema streams byte-identical). The one
+// cell without an oracle counterpart is the Part-2 custom MCT, which
+// opj_compress cannot emit; it is verified structurally, as documented there.
 func TestEncodeContainerGate(t *testing.T) {
 	Require(t)
 	dir := t.TempDir()

@@ -44,28 +44,10 @@ func GetnormReal(level, orient uint32) float64 {
 	return dwtNormsReal[orient][level]
 }
 
-// Getgain reconstructs the (reversible 5/3) sub-band analysis gain. The current
-// OpenJPEG dwt.c no longer exposes opj_dwt_getgain as a standalone function;
-// the gain is computed inline in opj_dwt_calc_explicit_stepsizes. This helper
-// reproduces that logic (0 for LL, 1 for HL/LH, 2 for HH) for callers that need
-// it. See CalcExplicitStepsizes for the in-context computation.
-func Getgain(orient uint32) uint32 {
-	if orient == 0 {
-		return 0
-	}
-	if orient == 1 || orient == 2 {
-		return 1
-	}
-	return 2
-}
-
-// GetgainReal reconstructs the irreversible 9/7 sub-band analysis gain, which is
-// always 0 (the 9/7 filter is normalized). Not present as a standalone function
-// in the current dwt.c; see Getgain for context.
-func GetgainReal(orient uint32) uint32 {
-	_ = orient
-	return 0
-}
+// The sub-band analysis gain (0 for LL, 1 for HL/LH, 2 for HH on the reversible
+// 5/3 path; always 0 on the irreversible 9/7 path) has no standalone function in
+// the current OpenJPEG dwt.c — it is computed inline in
+// opj_dwt_calc_explicit_stepsizes, which CalcExplicitStepsizes mirrors below.
 
 // Stepsize is a port of opj_stepsize_t.
 type Stepsize struct {

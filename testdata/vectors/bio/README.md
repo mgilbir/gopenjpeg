@@ -30,7 +30,7 @@ Cases use fixed-seed pseudo-random `(n, v)` sequences of Fibonacci-ish lengths
 gcc -O2 -DNDEBUG \
     -I oracle/openjpeg/src/lib/openjp2 \
     -I oracle/openjpeg/build/src/lib/openjp2 \
-    oracle/harness/w1/bio_vectors.c \
+    tools/oracle-harness/w1/bio_vectors.c \
     oracle/openjpeg/build/bin/libopenjp2.a -lm -lpthread -o /tmp/bio_vectors
 /tmp/bio_vectors > testdata/vectors/bio/bio.txt
 ```

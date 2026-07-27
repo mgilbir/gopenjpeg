@@ -60,10 +60,10 @@ cap (0 = none). Hex `-` means an empty byte string.
 ```sh
 gcc -O2 -I oracle/openjpeg/src/lib/openjp2 \
     -I oracle/openjpeg/build/src/lib/openjp2 \
-    oracle/harness/w6/t2_harness.c \
+    tools/oracle-harness/w6/t2_harness.c \
     oracle/openjpeg/build/bin/libopenjp2.a -lm -lpthread -o /tmp/w6t2
 /tmp/w6t2 testdata/vectors/t2/t2_vectors.txt
 ```
 
-`t2_harness.c` links the non-static t2.c entry points from `libopenjp2.a`; the
-whole `oracle/` tree is gitignored.
+`t2_harness.c` links the non-static t2.c entry points from `libopenjp2.a`; only
+the `oracle/` checkout it builds against is gitignored — the harness source itself is tracked under `tools/oracle-harness/`.

@@ -1,0 +1,53 @@
+--- src/lib/openjp2/ht_dec.c	(OpenJPEG 2.5.4, unmodified)
++++ src/lib/openjp2/ht_dec.c	(with the W10 vector-dump hook)
+@@ -2685,5 +2685,50 @@
+         }
+     }
+ 
++    /* ---- W10 instrumentation: dump one per-codeblock vector ---- */
++    {
++        const char* dumpPath = getenv("OPJ_W10_DUMP");
++        if (dumpPath != NULL) {
++            FILE* fp = fopen(dumpPath, "ab");
++            if (fp != NULL) {
++                OPJ_UINT32 i;
++                OPJ_UINT32 total = 0;
++                OPJ_UINT32 numsegs = cblk->numsegs;
++                OPJ_UINT32 s0p = 0, s0l = 0, s1p = 0, s1l = 0;
++                OPJ_INT32 iw = width, ih = height;
++                OPJ_UINT32 u;
++                for (i = 0; i < cblk->numchunks; i++) {
++                    total += cblk->chunks[i].len;
++                }
++                if (cblk->numsegs > 0) {
++                    s0p = cblk->segs[0].real_num_passes;
++                    s0l = cblk->segs[0].len;
++                }
++                if (cblk->numsegs > 1) {
++                    s1p = cblk->segs[1].real_num_passes;
++                    s1l = cblk->segs[1].len;
++                }
++                fwrite(&iw, 4, 1, fp);
++                fwrite(&ih, 4, 1, fp);
++                u = orient;     fwrite(&u, 4, 1, fp);
++                u = roishift;   fwrite(&u, 4, 1, fp);
++                u = cblksty;    fwrite(&u, 4, 1, fp);
++                u = cblk->Mb;   fwrite(&u, 4, 1, fp);
++                u = cblk->numbps; fwrite(&u, 4, 1, fp);
++                fwrite(&numsegs, 4, 1, fp);
++                fwrite(&s0p, 4, 1, fp);
++                fwrite(&s0l, 4, 1, fp);
++                fwrite(&s1p, 4, 1, fp);
++                fwrite(&s1l, 4, 1, fp);
++                fwrite(&total, 4, 1, fp);
++                fwrite(coded_data, 1, total, fp);
++                u = (OPJ_UINT32)(width * height);
++                fwrite(&u, 4, 1, fp);
++                fwrite(decoded_data, 4, (size_t)(width * height), fp);
++                fclose(fp);
++            }
++        }
++    }
++
+     return OPJ_TRUE;
+ }

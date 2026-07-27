@@ -34,7 +34,6 @@ type encodeOptions struct {
 	plt        bool
 	tlm        bool
 	guardBits  int
-	jpipOn     bool
 	numThreads int
 	onWarn     func(string)
 	onError    func(string)
@@ -327,7 +326,6 @@ func WithEncodeErrorHandler(fn func(string)) EncodeOption {
 	return func(o *encodeOptions) { o.onError = fn }
 }
 
-// WithEncodeInfoHandler installs a callback for informational messages.
 // WithEncodeConcurrency sets the number of worker goroutines used for the
 // parallelizable encode stage (per-code-block tier-1). n<=1 (the default) is
 // fully sequential; n>1 fans the code-blocks across n goroutines, each with a
@@ -344,6 +342,11 @@ func WithEncodeConcurrency(n int) EncodeOption {
 	}
 }
 
+// WithEncodeInfoHandler installs a callback for the encoder's informational
+// messages (the opj_set_info_handler equivalent): progress and parameter notes
+// that opj_compress prints as [INFO]. Warnings and errors have their own
+// handlers, WithEncodeWarningHandler and WithEncodeErrorHandler; with no handler
+// installed the messages are discarded.
 func WithEncodeInfoHandler(fn func(string)) EncodeOption {
 	return func(o *encodeOptions) { o.onInfo = fn }
 }
@@ -463,9 +466,16 @@ func encodeJ2K(stream *cio.Stream, img *image.Image, o *encodeOptions, mgr *even
 
 func encodeJP2(stream *cio.Stream, img *image.Image, o *encodeOptions, mgr *event.Manager) error {
 	adapter := newJ2KEncodeAdapter(&o.params, o.extraOptions())
-	adapter.e.SetThreads(o.numThreads)
+	if err := adapter.SetThreads(uint32(o.numThreads)); err != nil {
+		return fmt.Errorf("gopenjpeg: set encode concurrency: %w", err)
+	}
 	container := jp2.Create(adapter, false)
-	if err := container.SetupEncoder(&jp2.EncoderParams{JpipOn: o.jpipOn}, img, mgr); err != nil {
+	// JpipOn stays false: there is no WithJPIP option because the JPIP index
+	// (iptr/cidx box) plumbing is not present — opj_jpip_skip_iptr is compiled
+	// only under USE_JPIP in C and is deliberately not ported (see
+	// internal/jp2/encode.go StartCompress). An option that set the flag would be
+	// a no-op, so none is offered.
+	if err := container.SetupEncoder(&jp2.EncoderParams{}, img, mgr); err != nil {
 		return fmt.Errorf("gopenjpeg: setup jp2 encoder: %w", err)
 	}
 	if err := container.StartCompress(stream, img, mgr); err != nil {

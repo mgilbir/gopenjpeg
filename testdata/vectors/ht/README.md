@@ -45,7 +45,7 @@ passes: OpenJPEG has no HT encoder at all, and OpenJPH's block encoder asserts
 `num_passes == 1`.
 
 `multipass_vectors.bin.gz` therefore comes from the module-level harness
-`oracle/harness/w10/gen_multipass.c`, which calls the instrumented
+`tools/oracle-harness/w10/gen_multipass.c`, which calls the instrumented
 `opj_t1_ht_decode_cblk` directly with synthesized code-blocks built from the
 574 real corpus records:
 
@@ -70,26 +70,31 @@ records, confirming the refinement passes carry real effect.
 
 ## Regeneration
 
-1. Build the instrumented decoder (source lives under
-   `oracle/harness/w10/openjpeg-instr`, a copy of `oracle/openjpeg` with a dump
-   hook added at the tail of `opj_t1_ht_decode_cblk` in
-   `src/lib/openjp2/ht_dec.c`, guarded by the `OPJ_W10_DUMP` env var):
+1. Build the instrumented decoder: take a clean OpenJPEG 2.5.4 checkout and
+   apply the tracked patch `tools/oracle-harness/w10/ht_dec_instrument.patch`,
+   which adds a dump hook at the tail of `opj_t1_ht_decode_cblk` in
+   `src/lib/openjp2/ht_dec.c`, guarded by the `OPJ_W10_DUMP` env var. Nothing
+   else in the tree is modified.
 
    ```
-   cd oracle/harness/w10/openjpeg-instr && mkdir -p build && cd build
-   cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_CODEC=ON ..
+   git clone https://github.com/uclouvain/openjpeg openjpeg-instr
+   cd openjpeg-instr && git checkout v2.5.4
+   patch -p0 < /path/to/gopenjpeg/tools/oracle-harness/w10/ht_dec_instrument.patch
+   mkdir -p build && cd build
+   cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_CODEC=ON -DBUILD_STATIC_LIBS=ON ..
    make -j openjp2 opj_decompress
    ```
 
 2. Dump vectors by decoding the HT conformance files:
 
    ```
+   INSTR=/path/to/openjpeg-instr
    DUMP=/tmp/vectors.bin; rm -f "$DUMP"
    for f in oracle/data/input/nonregression/htj2k/*.j2k \
             oracle/data/input/nonregression/htj2k/*.jph \
             oracle/data/input/nonregression/htj2k/*.jhc; do
      OPJ_W10_DUMP="$DUMP" \
-       oracle/harness/w10/openjpeg-instr/build/bin/opj_decompress -i "$f" -o /tmp/o.png
+       $INSTR/build/bin/opj_decompress -i "$f" -o /tmp/o.png
    done
    ```
 
@@ -101,13 +106,12 @@ records, confirming the refinement passes carry real effect.
    (unsubsampled) dump from step 2:
 
    ```
-   cd oracle/harness/w10
-   gcc -O2 -o gen_multipass gen_multipass.c \
-     -I openjpeg-instr/src/lib/openjp2 \
-     -I openjpeg-instr/build/src/lib/openjp2 \
-     openjpeg-instr/build/bin/libopenjp2.a -lm -lpthread
-   # (build the static lib first: cmake -DBUILD_STATIC_LIBS=ON && make openjp2_static)
-   OPJ_W10_DUMP=/tmp/multipass.bin ./gen_multipass /tmp/vectors.bin
+   INSTR=/path/to/openjpeg-instr
+   gcc -O2 -o /tmp/gen_multipass tools/oracle-harness/w10/gen_multipass.c \
+     -I $INSTR/src/lib/openjp2 \
+     -I $INSTR/build/src/lib/openjp2 \
+     $INSTR/build/bin/libopenjp2.a -lm -lpthread
+   OPJ_W10_DUMP=/tmp/multipass.bin /tmp/gen_multipass /tmp/vectors.bin
    ```
 
    Then subsample (up to 3 per `(w,h,cblksty,numbps,num_passes,seg2==0)`

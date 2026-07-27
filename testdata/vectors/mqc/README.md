@@ -64,6 +64,6 @@ gcc -O2 -I src/lib/openjp2 -I build/src/lib/openjp2 \
 /tmp/genw2 > ../../testdata/vectors/mqc/mqc_vectors.json
 ```
 
-The harness (`oracle/harness/w2/gen.c`) is gitignored and regenerable. Its
+The harness (`tools/oracle-harness/w2/gen.c`) is tracked in this repo. Its
 PRNG (xorshift32) is only used to synthesise the C-side inputs; the Go tests
 read the recorded arrays directly and do not depend on it.

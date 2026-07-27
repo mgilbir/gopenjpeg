@@ -176,7 +176,8 @@ func TestDecodeNonregression(t *testing.T) {
 		t.Run("error/"+name, func(t *testing.T) {
 			in := DataDir("input", "nonregression", name)
 			if _, err := oracleDecodePGX(t, in); err == nil {
-				t.Skipf("oracle unexpectedly succeeded on %s", name)
+				t.Fatalf("%s is listed as an error case but the oracle decoded it: "+
+					"the curated list is stale (C23)", name)
 			}
 			if _, err := decodeGo(t, in, 0, 0, nil); err == nil {
 				t.Fatalf("oracle rejected %s but Go decoded it", name)
@@ -188,7 +189,8 @@ func TestDecodeNonregression(t *testing.T) {
 		t.Run("strict-error/"+name, func(t *testing.T) {
 			in := DataDir("input", "nonregression", name)
 			if _, err := oracleDecodePGX(t, in); err == nil {
-				t.Skipf("oracle unexpectedly succeeded on %s", name)
+				t.Fatalf("%s is listed as a strict-mode error case but the oracle "+
+					"decoded it: the curated list is stale (C23)", name)
 			}
 			if _, err := decodeGoStrict(t, in); err == nil {
 				t.Fatalf("oracle (strict) rejected %s but strict Go decoded it", name)
@@ -198,17 +200,30 @@ func TestDecodeNonregression(t *testing.T) {
 }
 
 // TestDecodeReduce checks resolution-reduction (-r) parity.
+//
+// The reduce levels are listed per file rather than as a cross product: -r must
+// stay below the file's resolution count or opj_decompress refuses the request
+// (p0_03.j2k carries only 2 resolutions, so -r 2 has no reference to compare
+// against). Cases the oracle cannot serve belong out of the list, not behind a
+// skip (C23).
 func TestDecodeReduce(t *testing.T) {
 	Require(t)
-	files := []string{"p0_01.j2k", "p0_03.j2k", "p1_01.j2k"}
+	files := []struct {
+		name    string
+		reduces []uint32
+	}{
+		{"p0_01.j2k", []uint32{1, 2}},
+		{"p0_03.j2k", []uint32{1}}, // numresolutions=2
+		{"p1_01.j2k", []uint32{1, 2}},
+	}
 	for _, f := range files {
-		for _, r := range []uint32{1, 2} {
-			f, r := f, r
+		for _, r := range f.reduces {
+			f, r := f.name, r
 			t.Run(f+"/r"+itoa(int(r)), func(t *testing.T) {
 				in := DataDir("input", "conformance", f)
 				comps, err := oracleDecodePGX(t, in, "-r", itoa(int(r)))
 				if err != nil {
-					t.Skipf("oracle -r %d failed: %v", r, err)
+					t.Fatalf("oracle -r %d failed: %v", r, err)
 				}
 				img, err := decodeGo(t, in, r, 0, nil)
 				if err != nil {
@@ -239,7 +254,7 @@ func TestDecodeLayers(t *testing.T) {
 			in := DataDir("input", filepath.FromSlash(c.f))
 			comps, err := oracleDecodePGX(t, in, "-l", itoa(int(c.l)))
 			if err != nil {
-				t.Skipf("oracle -l %d failed: %v", c.l, err)
+				t.Fatalf("oracle -l %d failed: %v", c.l, err)
 			}
 			img, err := decodeGo(t, in, 0, c.l, nil)
 			if err != nil {
@@ -253,6 +268,11 @@ func TestDecodeLayers(t *testing.T) {
 }
 
 // TestDecodeArea checks decode-window (-d x0,y0,x1,y1) parity.
+//
+// Every area must lie inside the file's reference grid; opj_decompress rejects
+// a window that starts before the image origin, so such a case yields no
+// reference to compare against and belongs out of the list rather than behind a
+// skip (C23). p1_01.j2k's grid is (5,128)-(127,227), hence the offset window.
 func TestDecodeArea(t *testing.T) {
 	Require(t)
 	cases := []struct {
@@ -261,7 +281,7 @@ func TestDecodeArea(t *testing.T) {
 	}{
 		{"p0_01.j2k", [4]int32{32, 32, 96, 96}},
 		{"p0_01.j2k", [4]int32{10, 20, 100, 110}},
-		{"p1_01.j2k", [4]int32{0, 0, 64, 64}},
+		{"p1_01.j2k", [4]int32{8, 130, 72, 194}},
 	}
 	for _, c := range cases {
 		c := c
@@ -271,7 +291,7 @@ func TestDecodeArea(t *testing.T) {
 			spec := itoa(int(c.area[0])) + "," + itoa(int(c.area[1])) + "," + itoa(int(c.area[2])) + "," + itoa(int(c.area[3]))
 			comps, err := oracleDecodePGX(t, in, "-d", spec)
 			if err != nil {
-				t.Skipf("oracle -d %s failed: %v", spec, err)
+				t.Fatalf("oracle -d %s failed: %v", spec, err)
 			}
 			area := c.area
 			img, err := decodeGo(t, in, 0, 0, &area)

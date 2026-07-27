@@ -508,13 +508,42 @@ func DecodePartial97(tc *TileComponent, numres uint32) bool {
 	v.wavelet = h.wavelet
 	raw := make([]int32, uint64(dataSize)*nbEltsV8)
 
-	// decode wraps: convert raw->float, run v8dwtDecode, convert float->raw.
-	decode := func(d *v8dwt) {
-		for i := range d.wavelet {
-			d.wavelet[i] = f32frombits(raw[i])
+	// C aliases one buffer as both OPJ_INT32* (the sparse-array traffic) and
+	// OPJ_FLOAT32* (the lifting), so it converts nothing. Without unsafe we keep
+	// two views and bit-cast between them around each v8dwtDecode. Converting the
+	// whole scratch each way on every coefficient group made that round trip cost
+	// O(dataSize) per group no matter how small the window was (C56); the
+	// conversions below touch only the words that actually cross the boundary,
+	// and the ranges — constant for a whole pass — are computed once outside the
+	// group loop.
+	//
+	// wavelet is the authoritative buffer, exactly as C's single allocation is:
+	// loadUnits refreshes only the words the interleave just deposited in raw, so
+	// every other word keeps the value the previous group left in it, which is
+	// precisely C's behaviour. raw is only ever a courier to and from the sparse
+	// array.
+	//
+	// loadUnits converts raw->wavelet over the words v8dwtInterleavePartialH/V
+	// wrote: lanes [0,n) of the interleaved L units (cas+2i, i in [winLX0,winLX1))
+	// and H units (1-cas+2i, i in [winHX0,winHX1)).
+	loadUnits := func(d *v8dwt, n uint32) {
+		load := func(base int, x0, x1 uint32) {
+			pos := (base + 2*int(x0)) * nbEltsV8
+			for x := x0; x < x1; x++ {
+				for e := uint32(0); e < n; e++ {
+					d.wavelet[pos+int(e)] = f32frombits(raw[pos+int(e)])
+				}
+				pos += 2 * nbEltsV8
+			}
 		}
-		v8dwtDecode(d)
-		for i := range d.wavelet {
+		load(int(d.cas), d.winLX0, d.winLX1)
+		load(int(1-d.cas), d.winHX0, d.winHX1)
+	}
+
+	// storeRange converts wavelet->raw over [lo,hi), the contiguous span the
+	// following sparse-array write reads back.
+	storeRange := func(d *v8dwt, lo, hi int) {
+		for i := lo; i < hi; i++ {
 			raw[i] = f32bits(d.wavelet[i])
 		}
 	}
@@ -579,12 +608,18 @@ func DecodePartial97(tc *TileComponent, numres uint32) bool {
 		h.winLX1 = winLLX1
 		h.winHX0 = winHLX0
 		h.winHX1 = winHLX1
+		// The sparse write below reads raw[winTrX0*8, winTrX1*8); that span is the
+		// same for every group of this pass, so it is bound once here.
+		hStoreLo, hStoreHi := int(winTrX0)*nbEltsV8, int(winTrX1)*nbEltsV8
 		var j uint32
 		for j = 0; j+(nbEltsV8-1) < rh; j += nbEltsV8 {
 			if (j+(nbEltsV8-1) >= winLLY0 && j < winLLY1) ||
 				(j+(nbEltsV8-1) >= winLHY0+uint32(v.sn) && j < winLHY1+uint32(v.sn)) {
-				v8dwtInterleavePartialH(&h, raw, sa, j, uintMin(nbEltsV8, rh-j))
-				decode(&h)
+				n := uintMin(nbEltsV8, rh-j)
+				v8dwtInterleavePartialH(&h, raw, sa, j, n)
+				loadUnits(&h, n)
+				v8dwtDecode(&h)
+				storeRange(&h, hStoreLo, hStoreHi)
 				if !sa.Write(winTrX0, j, winTrX1, j+nbEltsV8,
 					raw[int(winTrX0)*nbEltsV8:], nbEltsV8, 1, true) {
 					return false
@@ -595,7 +630,9 @@ func DecodePartial97(tc *TileComponent, numres uint32) bool {
 			((j+(nbEltsV8-1) >= winLLY0 && j < winLLY1) ||
 				(j+(nbEltsV8-1) >= winLHY0+uint32(v.sn) && j < winLHY1+uint32(v.sn))) {
 			v8dwtInterleavePartialH(&h, raw, sa, j, rh-j)
-			decode(&h)
+			loadUnits(&h, rh-j)
+			v8dwtDecode(&h)
+			storeRange(&h, hStoreLo, hStoreHi)
 			if !sa.Write(winTrX0, j, winTrX1, rh,
 				raw[int(winTrX0)*nbEltsV8:], nbEltsV8, 1, true) {
 				return false
@@ -606,10 +643,13 @@ func DecodePartial97(tc *TileComponent, numres uint32) bool {
 		v.winLX1 = winLLY1
 		v.winHX0 = winLHY0
 		v.winHX1 = winLHY1
+		vStoreLo, vStoreHi := int(winTrY0)*nbEltsV8, int(winTrY1)*nbEltsV8
 		for j = winTrX0; j < winTrX1; j += nbEltsV8 {
 			nbElts := uintMin(nbEltsV8, winTrX1-j)
 			v8dwtInterleavePartialV(&v, raw, sa, j, nbElts)
-			decode(&v)
+			loadUnits(&v, nbElts)
+			v8dwtDecode(&v)
+			storeRange(&v, vStoreLo, vStoreHi)
 			if !sa.Write(j, winTrY0, j+nbElts, winTrY1,
 				raw[int(winTrY0)*nbEltsV8:], 1, nbEltsV8, true) {
 				return false

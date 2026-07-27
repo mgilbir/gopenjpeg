@@ -18,11 +18,11 @@ import (
 // the adapter and applied to the codec in SetupDecoder, reproducing how the C
 // public API forwards the full opj_dparameters_t to opj_j2k_setup_decoder.
 //
-// Only the decode methods are implemented. The tile-streaming methods
+// Only the decode methods are implemented here. The tile-streaming methods
 // (ReadTileHeader/DecodeTile) and every encode method return ErrNotImplemented:
 // the decode paths this port exercises use whole-image decode or the
 // get-decoded-tile entry point (GetTile), not the streaming tile API, and
-// encoding is out of scope.
+// encoding is served by the sibling j2kEncodeAdapter (adapter_encode.go).
 type j2kAdapter struct {
 	d      *j2k.Decoder
 	reduce uint32
