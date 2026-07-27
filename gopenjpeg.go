@@ -1,10 +1,17 @@
-// Package gopenjpeg is the public API of a pure-Go port of OpenJPEG's decoder.
-// It decodes JPEG 2000 images from both raw codestreams (.j2k/.j2c/.jpc, the
-// SOC-prefixed format) and JP2 / JPH containers (the box-structured format used
-// by .jp2/.jph files), mirroring the capabilities of the reference
-// opj_decompress tool: resolution reduction, quality-layer limiting, region
-// (decode-area) restriction, component subsetting, single-tile decode, and
-// strict/relaxed conformance handling.
+// Package gopenjpeg is the public API of a pure-Go port of OpenJPEG. It both
+// decodes and encodes JPEG 2000 images in raw codestreams (.j2k/.j2c/.jpc, the
+// SOC-prefixed format) and in JP2 / JPH containers (the box-structured format
+// used by .jp2/.jph files).
+//
+// Decode mirrors the capabilities of the reference opj_decompress tool:
+// resolution reduction, quality-layer limiting, region (decode-area)
+// restriction, component subsetting, single-tile decode, strict/relaxed
+// conformance handling, and HTJ2K (High Throughput) codestreams. Encode mirrors
+// the codestream capabilities of opj_compress: reversible 5/3 and irreversible
+// 9/7 coding, rate and quality layer allocation, tiling and tile-parts,
+// precincts, code-block styles, progression orders and POC changes, ROI, MCT
+// (including Part-2 array-based), SOP/EPH/PLT/TLM markers, and the Cinema/IMF
+// profiles.
 //
 // # Usage
 //
@@ -14,20 +21,30 @@
 //	if err != nil { ... }
 //	std, _ := img.ToStandard() // convert to a Go image.Image
 //
-// The decode is bit-exact with opj_decompress on the supported corpus (see the
-// oracletest gate). Colour post-processing that the CLI applies before writing
-// (sYCC/CMYK/eYCC to sRGB) is available via Image.ConvertToRGB; the core Decode
-// returns the library-level components unchanged.
+//	err = gopenjpeg.Encode(img, writer,
+//	    gopenjpeg.WithEncodeFormat(gopenjpeg.FormatJP2),
+//	    gopenjpeg.WithIrreversible(),
+//	    gopenjpeg.WithRates(20))
+//
+// Both directions are gated bit-for-bit against the C reference: decoded samples
+// are identical to opj_decompress and encoded codestreams are byte-identical to
+// opj_compress on the corpus the oracletest gates cover, with no documented
+// exclusions. Colour post-processing that opj_decompress applies before writing
+// a file (sYCC/eYCC/CMYK/CIELab and embedded ICC profiles to sRGB) is available
+// via Image.ConvertToRGB; the core Decode returns the library-level components
+// unchanged.
 //
 // # Architecture
 //
 // Decode detects the container format, then drives the internal codestream
 // decoder (internal/j2k) directly for raw codestreams, or through the internal
-// JP2 container (internal/jp2) for boxed files. The JP2 container talks to the
-// codestream decoder through the jp2.CodestreamCodec interface; the adapter
-// that satisfies that interface over a *j2k.Decoder lives in this package
-// (type j2kAdapter in adapter.go). Only the decode side is implemented; the
-// encode methods of the interface return ErrNotImplemented.
+// JP2 container (internal/jp2) for boxed files. Encode is the mirror image:
+// internal/j2k's compressor directly, or wrapped by the JP2 container. The
+// container talks to the codestream codec through the jp2.CodestreamCodec
+// interface; the adapters that satisfy it over a *j2k.Decoder and a *j2k.Encoder
+// live in this package (j2kAdapter in adapter.go, j2kEncodeAdapter in
+// adapter_encode.go). Each adapter implements one direction, so the methods of
+// the other direction return ErrNotImplemented.
 package gopenjpeg
 
 import (
@@ -61,9 +78,16 @@ const (
 	FormatJP2
 )
 
-// ErrNotImplemented is returned by the encode side of the internal codec
-// adapter, which this decode-only port does not implement.
-var ErrNotImplemented = errors.New("gopenjpeg: not implemented (encode path)")
+// ErrNotImplemented is returned by the methods of the internal codec adapters
+// that belong to the direction the adapter does not serve: the decode methods of
+// the encode adapter and the encode methods of the decode adapter. Both
+// directions of the codec are implemented — see Decode and Encode — but each
+// adapter instance drives only one of them, so the unused half of the
+// jp2.CodestreamCodec interface reports this error rather than acting.
+//
+// It is also returned by the tile-granular entry points that this port does not
+// expose (the opj_write_tile / opj_read_tile_header family).
+var ErrNotImplemented = errors.New("gopenjpeg: not implemented (wrong codec direction)")
 
 // ErrUnknownFormat is returned when FormatAuto cannot recognise the input.
 var ErrUnknownFormat = errors.New("gopenjpeg: unrecognised input format")

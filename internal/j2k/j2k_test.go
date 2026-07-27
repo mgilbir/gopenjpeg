@@ -17,7 +17,7 @@ import (
 func buildCOD() []byte {
 	var b []byte
 	b = be2(b, msCOD)
-	b = be2(b, 12) // Lcod = 2 (length field) + 5 (SGcod) + 5 (SPcod)
+	b = be2(b, 12)               // Lcod = 2 (length field) + 5 (SGcod) + 5 (SPcod)
 	b = append(b, 0)             // Scod
 	b = append(b, 0)             // SGcod: progression order (LRCP)
 	b = be2(b, 1)                // SGcod: number of layers

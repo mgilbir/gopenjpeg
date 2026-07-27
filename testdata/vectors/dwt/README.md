@@ -10,7 +10,7 @@ transform the int32 words are float32 bit patterns and are compared by bits.
 | `partial.bin` | `TestPartialVectors`     | region/partial-decode 5/3 + 9/7 |
 | `norms.bin`   | `TestNormsVectors`       | `getnorm`/`getnorm_real` + `calc_explicit_stepsizes` |
 
-All harness sources live under `oracle/harness/w3/` (gitignored). Resolution
+All harness sources are tracked under `tools/oracle-harness/w3/`. Resolution
 and band coordinates use the standard `ceildivpow2` reduction; 1x1 tiles with
 more than one resolution level are excluded because the C reference reads out of
 bounds (undefined behaviour) on the single-element buffer, and over-decomposed
@@ -22,9 +22,9 @@ lossless round-trip checks.
 ```sh
 INC="-I oracle/openjpeg/src/lib/openjp2 -I oracle/openjpeg/build/src/lib/openjp2"
 LIB="oracle/openjpeg/build/bin/libopenjp2.a -lm -lpthread"
-gcc -O2 $INC oracle/harness/w3/dwt_gen.c     $LIB -o /tmp/dwt_gen
-gcc -O2 $INC oracle/harness/w3/partial_gen.c $LIB -o /tmp/partial_gen
-gcc -O2 $INC oracle/harness/w3/norms_gen.c   $LIB -o /tmp/norms_gen
+gcc -O2 $INC tools/oracle-harness/w3/dwt_gen.c     $LIB -o /tmp/dwt_gen
+gcc -O2 $INC tools/oracle-harness/w3/partial_gen.c $LIB -o /tmp/partial_gen
+gcc -O2 $INC tools/oracle-harness/w3/norms_gen.c   $LIB -o /tmp/norms_gen
 /tmp/dwt_gen     testdata/vectors/dwt/whole.bin
 /tmp/partial_gen testdata/vectors/dwt/partial.bin
 /tmp/norms_gen   testdata/vectors/dwt/norms.bin

@@ -42,10 +42,21 @@ func DataDir(parts ...string) string {
 }
 
 // Require skips the test if the oracle binaries or corpus are not present.
+//
+// Absence is the ONLY reason a gate may skip. Once Require has passed, a gate
+// that actually runs an oracle binary and gets a failure must fail the test, not
+// skip it (C23): the case lists are curated pass lists, so an oracle that can no
+// longer produce a reference for a listed case is either a broken oracle build
+// or a stale list — both are defects, and skipping hid them.
 func Require(t *testing.T) {
 	t.Helper()
-	if _, err := os.Stat(Bin("opj_decompress")); err != nil {
-		t.Skipf("oracle not available: %v", err)
+	// Both binaries are required: the decode/CLI gates drive opj_decompress and
+	// the encode/CLI-compress gates drive opj_compress. Stat-ing only the former
+	// let a half-built oracle turn the encode gates into runtime failures.
+	for _, bin := range []string{"opj_decompress", "opj_compress"} {
+		if _, err := os.Stat(Bin(bin)); err != nil {
+			t.Skipf("oracle not available: %v", err)
+		}
 	}
 	if _, err := os.Stat(DataDir()); err != nil {
 		t.Skipf("oracle corpus not available: %v", err)

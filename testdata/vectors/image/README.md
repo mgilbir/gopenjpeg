@@ -25,12 +25,12 @@ reduce factors 0..5, including 1x1 images.
 
 ## Regeneration
 
-The harness source is `oracle/harness/w4/image_gen.c` (gitignored). From the
+The harness source is `tools/oracle-harness/w4/image_gen.c`. From the
 repo root:
 
 ```
 gcc -O2 -I oracle/openjpeg/src/lib/openjp2 -I oracle/openjpeg/build/src/lib/openjp2 \
-    oracle/harness/w4/image_gen.c oracle/openjpeg/build/bin/libopenjp2.a -lm -lpthread \
+    tools/oracle-harness/w4/image_gen.c oracle/openjpeg/build/bin/libopenjp2.a -lm -lpthread \
     -o /tmp/image_gen
 /tmp/image_gen > testdata/vectors/image/vectors.json
 ```

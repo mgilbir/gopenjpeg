@@ -34,12 +34,12 @@ and `ok` is false — this exercises the singular-matrix error path.
 
 ## Regeneration
 
-The harness source is `oracle/harness/w4/mct_gen.c` (gitignored). From the repo
+The harness source is `tools/oracle-harness/w4/mct_gen.c`. From the repo
 root:
 
 ```
 gcc -O2 -I oracle/openjpeg/src/lib/openjp2 -I oracle/openjpeg/build/src/lib/openjp2 \
-    oracle/harness/w4/mct_gen.c oracle/openjpeg/build/bin/libopenjp2.a -lm -lpthread \
+    tools/oracle-harness/w4/mct_gen.c oracle/openjpeg/build/bin/libopenjp2.a -lm -lpthread \
     -o /tmp/mct_gen
 /tmp/mct_gen > testdata/vectors/mct/vectors.json
 ```
@@ -77,7 +77,7 @@ copy that one array over:
 
 ```
 gcc -O2 -I oracle/openjpeg/src/lib/openjp2 -I oracle/openjpeg/build/src/lib/openjp2 \
-    oracle/harness/w4/mct_gen.c -L oracle/openjpeg/build/bin -lopenjp2 \
+    tools/oracle-harness/w4/mct_gen.c -L oracle/openjpeg/build/bin -lopenjp2 \
     -Wl,-rpath,$PWD/oracle/openjpeg/build/bin -lm -lpthread -o /tmp/mct_gen_so
 /tmp/mct_gen_so   # take its ict.dec_c1 array
 ```

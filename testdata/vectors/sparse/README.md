@@ -7,12 +7,12 @@ port in `internal/sparse` (`TestSparseVectors`).
 ## Regeneration
 
 ```sh
-gcc -O2 oracle/harness/w3/sparse_gen.c \
+gcc -O2 tools/oracle-harness/w3/sparse_gen.c \
     oracle/openjpeg/build/bin/libopenjp2.a -lm -lpthread -o /tmp/sparse_gen
 /tmp/sparse_gen testdata/vectors/sparse/vectors.bin
 ```
 
-The harness (`oracle/harness/w3/sparse_gen.c`, gitignored) exercises a matrix of
+The harness (`tools/oracle-harness/w3/sparse_gen.c`) exercises a matrix of
 array/block layouts with writes, reads, strided reads (col strides 1/2/3/4/8),
 sub-region reads (including 1-pixel, single-row, single-column), invalid-region
 reads/writes in both forgiving and strict modes, and arrays left with

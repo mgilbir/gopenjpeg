@@ -1,0 +1,140 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# WHAT THIS WORKFLOW DOES AND DOES NOT COVER
+#
+# Covered: the whole pure-Go surface. Build, vet and gofmt; every unit test,
+# including the module-level tests that replay the checked-in C-generated
+# vectors in testdata/vectors (MQ coder, DWT, T1, HT, MCT, PI, T2, JP2 boxes,
+# ...) bit-for-bit; the public-API tests; the fuzz targets' seed corpora; and
+# the same on a native arm64 runner, which is what actually backs the
+# "bit-exact on every GOARCH" claim (see the README section of that name) —
+# the float vectors are replayed by a compiler that contracts x*y+z into an
+# FMA unless the rounding barriers hold.
+#
+# NOT covered: the differential gates in oracletest/. They need a locally built
+# OpenJPEG ("the oracle") plus the openjpeg-data corpus under oracle/, which is
+# gitignored, so oracletest.Require() skips them here. `go test ./...` below
+# therefore passes with the entire differential surface skipped — treat a green
+# CI as "the port is self-consistent", not as "parity with C is verified".
+#
+# An oracle tier is deliberately NOT shipped rather than shipped broken. Parity
+# in this repo is defined against one specific C build: OpenJPEG is compiled
+# -O3 -ffast-math, and several byte-exactness results (the ICT green term in
+# internal/mct, the forward-ICT grouping and hoisted quantizer division on the
+# encode side) depend on how *that* gcc reassociates those expressions in the
+# shipped libopenjp2.so. A CI-built oracle would use a different compiler
+# version and could reassociate differently, so a from-source oracle job would
+# produce spurious 1-ULP failures on the very files those fixes target. Pinning
+# the corpus revision has the same problem: the curated pass/error lists in
+# oracletest/ are tied to the exact corpus contents. Running the gates remains a
+# maintainer step on a machine with oracle/ built:
+#     go test ./oracletest/
+# and it is required before merging anything that touches the codec.
+
+jobs:
+  test:
+    name: test (amd64, go ${{ matrix.go }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # go.mod declares go 1.25 and must keep building with it; 'stable'
+        # catches breakage from newer toolchains.
+        go: ['1.25.x', 'stable']
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go }}
+          check-latest: true
+
+      - name: gofmt
+        run: |
+          unformatted=$(gofmt -l . | grep -v '^oracle/' || true)
+          if [ -n "$unformatted" ]; then
+            echo "not gofmt-clean:"
+            echo "$unformatted"
+            gofmt -d $unformatted
+            exit 1
+          fi
+
+      - name: build
+        run: go build ./...
+
+      - name: vet
+        run: go vet ./...
+
+      - name: test
+        run: go test ./...
+
+      - name: fuzz seed corpora
+        # Runs each fuzz target over its f.Add seeds and testdata/fuzz corpus as
+        # ordinary test cases (no fuzzing engine, no time budget). This is the
+        # regression net for the crashers previously found by long fuzz runs.
+        run: go test -run 'Fuzz' ./...
+
+  arm64:
+    name: test (arm64 native)
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.x'
+          check-latest: true
+
+      - name: build
+        run: go build ./...
+
+      - name: test
+        # gc contracts x*y+z into a single-rounding FMA on arm64 but never on
+        # amd64, so this job is what proves the explicit float32()/float64()
+        # rounding barriers in the 9/7 DWT, the MCT and the colour conversions
+        # still reproduce the C vectors bit-for-bit off amd64.
+        run: go test ./...
+
+  cross:
+    name: cross-compile checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.x'
+          check-latest: true
+
+      - name: vet for arm64
+        run: GOARCH=arm64 GOOS=linux go vet ./...
+
+      - name: no FMA contraction in the float kernels
+        # Every GOARCH on which gc contracts x*y+z. The float pipeline wraps each
+        # product feeding an add in an explicit conversion, which the Go spec
+        # defines as a rounding step and hence an FMA barrier; if one is ever
+        # dropped, a floating-point multiply-add mnemonic reappears here. The
+        # pattern matches only FP forms (FMADD/FMSUB/FNMADD/FNMSUB and the
+        # s390x/ppc64 vector spellings) — integer MADD is exact and expected.
+        run: |
+          status=0
+          for arch in arm64 ppc64le s390x riscv64 loong64; do
+            hits=$(GOARCH=$arch GOOS=linux go build -gcflags=-S \
+                     ./internal/dwt ./internal/mct . 2>&1 \
+                   | grep -E '\b(F[A-Z]*M(ADD|SUB)|WFM(ADD|SUB)|XS[A-Z]*M(ADD|SUB))' || true)
+            if [ -n "$hits" ]; then
+              echo "FMA contraction on GOARCH=$arch:"
+              echo "$hits"
+              status=1
+            fi
+          done
+          exit $status

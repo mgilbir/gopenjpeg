@@ -32,7 +32,7 @@ reproduces (the `>>` result is truncated to int32 rather than asserted).
 gcc -O2 -DNDEBUG \
     -I oracle/openjpeg/src/lib/openjp2 \
     -I oracle/openjpeg/build/src/lib/openjp2 \
-    oracle/harness/w1/opjmath_vectors.c \
+    tools/oracle-harness/w1/opjmath_vectors.c \
     oracle/openjpeg/build/bin/libopenjp2.a -lm -lpthread -o /tmp/opjmath_vectors
 /tmp/opjmath_vectors > testdata/vectors/opjmath/intmath.txt
 ```

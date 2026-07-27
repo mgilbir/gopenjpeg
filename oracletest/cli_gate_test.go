@@ -97,8 +97,10 @@ func TestCLIByteParity(t *testing.T) {
 			}
 			// Oracle.
 			cArgs := append([]string{"-i", inPath, "-o", cOut}, c.flags...)
+			// A curated case the oracle cannot serve is a defect, not a reason to
+			// skip: the Go CLI is held to the same bar two lines above (C23).
 			if out, err := execOracle("opj_decompress", cArgs...); err != nil {
-				t.Skipf("opj_decompress %v failed: %v\n%s", cArgs, err, out)
+				t.Fatalf("opj_decompress %v failed: %v\n%s", cArgs, err, out)
 			}
 
 			gNames := listDir(t, gdir)

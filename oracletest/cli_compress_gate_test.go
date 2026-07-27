@@ -118,8 +118,10 @@ func TestCLICompressByteParity(t *testing.T) {
 				t.Fatalf("gopj-compress %v: %v\n%s", gArgs, err, out)
 			}
 			cArgs := append([]string{"-i", c.in, "-o", cOut}, c.flags...)
+			// A curated case the oracle cannot serve is a defect, not a reason to
+			// skip: the Go CLI is held to the same bar two lines above (C23).
 			if out, err := execOracle("opj_compress", cArgs...); err != nil {
-				t.Skipf("opj_compress %v failed: %v\n%s", cArgs, err, out)
+				t.Fatalf("opj_compress %v failed: %v\n%s", cArgs, err, out)
 			}
 
 			gb, err := os.ReadFile(gOut)
