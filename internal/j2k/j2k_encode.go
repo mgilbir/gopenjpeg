@@ -486,7 +486,7 @@ func (e *Encoder) SetupEncoder(parameters *CParameters, img *image.Image, mgr *e
 			return ErrEncodeSetup
 		}
 		if cp.Tw > 65535/cp.Th {
-			mgr.Errorf("Invalid number of tiles : %u x %u (maximum fixed by jpeg2000 norm is 65535 tiles)\n",
+			mgr.Errorf("Invalid number of tiles : %d x %d (maximum fixed by jpeg2000 norm is 65535 tiles)\n",
 				cp.Tw, cp.Th)
 			return ErrEncodeSetup
 		}

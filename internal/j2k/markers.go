@@ -91,7 +91,7 @@ func (d *Decoder) readSIZ(data []byte) error {
 	sizW := img.X1 - img.X0
 	sizH := img.Y1 - img.Y0
 	if d.ihdrW > 0 && d.ihdrH > 0 && (d.ihdrW != sizW || d.ihdrH != sizH) {
-		d.mgr.Errorf("Error with SIZ marker: IHDR w(%u) h(%u) vs. SIZ w(%u) h(%u)\n", d.ihdrW, d.ihdrH, sizW, sizH)
+		d.mgr.Errorf("Error with SIZ marker: IHDR w(%d) h(%d) vs. SIZ w(%d) h(%d)\n", d.ihdrW, d.ihdrH, sizW, sizH)
 		return ErrBadSIZ
 	}
 
@@ -111,11 +111,11 @@ func (d *Decoder) readSIZ(data []byte) error {
 		c.Dx = r.u(1) // XRsiz_i
 		c.Dy = r.u(1) // YRsiz_i
 		if c.Dx < 1 || c.Dx > 255 || c.Dy < 1 || c.Dy > 255 {
-			d.mgr.Errorf("Invalid values for comp = %d : dx=%u dy=%u (should be between 1 and 255)\n", i, c.Dx, c.Dy)
+			d.mgr.Errorf("Invalid values for comp = %d : dx=%d dy=%d (should be between 1 and 255)\n", i, c.Dx, c.Dy)
 			return ErrBadSIZ
 		}
 		if c.Prec > 31 {
-			d.mgr.Errorf("Invalid values for comp = %d : prec=%u (OpenJpeg only supports up to 31)\n", i, c.Prec)
+			d.mgr.Errorf("Invalid values for comp = %d : prec=%d (OpenJpeg only supports up to 31)\n", i, c.Prec)
 			return ErrBadSIZ
 		}
 		c.ResnoDecoded = 0
@@ -125,7 +125,7 @@ func (d *Decoder) readSIZ(data []byte) error {
 	cp.Tw = uintCeildiv(img.X1-cp.Tx0, cp.Tdx)
 	cp.Th = uintCeildiv(img.Y1-cp.Ty0, cp.Tdy)
 	if cp.Tw == 0 || cp.Th == 0 || cp.Tw > 65535/cp.Th {
-		d.mgr.Errorf("Invalid number of tiles : %u x %u (maximum fixed by jpeg2000 norm is 65535 tiles)\n", cp.Tw, cp.Th)
+		d.mgr.Errorf("Invalid number of tiles : %d x %d (maximum fixed by jpeg2000 norm is 65535 tiles)\n", cp.Tw, cp.Th)
 		return ErrBadSIZ
 	}
 	nbTiles := cp.Tw * cp.Th
@@ -610,7 +610,7 @@ func (d *Decoder) readPPM(data []byte) error {
 		cp.PpmMarkersCount = zppm + 1
 	}
 	if cp.PpmMarkers[zppm].Data != nil {
-		d.mgr.Errorf("Zppm %u already read\n", zppm)
+		d.mgr.Errorf("Zppm %d already read\n", zppm)
 		return ErrMarkerHandler
 	}
 	cp.PpmMarkers[zppm].Data = append([]byte(nil), payload...)
@@ -746,7 +746,7 @@ func (d *Decoder) readPPT(data []byte) error {
 		tcp.PptMarkersCount = zppt + 1
 	}
 	if tcp.PptMarkers[zppt].Data != nil {
-		d.mgr.Errorf("Zppt %u already read\n", zppt)
+		d.mgr.Errorf("Zppt %d already read\n", zppt)
 		return ErrMarkerHandler
 	}
 	tcp.PptMarkers[zppt].Data = append([]byte(nil), payload...)
@@ -797,7 +797,7 @@ func (d *Decoder) readCBD(data []byte) error {
 		img.Comps[i].Sgnd = (def >> 7) & 1
 		img.Comps[i].Prec = (def & 0x7f) + 1
 		if img.Comps[i].Prec > 31 {
-			d.mgr.Errorf("Invalid values for comp = %d : prec=%u\n", i, img.Comps[i].Prec)
+			d.mgr.Errorf("Invalid values for comp = %d : prec=%d\n", i, img.Comps[i].Prec)
 			return ErrMarkerHandler
 		}
 	}

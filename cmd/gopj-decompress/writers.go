@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/mgilbir/gopenjpeg"
@@ -49,7 +50,9 @@ func clampRange(v, lo, hi int32) int32 {
 // writePGX ports imagetopgx: one big-endian .pgx file per component, named
 // <base>_<compno>.pgx.
 func writePGX(img *gopenjpeg.Image, outfile string) error {
-	if !strings.HasSuffix(outfile, ".pgx") {
+	// Case-insensitive, matching outputFormat's detection: an uppercase .PGX
+	// that format detection accepted must not be rejected here (C48).
+	if !strings.EqualFold(filepath.Ext(outfile), ".pgx") {
 		return fmt.Errorf("pgx output must end in .pgx: %s", outfile)
 	}
 	base := outfile[:len(outfile)-4]
