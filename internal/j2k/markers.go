@@ -130,6 +130,44 @@ func (d *Decoder) readSIZ(data []byte) error {
 	}
 	nbTiles := cp.Tw * cp.Th
 
+	// C11 (DoS hardening): every per-field SIZ guard above passes, but the
+	// product nbTiles*numcomps is still unbounded (nbTiles up to 65535,
+	// numcomps up to 16384). It drives one ~1 KB cparams.TCCP allocation per
+	// tile-component below, so a ~49 KB codestream declaring 1000 tiles x 16384
+	// components asks for ~17 GB. The C reference (j2k.c:2413,2475) issues the
+	// same opj_calloc but survives because a failed calloc returns NULL and the
+	// reader degrades to OPJ_FALSE; Go's make aborts the process, turning a tiny
+	// malformed input into a cheap DoS. Bound the total tile-component count
+	// against the bytes the codestream can physically contain, before any make.
+	//
+	// Why this can never reject a valid codestream: every tile-component must be
+	// described by at least one packet in the codestream. Even in the most
+	// compact legal encoding — all-empty packets whose headers are moved to
+	// PPM/PPT and bit-packed — each packet still costs at least one bit, so B
+	// bytes of input can legitimately describe at most 8*B tile-components. This
+	// ignores the per-tile SOT+SOD (14 bytes) and the main-header overhead,
+	// which only make real files larger, so 8*B is a strict upper bound that no
+	// conforming codestream reaches. The attack sits at ~333 tile-components per
+	// input byte (16.4M / 49 KB), ~40x above the bound; every oracle corpus file
+	// sits far below it.
+	prodTileComps := uint64(nbTiles) * uint64(img.Numcomps)
+	var maxTileComps uint64
+	if d.streamLength > 0 {
+		maxTileComps = 8 * uint64(d.streamLength)
+	} else {
+		// Total input length unavailable (both cio.Stream constructors set it,
+		// so this is defensive only): fall back to an absolute ceiling on the
+		// allocation so a malformed SIZ still cannot OOM the process. 2 GiB /
+		// sizeof(cparams.TCCP) tile-components is far above any real codestream.
+		const tccpBytes = 1080 // unsafe.Sizeof(cparams.TCCP{})
+		maxTileComps = (2 << 30) / tccpBytes
+	}
+	if prodTileComps > maxTileComps {
+		d.mgr.Errorf("Error with SIZ marker: %d tiles x %d components exceed what a %d-byte codestream can describe\n",
+			nbTiles, img.Numcomps, d.streamLength)
+		return ErrBadSIZ
+	}
+
 	if d.dec.discardTiles {
 		d.dec.startTileX = (d.dec.startTileX - cp.Tx0) / cp.Tdx
 		d.dec.startTileY = (d.dec.startTileY - cp.Ty0) / cp.Tdy

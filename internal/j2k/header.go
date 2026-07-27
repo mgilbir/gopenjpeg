@@ -86,6 +86,9 @@ func (d *Decoder) readSOC(s *cio.Stream) error {
 
 // readHeaderProcedure ports opj_j2k_read_header_procedure.
 func (d *Decoder) readHeaderProcedure(s *cio.Stream) error {
+	// Record the bytes available in the codestream before reading the main
+	// header; readSIZ bounds its tile-component allocation against this (C11).
+	d.streamLength = s.NumberByteLeft()
 	d.dec.state = stMHSOC
 	if err := d.readSOC(s); err != nil {
 		d.mgr.Errorf("Expected a SOC marker \n")
