@@ -16,6 +16,17 @@
 //     where C uses float, and no expressions are re-associated. This is a
 //     correctness requirement: results are compared bit-for-bit against the C
 //     oracle.
+//   - Go's spec permits the compiler to contract `x*y + z` into a single-rounding
+//     FMA, and gc does so on arm64, ppc64, s390x, riscv64 and loong64. The C
+//     oracle rounds each product separately, so a contracted kernel would drift
+//     from it on exactly those architectures while the amd64 gates stayed green.
+//     Every float32 product in the 9/7 lifting kernels that feeds an add or a
+//     subtract is therefore wrapped in an explicit float32(...) conversion — per
+//     the Go spec such a conversion rounds to the target type's precision and so
+//     forbids the fusion. The barriers forbid fusion only; operand order and
+//     associativity are untouched, and on amd64 (which never fuses) the emitted
+//     code is unchanged. Verified by compiling this package for each fusing
+//     GOARCH and confirming no FMADD/FMSUB/FNMADD/FNMSUB is emitted.
 //   - Only the scalar code paths are ported. The C file additionally contains
 //     SSE/AVX/NEON intrinsic paths and an opj_thread pool; these are omitted.
 //     They are pure performance variants that produce identical results, so the

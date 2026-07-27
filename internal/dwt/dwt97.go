@@ -4,6 +4,16 @@ package dwt
 // 1-D lifting kernels, the forward/inverse row and column passes, and the
 // whole-tile 2-D drivers. All arithmetic is float32 in the exact order of the
 // C source; results are bit-exact with the C library.
+//
+// FMA barriers: Go's spec permits the compiler to fuse `x*y + z` (and the
+// `x*y - z` / `z - x*y` shapes) into a single-rounding FMA, and gc does so on
+// arm64/ppc64/s390x/riscv64. The C reference rounds the product separately, so
+// every float32 product that feeds an add or a subtract below is wrapped in an
+// explicit float32(...) conversion. Per the Go spec an explicit floating-point
+// conversion rounds to the target type's precision and therefore forbids the
+// fusion; on amd64 (where gc never fuses) it is a no-op, so the byte-identical
+// oracle parity on that arch is unchanged. The conversions only forbid fusion —
+// operand order and associativity are exactly as before.
 
 // two_invK: historic value for 2 / opj_invK used by the inverse transform
 // (see the BUG_WEIRD_TWO_INVK note in dwt.c / tcd.c).
@@ -16,15 +26,15 @@ const dwtTwoInvK float32 = 1.625732422
 func encodeStep2(w []float32, flOff, fwOff int, end, m uint32, c float32) {
 	imax := uintMin(end, m)
 	if imax > 0 {
-		w[fwOff-1] += (w[flOff] + w[fwOff]) * c
+		w[fwOff-1] += float32((w[flOff] + w[fwOff]) * c)
 		fwOff += 2
 		for i := uint32(1); i < imax; i++ {
-			w[fwOff-1] += (w[fwOff-2] + w[fwOff]) * c
+			w[fwOff-1] += float32((w[fwOff-2] + w[fwOff]) * c)
 			fwOff += 2
 		}
 	}
 	if m < end {
-		w[fwOff-1] += (2 * w[fwOff-2]) * c
+		w[fwOff-1] += float32((2 * w[fwOff-2]) * c)
 	}
 }
 
@@ -151,19 +161,19 @@ func encodeV8Step2(tmp []float32, flOff, fwOff int, end, m uint32, cst float32) 
 	imax := uintMin(end, m)
 	if imax > 0 {
 		for c := 0; c < nbEltsV8; c++ {
-			tmp[fwOff-nbEltsV8+c] += (tmp[flOff+c] + tmp[fwOff+c]) * cst
+			tmp[fwOff-nbEltsV8+c] += float32((tmp[flOff+c] + tmp[fwOff+c]) * cst)
 		}
 		fwOff += 2 * nbEltsV8
 		for i := uint32(1); i < imax; i++ {
 			for c := 0; c < nbEltsV8; c++ {
-				tmp[fwOff-nbEltsV8+c] += (tmp[fwOff-2*nbEltsV8+c] + tmp[fwOff+c]) * cst
+				tmp[fwOff-nbEltsV8+c] += float32((tmp[fwOff-2*nbEltsV8+c] + tmp[fwOff+c]) * cst)
 			}
 			fwOff += 2 * nbEltsV8
 		}
 	}
 	if m < end {
 		for c := 0; c < nbEltsV8; c++ {
-			tmp[fwOff-nbEltsV8+c] += (2 * tmp[fwOff-2*nbEltsV8+c]) * cst
+			tmp[fwOff-nbEltsV8+c] += float32((2 * tmp[fwOff-2*nbEltsV8+c]) * cst)
 		}
 	}
 }
@@ -286,7 +296,7 @@ func v8dwtDecodeStep2(w []float32, lUnitOff, wUnitOff int, start, end, m uint32,
 	}
 	for i := start; i < imax; i++ {
 		for e := 0; e < nbEltsV8; e++ {
-			w[wpos-nbEltsV8+e] = w[wpos-nbEltsV8+e] + (w[lpos+e]+w[wpos+e])*c
+			w[wpos-nbEltsV8+e] = w[wpos-nbEltsV8+e] + float32((w[lpos+e]+w[wpos+e])*c)
 		}
 		lpos = wpos
 		wpos += 2 * nbEltsV8
@@ -294,7 +304,7 @@ func v8dwtDecodeStep2(w []float32, lUnitOff, wUnitOff int, start, end, m uint32,
 	if m < end {
 		c2 := c + c
 		for e := 0; e < nbEltsV8; e++ {
-			w[wpos-nbEltsV8+e] = w[wpos-nbEltsV8+e] + w[lpos+e]*c2
+			w[wpos-nbEltsV8+e] = w[wpos-nbEltsV8+e] + float32(w[lpos+e]*c2)
 		}
 	}
 }
