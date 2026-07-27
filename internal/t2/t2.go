@@ -645,7 +645,12 @@ func (t2 *T2) readPacketHeader(t *tile.Tile, tcp *cparams.TCP, p *pi.Iterator, s
 		} else {
 			curData += 6
 		}
-		// TODO: check the Nsop value
+		// The SOP marker's Nsop sequence number is intentionally not validated:
+		// OpenJPEG's opj_t2_decode_packet likewise reads past the 6-byte SOP
+		// without checking Nsop (its own source carries the same "TODO: check
+		// the Nsop value" note and never acts on it). Adding a check here would
+		// change decode behaviour in default mode and diverge from the oracle,
+		// so this is deliberately a parity no-op.
 	}
 
 	// Header source selection (PPM / PPT / normal).

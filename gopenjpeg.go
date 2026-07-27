@@ -224,9 +224,17 @@ type ComponentInfo struct {
 func openStream(r io.Reader, maxInputSize int64) (s *cio.Stream, magic []byte, cleanup func(), err error) {
 	const magicLen = 12
 	if rs, ok := r.(io.ReadSeeker); ok {
+		// Honor the reader's current position as the stream origin so magic
+		// detection and decoding share one origin (matching stdlib
+		// image.Decode). Capture it, read the magic from there, then seek back
+		// so NewReadSeekerInputStream adopts the same origin as logical 0.
+		origin, oerr := rs.Seek(0, io.SeekCurrent)
+		if oerr != nil {
+			return nil, nil, nil, fmt.Errorf("gopenjpeg: seek input: %w", oerr)
+		}
 		hdr := make([]byte, magicLen)
 		n, _ := io.ReadFull(rs, hdr)
-		if _, serr := rs.Seek(0, io.SeekStart); serr != nil {
+		if _, serr := rs.Seek(origin, io.SeekStart); serr != nil {
 			return nil, nil, nil, fmt.Errorf("gopenjpeg: seek input: %w", serr)
 		}
 		st, serr := cio.NewReadSeekerInputStream(rs)
@@ -279,9 +287,13 @@ func detectFormat(magic []byte) Format {
 // already applied for JP2 inputs); call Image.ConvertToRGB to reproduce the
 // colour-space conversion opj_decompress performs before writing.
 //
-// If r is an io.ReadSeeker it is read on demand and never fully buffered. Any
-// other io.Reader is read entirely into memory before format detection; use
-// WithMaxInputSize to bound that buffer for untrusted, non-seekable inputs.
+// If r is an io.ReadSeeker it is read on demand and never fully buffered, and
+// its current position is treated as the start of the stream (as stdlib
+// image.Decode does): both magic detection and decoding use that origin, so a
+// reader positioned mid-stream decodes the substream that begins there. Any
+// other io.Reader is read entirely into memory from its current position before
+// format detection; use WithMaxInputSize to bound that buffer for untrusted,
+// non-seekable inputs.
 func Decode(r io.Reader, opts ...Option) (*Image, error) {
 	o := defaultOptions()
 	for _, fn := range opts {

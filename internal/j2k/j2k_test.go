@@ -1,12 +1,30 @@
 package j2k
 
 import (
+	"errors"
+	"strings"
 	"testing"
 
 	"github.com/mgilbir/gopenjpeg/internal/cio"
 	"github.com/mgilbir/gopenjpeg/internal/cparams"
+	"github.com/mgilbir/gopenjpeg/internal/event"
 	"github.com/mgilbir/gopenjpeg/internal/image"
 )
+
+// buildCOD builds a minimal, valid COD marker segment (Scod=0, LRCP, 1 layer,
+// no MCT, 5 resolution levels, 64x64 code-blocks, reversible 5/3). The layout
+// mirrors what readCOD parses: SGcod (5 bytes) + SPcod (5 bytes).
+func buildCOD() []byte {
+	var b []byte
+	b = be2(b, msCOD)
+	b = be2(b, 12) // Lcod = 2 (length field) + 5 (SGcod) + 5 (SPcod)
+	b = append(b, 0)             // Scod
+	b = append(b, 0)             // SGcod: progression order (LRCP)
+	b = be2(b, 1)                // SGcod: number of layers
+	b = append(b, 0)             // SGcod: MCT
+	b = append(b, 4, 4, 4, 0, 1) // SPcod: decomp levels, cblkw exp, cblkh exp, cblksty, qmfbid
+	return b
+}
 
 // be2/be4 append a big-endian uint16/uint32.
 func be2(b []byte, v uint16) []byte { return append(b, byte(v>>8), byte(v)) }
@@ -81,6 +99,59 @@ func TestReadHeaderZeroComponents(t *testing.T) {
 	data := buildSIZ(16, 16, 16, 16, 0)
 	if _, err := decodeHeader(t, data); err == nil {
 		t.Fatalf("expected error for zero-component SIZ")
+	}
+}
+
+// TestReadHeaderDuplicateCOD is the C19 regression. In strict mode a second COD
+// marker in the main header must be rejected (matching the JPEG 2000 "no more
+// than one COD marker per tile" constraint) rather than silently overwriting
+// the coding parameters set by the first COD. In the default relaxed mode the
+// duplicate must be tolerated, matching OpenJPEG 2.5.4 (which ships that guard
+// disabled, upstream #1043) so no legitimate file is rejected.
+func TestReadHeaderDuplicateCOD(t *testing.T) {
+	data := buildSIZ(16, 16, 16, 16, 1)
+	data = append(data, buildCOD()...)
+	data = append(data, buildCOD()...) // duplicate COD
+
+	// Strict mode: reject with the duplicate-COD diagnostic.
+	var msgs []string
+	mgr := &event.Manager{ErrorHandler: func(s string) { msgs = append(msgs, s) }}
+	d := CreateDecompress()
+	d.SetStrictMode(true)
+	if _, err := d.ReadHeader(cio.NewMemoryInputStream(data), mgr); err == nil {
+		t.Fatalf("strict: expected error for duplicate COD marker, got nil")
+	} else if !errors.Is(err, ErrMarkerHandler) {
+		t.Fatalf("strict: expected ErrMarkerHandler, got %v", err)
+	}
+	found := false
+	for _, m := range msgs {
+		if strings.Contains(m, "No more than one COD marker per tile") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Fatalf("strict: expected the duplicate-COD diagnostic, got messages %v", msgs)
+	}
+
+	// Relaxed mode (default): the duplicate must NOT trigger the marker-handler
+	// rejection (the header may still fail later for unrelated reasons such as a
+	// missing QCD, but never with ErrMarkerHandler from the COD guard).
+	dr := CreateDecompress()
+	if _, err := dr.ReadHeader(cio.NewMemoryInputStream(data), &event.Manager{}); errors.Is(err, ErrMarkerHandler) {
+		t.Fatalf("relaxed: duplicate COD must be tolerated, got ErrMarkerHandler: %v", err)
+	}
+}
+
+// TestGetTileBeforeReadHeader is the C40 regression: GetTile called before
+// ReadHeader (privateImage still nil) must return an error, not panic on a nil
+// dereference.
+func TestGetTileBeforeReadHeader(t *testing.T) {
+	d := CreateDecompress()
+	out := &image.Image{Numcomps: 1, Comps: make([]image.Comp, 1)}
+	err := d.GetTile(nil, out, 0, nil)
+	if !errors.Is(err, ErrHeaderNotRead) {
+		t.Fatalf("expected ErrHeaderNotRead, got %v", err)
 	}
 }
 

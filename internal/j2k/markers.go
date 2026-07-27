@@ -232,6 +232,17 @@ func (d *Decoder) readCOD(data []byte) error {
 	img := d.privateImage
 	cp := &d.CP
 	tcp := d.tcpAt()
+	// The JPEG 2000 spec permits at most one COD per tile (or per main header).
+	// OpenJPEG's opj_j2k_read_cod historically rejected a second COD, but 2.5.4
+	// ships that guard under #if 0 (upstream disabled it in issue #1043 because
+	// rejecting broke legitimate files), so it now accepts a duplicate COD and
+	// lets the last one win. Match that in the default relaxed mode for oracle
+	// parity, and enforce the spec constraint only in strict mode so a duplicate
+	// cannot silently overwrite the first COD's coding parameters unnoticed.
+	if tcp.Cod && cp.Strict {
+		d.mgr.Errorf("COD marker already read. No more than one COD marker per tile.\n")
+		return ErrMarkerHandler
+	}
 	tcp.Cod = true
 
 	if len(data) < 5 {
