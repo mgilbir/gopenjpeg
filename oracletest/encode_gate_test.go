@@ -255,6 +255,18 @@ func TestEncodeGate(t *testing.T) {
 			flags:  []string{"-I", "-mct", "1"},
 			mutate: func(p *j2k.CParameters) { p.Irreversible = 1; p.TcpMct = 1 },
 		},
+		{
+			name: "comment_text_gray", img: gray,
+			flags:  []string{"-C", "gopenjpeg gate"},
+			mutate: func(p *j2k.CParameters) { s := "gopenjpeg gate"; p.CpComment = &s },
+		},
+		{
+			// C53: cp->comment is a non-NULL empty string, so opj_compress -C ""
+			// still emits a COM marker with a zero-length payload.
+			name: "comment_empty_gray", img: gray,
+			flags:  []string{"-C", ""},
+			mutate: func(p *j2k.CParameters) { s := ""; p.CpComment = &s },
+		},
 	}
 
 	dir := t.TempDir()

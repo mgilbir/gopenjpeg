@@ -179,6 +179,11 @@ func WithROI(compno, shift int) EncodeOption {
 
 // WithMCT sets the multi-component transform mode: 0 none, 1 RCT/ICT, 2 custom
 // (requires WithCustomMCT). Mirrors the -mct flag.
+//
+// Mode 2 selects the JPEG 2000 Part-2 array-based transform. See WithCustomMCT
+// for the interoperability caveat: the resulting codestream is not readable by
+// this library nor by stock OpenJPEG. Mode 2 without a matrix (no WithCustomMCT
+// call), or mode 2 combined with WithLossless, is rejected by Encode.
 func WithMCT(mode int) EncodeOption {
 	return func(o *encodeOptions) { o.params.TcpMct = int32(mode) }
 }
@@ -187,6 +192,11 @@ func WithMCT(mode int) EncodeOption {
 // row-major coding matrix and dcShift holds the numcomps DC offsets (the -m
 // flag). It forces irreversible coding and the Part-2/MCT profile, mirroring
 // opj_set_MCT.
+//
+// Interoperability warning: the output is a JPEG 2000 Part-2 codestream whose
+// COD marker declares an array-based MCT. Neither this library's Decode nor
+// stock OpenJPEG (opj_decompress) can read it — both reject an SGcod MCT value
+// above 1. Use this only when targeting a third-party Part-2-capable decoder.
 func WithCustomMCT(matrix []float32, dcShift []int32) EncodeOption {
 	return func(o *encodeOptions) {
 		if cparams.IsPart2(o.params.Rsiz) {
@@ -239,8 +249,9 @@ type POCChange struct {
 	Order     ProgressionOrder
 }
 
-// WithComment sets the COM marker payload (the -C flag). An empty string
-// suppresses the default "Created by OpenJPEG" comment.
+// WithComment sets the COM marker payload (the -C flag), replacing the default
+// "Created by OpenJPEG version X" comment. Passing an empty string writes an
+// empty COM marker rather than omitting it, matching opj_compress -C "".
 func WithComment(s string) EncodeOption {
 	return func(o *encodeOptions) { o.params.CpComment = &s }
 }
@@ -356,6 +367,10 @@ func (o *encodeOptions) extraOptions() []string {
 // codestream capabilities of opj_compress. The whole output is assembled in
 // memory before being written to w (the JP2 jp2c length back-patch needs a
 // seekable stream).
+//
+// img is not modified: its component sample data is read, never consumed, so the
+// same Image can be encoded repeatedly (with different options) and reused after
+// a failed call.
 func Encode(img *Image, w io.Writer, opts ...EncodeOption) error {
 	if img == nil {
 		return fmt.Errorf("gopenjpeg: encode: nil image")
