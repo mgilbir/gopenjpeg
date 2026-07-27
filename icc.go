@@ -18,6 +18,14 @@ import (
 // the C code — the image components are left unmodified when this is returned.
 var ErrICCApply = errors.New("gopenjpeg: could not apply embedded ICC profile")
 
+// ErrNoICCProfile is returned by ApplyICCProfile when the image carries no
+// embedded ICC profile to apply (ICCProfileLen == 0). It is distinct from
+// ErrICCApply, which signals that a profile is present but could not be applied
+// (malformed profile, unbuildable transform, unsupported output colour space, or
+// a mismatched component layout). Callers can distinguish "nothing to do" from
+// "tried and failed".
+var ErrNoICCProfile = errors.New("gopenjpeg: image has no embedded ICC profile")
+
 // ApplyICCProfile ports color_apply_icc_profile from OpenJPEG's
 // src/bin/common/color.c. It renders the decoded components to sRGB using the
 // embedded ICC profile (Image.ICCProfileBuf / ICCProfileLen), driving the
@@ -46,7 +54,22 @@ func (im *Image) ApplyICCProfile() error {
 }
 
 func applyICCProfile(img *image.Image) error {
-	if img.ICCProfileLen == 0 || len(img.ICCProfileBuf) == 0 {
+	// C4 (colour side): a zero-component image must not reach the Comps[0]
+	// dereferences below. opj_decompress only ever calls color_apply_icc_profile
+	// on a decoded image with components; guard the public/API-reachable path.
+	if img.Numcomps == 0 || len(img.Comps) == 0 {
+		return ErrICCApply
+	}
+	// C46: distinguish "no profile present" from "profile failed to apply". A
+	// zero ICCProfileLen means there is no embedded ICC profile to apply (it is
+	// also the CIELab enumerated-space marker, handled by ConvertToRGB before it
+	// reaches here); report it with a distinct sentinel.
+	if img.ICCProfileLen == 0 {
+		return ErrNoICCProfile
+	}
+	if len(img.ICCProfileBuf) == 0 {
+		// Length claims a profile but the buffer is empty: malformed, treat as an
+		// apply failure (leave the image untouched), matching the C void path.
 		return ErrICCApply
 	}
 	n := int(img.ICCProfileLen)
@@ -178,9 +201,22 @@ func applyICCProfile(img *image.Image) error {
 		// Grey -> RGB expansion: color.c reallocs the component array to
 		// numcomps+2, moving the alpha (comps[1]) to comps[3] for GRAYA, and
 		// synthesises comps[1]/comps[2] as copies of comps[0] to hold G and B.
-		// The transform in/out types are TYPE_GRAY_8 / TYPE_RGB_8 (8-bit),
-		// regardless of precision, exactly as the C code builds them for the
-		// grey branch; we pack the grey samples the same way.
+		// The transform in/out types are TYPE_GRAY_8 / TYPE_RGB_8 (8-bit).
+		//
+		// C38: color.c carries a separate prec>8 sub-branch that packs the grey
+		// samples as unsigned short, but still feeds them to a TYPE_GRAY_8
+		// transform (in_type is never overridden for GRAY) -- a degenerate path
+		// with no defined correct output, and no >8-bit grey-ICC file exists in
+		// the conformance corpus to pin it. This port keeps a single 8-bit
+		// transform: the prec<=8 case (the only one the oracle exercises) is
+		// byte-for-byte unchanged, and for prec>8 we downscale the sample to 8
+		// bits (rather than truncating its low byte, which would be garbage) so
+		// a genuine high-precision grey ICC image degrades sensibly. This is a
+		// deliberate, documented deviation, not bit-exact with the C path.
+		grayShift := uint(0)
+		if p := img.Comps[0].Prec; p > 8 {
+			grayShift = uint(p - 8)
+		}
 		max := maxW * maxH
 		gData := make([]int32, max)
 		bData := make([]int32, max)
@@ -204,7 +240,7 @@ func applyICCProfile(img *image.Image) error {
 		inbuf := make([]byte, max)
 		outbuf := make([]byte, max*3)
 		for i := 0; i < max; i++ {
-			inbuf[i] = byte(r[i])
+			inbuf[i] = byte(r[i] >> grayShift)
 		}
 		transform.DoTransform(inbuf, outbuf, uint32(max))
 		for i := 0; i < max; i++ {
@@ -215,5 +251,13 @@ func applyICCProfile(img *image.Image) error {
 	}
 
 	img.ColorSpace = image.ClrspcSRGB
+	// C9: clear the profile after a successful apply so ConvertToRGB is
+	// idempotent. opj_decompress frees icc_profile_buf and zeroes the length
+	// after color_apply_icc_profile; ConvertToRGB re-enters the ICC branch
+	// whenever ICCProfileBuf != nil, so leaving it set would re-apply the
+	// transform to already-transformed samples on a second call. Mirrors the
+	// same clearing cielabToRGB already does (colorconv.go).
+	img.ICCProfileBuf = nil
+	img.ICCProfileLen = 0
 	return nil
 }
