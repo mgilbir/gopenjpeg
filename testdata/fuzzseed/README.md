@@ -1,9 +1,10 @@
 # Fuzz seed corpus
 
 Small (<50 KB) JPEG 2000 inputs checked in so the root-package fuzz targets
-(`FuzzDecode`, `FuzzDecodeConcurrent`, `FuzzEncodeDecodeRoundTrip`,
-`FuzzReadInfo` in `../../fuzz_test.go`) have meaningful, structure-valid seeds
-even when the (gitignored) `oracle/data` corpus is absent.
+(`FuzzDecode`, `FuzzDecodeConcurrent`, `FuzzDecodeConvert`,
+`FuzzEncodeDecodeRoundTrip`, `FuzzReadInfo` in `../../fuzz_test.go`) have
+meaningful, structure-valid seeds even when the (gitignored) `oracle/data`
+corpus is absent.
 
 All files are copied verbatim from the OpenJPEG conformance / non-regression
 data set (`github.com/uclouvain/openjpeg-data`, mirrored under
@@ -26,6 +27,9 @@ data set (`github.com/uclouvain/openjpeg-data`, mirrored under
 | `issue823.jp2` | `nonregression/issue823.jp2` | malformed JP2 box structure |
 | `gdal_fuzzer_check_number_of_tiles.jp2` | `nonregression/gdal_fuzzer_check_number_of_tiles.jp2` | GDAL fuzzer crasher |
 | `huge-tile-size.jp2` | `nonregression/huge-tile-size.jp2` | absurd tile geometry (size-cap exercise) |
+| `issue411-ycc420.jp2` | `nonregression/issue411-ycc420.jp2` | sYCC 4:2:0 — the C8 colour-pipeline shape (with `WithReduce`) |
+| `issue411-ycc422.jp2` | `nonregression/issue411-ycc422.jp2` | sYCC 4:2:2 chroma sub-sampling |
+| `issue411-ycc444.jp2` | `nonregression/issue411-ycc444.jp2` | sYCC 4:4:4 chroma |
 
 License: these inputs are part of the OpenJPEG data set (BSD-2-Clause, same as
 this port). See `oracle/data/README` for the upstream copyright.

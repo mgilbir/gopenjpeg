@@ -181,6 +181,23 @@ func (im *Image) ToStandard() (stdimage.Image, error) {
 	if c0.Prec > 16 {
 		return nil, fmt.Errorf("gopenjpeg: ToStandard: precision %d bits exceeds 16", c0.Prec)
 	}
+	if c0.Prec == 0 {
+		// sample8/sample16 shift by Prec-1 for signed data and by 8-Prec / 16-Prec
+		// otherwise; a zero precision is not a renderable image and must not
+		// become a negative shift count.
+		return nil, fmt.Errorf("gopenjpeg: ToStandard: component precision is zero")
+	}
+	// Every sample loop below indexes Data[k] for k < W*H. A decoded image always
+	// carries W*H samples per component, but an Image assembled through NewImage
+	// need not (NewImage validates nothing — C21); a short slice must be an error
+	// rather than an index-out-of-range panic.
+	for i := 0; i < nc; i++ {
+		ci := im.Component(i)
+		if uint64(len(ci.Data)) < uint64(ci.W)*uint64(ci.H) {
+			return nil, fmt.Errorf("gopenjpeg: ToStandard: component %d holds %d samples, need %dx%d",
+				i, len(ci.Data), ci.W, ci.H)
+		}
+	}
 	w, h := int(c0.W), int(c0.H)
 	rect := stdimage.Rect(0, 0, w, h)
 	wide := c0.Prec > 8

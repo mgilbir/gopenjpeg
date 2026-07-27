@@ -648,9 +648,17 @@ func encIsTermPass(numbps, cblksty uint32, bpno int32, passtype uint32) bool {
 // data to sign-magnitude in place, runs the coding passes, and fills cblk's
 // Data / Passes / Numbps / Totalpasses. Returns the cumulative weighted MSE
 // reduction (the value the C reference adds to tile->distotile).
-func (t *T1) EncodeCblk(cblk *CodeBlockEnc, orient, compno, level, qmfbid uint32, stepsize float64, cblksty, numcomps uint32, mctNorms []float64, mctNumcomps uint32) float64 {
+//
+// It returns an error only for an out-of-range orient (>3): the C reference
+// indexes lut_ctxno_zc + (orient << 9) into a 2048-entry table, so a larger
+// value has no defined context table and would slice past the LUT. The C code
+// reaches this only through band numbers 0..3 and never validates it; the port
+// must not panic on a caller mistake, so it reports it.
+func (t *T1) EncodeCblk(cblk *CodeBlockEnc, orient, compno, level, qmfbid uint32, stepsize float64, cblksty, numcomps uint32, mctNorms []float64, mctNumcomps uint32) (float64, error) {
 	cumwmsedec := 0.0
-	t.lutCtxnoZCOrient = lutCtxnoZC[orient<<9:]
+	if err := t.setOrientLUT(orient); err != nil {
+		return cumwmsedec, err
+	}
 
 	// Compute max magnitude and convert data to sign-magnitude in place.
 	max := int32(0)
@@ -676,7 +684,7 @@ func (t *T1) EncodeCblk(cblk *CodeBlockEnc, orient, compno, level, qmfbid uint32
 	}
 	if cblk.Numbps == 0 {
 		cblk.Totalpasses = 0
-		return cumwmsedec
+		return cumwmsedec, nil
 	}
 
 	bpno := int32(cblk.Numbps - 1)
@@ -806,5 +814,5 @@ func (t *T1) EncodeCblk(cblk *CodeBlockEnc, orient, compno, level, qmfbid uint32
 	// Publish the coded byte stream (cblk->data equivalent).
 	cblk.Data = append(cblk.Data[:0], data...)
 
-	return cumwmsedec
+	return cumwmsedec, nil
 }

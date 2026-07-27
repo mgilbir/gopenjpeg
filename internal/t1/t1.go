@@ -1,6 +1,10 @@
 package t1
 
-import "github.com/mgilbir/gopenjpeg/internal/mqc"
+import (
+	"fmt"
+
+	"github.com/mgilbir/gopenjpeg/internal/mqc"
+)
 
 // T1 is the Go equivalent of opj_t1_t: the state of a tier-1 coder/decoder.
 // A single T1 can be reused across many code-blocks (its data/flags buffers
@@ -47,6 +51,24 @@ type T1 struct {
 // encode-vs-decode role, matching the C flag; buffers are allocated lazily.
 func New(isEncoder bool) *T1 {
 	return &T1{encoder: isEncoder}
+}
+
+// maxOrient is the largest sub-band orientation the zero-coding context LUT
+// covers. The C reference indexes lut_ctxno_zc + (orient << 9) over a
+// 2048-entry table, so only orient 0..3 (LL, HL, LH, HH — the band numbers the
+// codestream can carry) are addressable.
+const maxOrient = 3
+
+// setOrientLUT installs lutCtxnoZC[orient<<9:] as the active zero-coding
+// context table. orient above maxOrient would slice past the 2048-entry LUT and
+// panic; the library never panics on caller input, so it is rejected with an
+// error instead (C reaches the same states only via band numbers 0..3).
+func (t *T1) setOrientLUT(orient uint32) error {
+	if orient > maxOrient {
+		return fmt.Errorf("t1: sub-band orientation %d out of range [0,%d]", orient, maxOrient)
+	}
+	t.lutCtxnoZCOrient = lutCtxnoZC[orient<<9:]
+	return nil
 }
 
 // Data returns the current coefficient buffer (t1->data), valid for the most

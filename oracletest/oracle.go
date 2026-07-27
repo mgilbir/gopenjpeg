@@ -13,7 +13,11 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strings"
+	"sync"
 	"testing"
+
+	"github.com/mgilbir/gopenjpeg/internal/event"
 )
 
 // Root returns the oracle directory, honoring GOPENJPEG_ORACLE, defaulting
@@ -45,6 +49,86 @@ func Require(t *testing.T) {
 	}
 	if _, err := os.Stat(DataDir()); err != nil {
 		t.Skipf("oracle corpus not available: %v", err)
+	}
+}
+
+// EventCollector is an event sink for the gates. Every gate that drives the
+// pure-Go codec installs one (C61: the gates used to pass a nil *event.Manager,
+// which meant the entire error/warning/info emission path — format strings,
+// argument counts, handler wiring, concurrent handler access — was never
+// executed by the differential harness). Collected messages are available for
+// assertions and are dumped on failure.
+//
+// It is safe for concurrent use: the tier-1 decode workers wrap the manager in
+// a locking shim, but the encode side and the container layers do not, so the
+// collector locks for itself.
+type EventCollector struct {
+	mu       sync.Mutex
+	errors   []string
+	warnings []string
+	infos    []string
+}
+
+// Manager returns an *event.Manager whose three handlers feed the collector.
+func (c *EventCollector) Manager() *event.Manager {
+	return &event.Manager{
+		ErrorHandler:   func(msg string) { c.add(&c.errors, msg) },
+		WarningHandler: func(msg string) { c.add(&c.warnings, msg) },
+		InfoHandler:    func(msg string) { c.add(&c.infos, msg) },
+	}
+}
+
+func (c *EventCollector) add(dst *[]string, msg string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	*dst = append(*dst, msg)
+}
+
+// Errors, Warnings and Infos return copies of the collected messages.
+func (c *EventCollector) Errors() []string   { return c.snapshot(&c.errors) }
+func (c *EventCollector) Warnings() []string { return c.snapshot(&c.warnings) }
+func (c *EventCollector) Infos() []string    { return c.snapshot(&c.infos) }
+
+func (c *EventCollector) snapshot(src *[]string) []string {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return append([]string(nil), (*src)...)
+}
+
+// All returns every collected message, errors first, then warnings, then infos.
+func (c *EventCollector) All() []string {
+	out := c.Errors()
+	out = append(out, c.Warnings()...)
+	return append(out, c.Infos()...)
+}
+
+// Contains reports whether any collected message contains sub.
+func (c *EventCollector) Contains(sub string) bool {
+	for _, m := range c.All() {
+		if strings.Contains(m, sub) {
+			return true
+		}
+	}
+	return false
+}
+
+// Check asserts the shape of what was emitted: a message must be non-empty and
+// must not carry a NUL or an unexpanded fmt verb error ("%!"), which is how a
+// mis-ported format string or a wrong argument count shows up. It is cheap
+// enough to call from every gate.
+func (c *EventCollector) Check(t *testing.T, context string) {
+	t.Helper()
+	for _, m := range c.All() {
+		if m == "" {
+			t.Errorf("%s: emitted an empty diagnostic message", context)
+			continue
+		}
+		if strings.ContainsRune(m, 0) {
+			t.Errorf("%s: diagnostic contains a NUL byte: %q", context, m)
+		}
+		if strings.Contains(m, "%!") {
+			t.Errorf("%s: diagnostic has a bad format verb / argument count: %q", context, m)
+		}
 	}
 }
 

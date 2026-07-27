@@ -11,7 +11,6 @@ import (
 	"testing"
 
 	"github.com/mgilbir/gopenjpeg/internal/cio"
-	"github.com/mgilbir/gopenjpeg/internal/event"
 	"github.com/mgilbir/gopenjpeg/internal/image"
 	"github.com/mgilbir/gopenjpeg/internal/j2k"
 )
@@ -106,11 +105,13 @@ func decodeGo(t *testing.T, path string, reduce, layer uint32, area *[4]int32) (
 		return nil, err
 	}
 	s := cio.NewMemoryInputStream(data)
-	// NOTE: a nil event manager is used deliberately. internal/t2's warnf helper
-	// (t2.go) recurses infinitely when given a non-nil manager (a W6 bug outside
-	// W7's edit scope); a nil manager is nil-safe throughout j2k/tcd/t2. See the
-	// worker report's integration notes.
-	var mgr *event.Manager
+	// A collecting event manager is installed on purpose (C61): the gates are
+	// the only place the emission path (format strings, argument counts, handler
+	// wiring) runs over the whole corpus, so the messages are collected and
+	// shape-checked rather than discarded through a nil manager.
+	var ec EventCollector
+	mgr := ec.Manager()
+	defer func() { ec.Check(t, "decodeGo "+filepath.Base(path)) }()
 	d := j2k.CreateDecompress()
 	d.SetupDecoder(reduce, layer)
 	d.SetStrictMode(false)
@@ -126,6 +127,13 @@ func decodeGo(t *testing.T, path string, reduce, layer uint32, area *[4]int32) (
 	}
 	if aerr != nil {
 		return nil, fmt.Errorf("SetDecodeArea: %w", aerr)
+	}
+	if area == nil && !ec.Contains(infoWholeImageArea) {
+		// The whole-image decode-area notice is a C-ported literal emitted on
+		// every arealess SetDecodeArea; if it is missing, the info channel is not
+		// actually wired up and the rest of this gate's event coverage is a lie.
+		t.Errorf("decodeGo %s: expected the %q info message, got %q",
+			filepath.Base(path), infoWholeImageArea, ec.All())
 	}
 	if err := d.Decode(s, img, mgr); err != nil {
 		return nil, fmt.Errorf("Decode: %w", err)
