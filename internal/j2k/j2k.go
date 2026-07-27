@@ -151,6 +151,13 @@ type Decoder struct {
 	// mainHeadEnd is the stream position just after the main header.
 	mainHeadEnd int64
 
+	// streamLength is the number of input bytes available when the main
+	// header read began (opj_stream_get_number_byte_left at that point). It is
+	// used by readSIZ to bound the tile-component allocation against the bytes
+	// the codestream can physically contain (C11 DoS hardening). Zero means the
+	// length was not available, and readSIZ falls back to an absolute ceiling.
+	streamLength int64
+
 	ihdrW uint32 // ihdr_w (from JP2 IHDR; 0 for raw codestream)
 	ihdrH uint32
 

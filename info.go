@@ -13,13 +13,17 @@ import (
 // ReadInfo reads only the header of a JPEG 2000 image and returns its structural
 // information without decoding sample data. It is used by the gopj-dump command
 // and by callers that need geometry, precision and colour metadata cheaply.
+//
+// If rd is an io.ReadSeeker it is read on demand and never fully buffered. Any
+// other io.Reader is read entirely into memory before format detection; use
+// WithMaxInputSize to bound that buffer for untrusted, non-seekable inputs.
 func ReadInfo(rd io.Reader, opts ...Option) (*Info, error) {
 	o := defaultOptions()
 	for _, fn := range opts {
 		fn(&o)
 	}
 
-	stream, magic, cleanup, err := openStream(rd)
+	stream, magic, cleanup, err := openStream(rd, o.maxInputSize)
 	if err != nil {
 		return nil, err
 	}

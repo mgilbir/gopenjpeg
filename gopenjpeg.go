@@ -35,6 +35,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 
 	"github.com/mgilbir/gopenjpeg/internal/cio"
 	"github.com/mgilbir/gopenjpeg/internal/event"
@@ -67,6 +68,10 @@ var ErrNotImplemented = errors.New("gopenjpeg: not implemented (encode path)")
 // ErrUnknownFormat is returned when FormatAuto cannot recognise the input.
 var ErrUnknownFormat = errors.New("gopenjpeg: unrecognised input format")
 
+// ErrInputTooLarge is returned by Decode and ReadInfo when a non-seekable input
+// exceeds the limit set by WithMaxInputSize.
+var ErrInputTooLarge = errors.New("gopenjpeg: input exceeds the configured maximum size")
+
 // options holds the decode configuration assembled from Option values.
 type options struct {
 	format  Format
@@ -77,9 +82,12 @@ type options struct {
 	tile    int64 // -1 == decode whole image
 	strict  bool
 	threads int
-	onWarn  func(string)
-	onError func(string)
-	onInfo  func(string)
+	// maxInputSize bounds the number of bytes buffered from a non-seekable
+	// input (see WithMaxInputSize). 0 means unlimited (the default).
+	maxInputSize int64
+	onWarn       func(string)
+	onError      func(string)
+	onInfo       func(string)
 }
 
 func defaultOptions() options {
@@ -138,6 +146,22 @@ func WithConcurrency(n int) Option {
 	}
 }
 
+// WithMaxInputSize bounds how many bytes Decode and ReadInfo will buffer from a
+// non-seekable input. Non-seekable readers are fully read into memory before any
+// format validation (an io.ReadSeeker is streamed instead and is unaffected), so
+// an attacker-controlled reader can otherwise drive an unbounded allocation. When
+// n > 0 the non-seeker input is truncated at n bytes and Decode/ReadInfo return
+// an error if the input exceeds n. n <= 0 (the default) is unlimited, preserving
+// the previous behavior exactly.
+func WithMaxInputSize(n int64) Option {
+	return func(o *options) {
+		if n < 0 {
+			n = 0
+		}
+		o.maxInputSize = n
+	}
+}
+
 // WithWarningHandler installs a callback for decoder warnings.
 func WithWarningHandler(fn func(string)) Option { return func(o *options) { o.onWarn = fn } }
 
@@ -193,9 +217,11 @@ type ComponentInfo struct {
 
 // openStream builds an input cio.Stream over r. If r is an io.ReadSeeker the
 // stream reads directly from it (no full-file copy); otherwise the whole input
-// is read into memory. It also returns the leading magic bytes for format
-// detection, restoring the read position afterwards.
-func openStream(r io.Reader) (s *cio.Stream, magic []byte, cleanup func(), err error) {
+// is read into memory. When maxInputSize > 0 the non-seeker path is bounded to
+// that many bytes and ErrInputTooLarge is returned if the input exceeds it
+// (maxInputSize <= 0 is unlimited). It also returns the leading magic bytes for
+// format detection, restoring the read position afterwards.
+func openStream(r io.Reader, maxInputSize int64) (s *cio.Stream, magic []byte, cleanup func(), err error) {
 	const magicLen = 12
 	if rs, ok := r.(io.ReadSeeker); ok {
 		hdr := make([]byte, magicLen)
@@ -209,9 +235,18 @@ func openStream(r io.Reader) (s *cio.Stream, magic []byte, cleanup func(), err e
 		}
 		return st, hdr[:n], func() { st.Destroy() }, nil
 	}
-	data, rerr := io.ReadAll(r)
+	src := r
+	if maxInputSize > 0 && maxInputSize < math.MaxInt64 {
+		// Read one byte past the limit so an input exactly at the limit is
+		// accepted while anything larger is detected rather than truncated.
+		src = io.LimitReader(r, maxInputSize+1)
+	}
+	data, rerr := io.ReadAll(src)
 	if rerr != nil {
 		return nil, nil, nil, fmt.Errorf("gopenjpeg: read input: %w", rerr)
+	}
+	if maxInputSize > 0 && int64(len(data)) > maxInputSize {
+		return nil, nil, nil, ErrInputTooLarge
 	}
 	m := data
 	if len(m) > magicLen {
@@ -243,6 +278,10 @@ func detectFormat(magic []byte) Format {
 // components (palette expansion, channel mapping and channel definitions are
 // already applied for JP2 inputs); call Image.ConvertToRGB to reproduce the
 // colour-space conversion opj_decompress performs before writing.
+//
+// If r is an io.ReadSeeker it is read on demand and never fully buffered. Any
+// other io.Reader is read entirely into memory before format detection; use
+// WithMaxInputSize to bound that buffer for untrusted, non-seekable inputs.
 func Decode(r io.Reader, opts ...Option) (*Image, error) {
 	o := defaultOptions()
 	for _, fn := range opts {
@@ -257,7 +296,7 @@ func Decode(r io.Reader, opts ...Option) (*Image, error) {
 			o.tile, uint32(0xFFFFFFFF))
 	}
 
-	stream, magic, cleanup, err := openStream(r)
+	stream, magic, cleanup, err := openStream(r, o.maxInputSize)
 	if err != nil {
 		return nil, err
 	}
