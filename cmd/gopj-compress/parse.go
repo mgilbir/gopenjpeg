@@ -98,29 +98,47 @@ func parseROI(s string) (int, int, error) {
 	return compno, shift, nil
 }
 
-// parsePOC parses the -POC argument "T<tile>=r0,c0,l1,r1,c1,ORDER/...".
+// maxPOCRecords is the size of opj_cparameters_t.POC; the library rejects more.
+const maxPOCRecords = 32
+
+// parsePOC parses the -POC argument, a '/'-separated list of
+// "T<tile>=<resStart>,<compStart>,<layerEnd>,<resEnd>,<compEnd>,<progOrder>"
+// records. It ports the parse loop of opj_compress case 'P': scan a record, then
+// advance to the character after the next '/' and scan again, so every record
+// lands in the parameter array — not just the first (C31).
 func parsePOC(s string) ([]gopenjpeg.POCChange, error) {
 	var out []gopenjpeg.POCChange
-	for len(s) > 0 {
+	rest := s
+	for len(rest) > 0 {
 		var tile, r0, c0, l1, r1, c1 uint32
 		var order string
-		n, err := fmt.Sscanf(s, "T%d=%d,%d,%d,%d,%d,%4s", &tile, &r0, &c0, &l1, &r1, &c1, &order)
+		n, err := fmt.Sscanf(rest, "T%d=%d,%d,%d,%d,%d,%4s", &tile, &r0, &c0, &l1, &r1, &c1, &order)
 		if n != 7 || err != nil {
 			break
 		}
+		// C's %4s stops at whitespace, not at the record separator, so a
+		// trailing "/..." can be glued to the order name; keep only the name.
+		if i := strings.IndexByte(order, '/'); i >= 0 {
+			order = order[:i]
+		}
 		prg, perr := parseProgression(order)
 		if perr != nil {
-			return nil, perr
+			return nil, fmt.Errorf("unrecognized progression order in option -POC (POC n %d) "+
+				"[LRCP, RLCP, RPCL, PCRL, CPRL]", len(out)+1)
+		}
+		if len(out) == maxPOCRecords {
+			return nil, fmt.Errorf("too many -POC records: at most %d are supported", maxPOCRecords)
 		}
 		out = append(out, gopenjpeg.POCChange{
 			Tile: tile, ResStart: r0, CompStart: c0, LayEnd: l1, ResEnd: r1, CompEnd: c1, Order: prg,
 		})
-		// advance past this record
-		idx := strings.Index(s, order)
-		if idx < 0 {
+		// Advance to just past the next '/', mirroring C's
+		// `while (*s && *s != '/') s++; if (!*s) break; s++;`.
+		i := strings.IndexByte(rest, '/')
+		if i < 0 {
 			break
 		}
-		s = s[idx+len(order):]
+		rest = rest[i+1:]
 	}
 	if len(out) == 0 {
 		return nil, fmt.Errorf("bad -POC argument %q", s)
@@ -175,6 +193,12 @@ func sqrtF(x float64) float64 {
 	return g
 }
 
+// maxRawComponents bounds the component count -F may request. The codestream
+// itself allows 16384 (the SIZ Csiz field), which is far beyond anything a raw
+// file describes, but it keeps the value in a range where w*h*ncomp cannot
+// overflow the size checks in the reader.
+const maxRawComponents = 16384
+
 // parseRawGeometry ports the -F argument
 // "width,height,ncomp,bitdepth,{s|u}[@dx1xdy1:dx2xdy2:...]".
 func parseRawGeometry(s string) (*rawGeometry, error) {
@@ -214,6 +238,22 @@ func parseRawGeometry(s string) (*rawGeometry, error) {
 	default:
 		return nil, fmt.Errorf("bad -F sign %q", parts[4])
 	}
+	// Validate every field before it is used to size an allocation: a negative
+	// ncomp used to reach make() directly, and a zero sub-sampling factor
+	// reached a division in the RAW reader (C7).
+	if w < 1 || h < 1 {
+		return nil, fmt.Errorf("invalid raw image parameters: bad dimensions %dx%d in -F (both must be >= 1)", w, h)
+	}
+	if uint64(w)*uint64(h) > maxSamples {
+		return nil, fmt.Errorf("invalid raw image parameters: image %dx%d too big", w, h)
+	}
+	if ncomp < 1 || ncomp > maxRawComponents {
+		return nil, fmt.Errorf("invalid raw image parameters: bad component count %d in -F (must be in [1,%d])",
+			ncomp, maxRawComponents)
+	}
+	if bd < 1 || bd > 16 {
+		return nil, fmt.Errorf("invalid raw image parameters: bad bit depth %d in -F (must be in [1,16])", bd)
+	}
 	g := &rawGeometry{width: w, height: h, numcomps: ncomp, bitdepth: bd, signed: signed}
 	g.dx = make([]int, ncomp)
 	g.dy = make([]int, ncomp)
@@ -224,6 +264,10 @@ func parseRawGeometry(s string) (*rawGeometry, error) {
 			var dx, dy int
 			if _, err := fmt.Sscanf(specs[c], "%dx%d", &dx, &dy); err != nil {
 				return nil, fmt.Errorf("bad -F subsampling %q", specs[c])
+			}
+			if dx < 1 || dy < 1 || dx > 255 || dy > 255 {
+				return nil, fmt.Errorf("invalid raw image parameters: bad -F sub-sampling %dx%d "+
+					"for component %d (each factor must be in [1,255])", dx, dy, c)
 			}
 			lastdx, lastdy = dx, dy
 		}

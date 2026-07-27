@@ -29,8 +29,14 @@ func buildCompress(t *testing.T) string {
 
 // writeGrayPGM writes a w x h 8-bit P5 gradient.
 func writeGrayPGM(path string, w, h int) error {
+	return writeGrayPGMEOL(path, w, h, "\n")
+}
+
+// writeGrayPGMEOL writes the same gradient with an explicit header line
+// terminator, so the gate can exercise CRLF headers (C16).
+func writeGrayPGMEOL(path string, w, h int, eol string) error {
 	var buf bytes.Buffer
-	fmt.Fprintf(&buf, "P5\n%d %d\n255\n", w, h)
+	fmt.Fprintf(&buf, "P5%s%d %d%s255%s", eol, w, h, eol, eol)
 	for y := 0; y < h; y++ {
 		for x := 0; x < w; x++ {
 			buf.WriteByte(byte((x*7 + y*13 + ((x ^ y) * 3)) & 0xff))
@@ -62,10 +68,14 @@ func TestCLICompressByteParity(t *testing.T) {
 	dir := t.TempDir()
 	gray := filepath.Join(dir, "g.pgm")
 	color := filepath.Join(dir, "c.ppm")
+	grayCRLF := filepath.Join(dir, "gcrlf.pgm")
 	if err := writeGrayPGM(gray, 160, 96); err != nil {
 		t.Fatal(err)
 	}
 	if err := writeColorPPM(color, 96, 64); err != nil {
+		t.Fatal(err)
+	}
+	if err := writeGrayPGMEOL(grayCRLF, 160, 96, "\r\n"); err != nil {
 		t.Fatal(err)
 	}
 
@@ -82,6 +92,19 @@ func TestCLICompressByteParity(t *testing.T) {
 		{"gray_plt_jp2", gray, "jp2", []string{"-PLT"}},
 		{"rgb_prog_mct0", color, "j2k", []string{"-p", "RLCP", "-mct", "0"}},
 		{"gray_mode_cblk", gray, "j2k", []string{"-M", "8", "-b", "32,32"}},
+		// C14: -s must actually sub-sample, in the SIZ and in the samples.
+		{"gray_subsampled", gray, "j2k", []string{"-s", "2,2"}},
+		{"rgb_subsampled_jp2", color, "jp2", []string{"-s", "2,2"}},
+		{"gray_subsampled_asym", gray, "j2k", []string{"-s", "2,1"}},
+		// C16: a CRLF-terminated header must read exactly like an LF one.
+		{"gray_crlf_header", grayCRLF, "j2k", nil},
+		{"gray_crlf_header_rates", grayCRLF, "j2k", []string{"-I", "-r", "20,10,5"}},
+		// C31: every -POC record must reach the encoder, not only the first.
+		// opj_compress indexes POC tiles from 1, so T1 is the single tile here.
+		{"rgb_poc_two_records", color, "j2k",
+			[]string{"-POC", "T1=0,0,1,5,3,CPRL/T1=5,0,1,6,3,CPRL"}},
+		{"rgb_poc_two_records_layers", color, "j2k",
+			[]string{"-r", "20,10", "-POC", "T1=0,0,1,5,3,CPRL/T1=5,0,2,6,3,LRCP"}},
 	}
 
 	for _, c := range cases {
