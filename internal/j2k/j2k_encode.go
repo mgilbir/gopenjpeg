@@ -9,6 +9,7 @@ package j2k
 
 import (
 	"errors"
+	"fmt"
 	"math"
 
 	"github.com/mgilbir/gopenjpeg/internal/cparams"
@@ -156,10 +157,77 @@ func (e *Encoder) SetThreads(n int) { e.numThreads = n }
 // intPow2 returns 1<<n as int32.
 func intPow2(n int32) int32 { return int32(1) << uint(n) }
 
+// validateEncodeInputs rejects the parameter/image combinations that OpenJPEG
+// caught at its CLI layer but that this port would otherwise carry into the
+// trusting internals — where a count exceeding a fixed-size array, a degenerate
+// tile geometry, or a malformed component would panic or emit a corrupt
+// codestream. Every check returns an error wrapping ErrEncodeSetup (so callers
+// can test errors.Is) and, where a manager is installed, mirrors C's diagnostic.
+func validateEncodeInputs(parameters *CParameters, img *image.Image, mgr *event.Manager) error {
+	if err := img.ValidateForEncode(); err != nil {
+		mgr.Errorf("%s\n", err.Error())
+		return fmt.Errorf("%w: %v", ErrEncodeSetup, err)
+	}
+
+	// Layer count: TcpRates/TcpDistoratio are fixed [100] arrays indexed by
+	// TcpNumlayers for every allocation strategy (C1, C30). 0 is a valid
+	// sentinel meaning "default to one lossless layer" (handled below).
+	if parameters.TcpNumlayers < 0 || int(parameters.TcpNumlayers) > len(parameters.TcpRates) {
+		mgr.Errorf("Invalid number of quality layers: %d not in range [0,%d]\n",
+			parameters.TcpNumlayers, len(parameters.TcpRates))
+		return fmt.Errorf("%w: number of quality layers %d not in range [0,%d]",
+			ErrEncodeSetup, parameters.TcpNumlayers, len(parameters.TcpRates))
+	}
+
+	// POC count: POC is a fixed [MaxPocs] array (C2).
+	if parameters.Numpocs > cparams.MaxPocs {
+		mgr.Errorf("Invalid number of progression order changes: %d exceeds %d\n",
+			parameters.Numpocs, cparams.MaxPocs)
+		return fmt.Errorf("%w: number of progression order changes %d exceeds %d",
+			ErrEncodeSetup, parameters.Numpocs, cparams.MaxPocs)
+	}
+
+	// Custom precincts: PrcwInit[ResSpec-1] is read when PRT styling is on, so a
+	// zero ResSpec underflows the index (C3).
+	if uint32(parameters.Csty)&cparams.CPCstyPRT != 0 &&
+		(parameters.ResSpec < 1 || parameters.ResSpec > cparams.MaxRLvls) {
+		mgr.Errorf("Invalid number of precinct resolutions: %d not in range [1,%d]\n",
+			parameters.ResSpec, cparams.MaxRLvls)
+		return fmt.Errorf("%w: number of precinct resolutions %d not in range [1,%d]",
+			ErrEncodeSetup, parameters.ResSpec, cparams.MaxRLvls)
+	}
+
+	// Tile geometry: negative tile sizes/origins wrap to huge uint32 and encode
+	// silently; a zero tile size divides by zero (C44, C5).
+	if parameters.TileSizeOn && (parameters.CpTdx <= 0 || parameters.CpTdy <= 0) {
+		mgr.Errorf("Invalid tile size: %d x %d (must be positive)\n",
+			parameters.CpTdx, parameters.CpTdy)
+		return fmt.Errorf("%w: tile size %d x %d must be positive",
+			ErrEncodeSetup, parameters.CpTdx, parameters.CpTdy)
+	}
+	if parameters.CpTx0 < 0 || parameters.CpTy0 < 0 {
+		mgr.Errorf("Invalid tile origin: %d,%d (must be non-negative)\n",
+			parameters.CpTx0, parameters.CpTy0)
+		return fmt.Errorf("%w: tile origin %d,%d must be non-negative",
+			ErrEncodeSetup, parameters.CpTx0, parameters.CpTy0)
+	}
+
+	return nil
+}
+
 // SetupEncoder ports opj_j2k_setup_encoder.
 func (e *Encoder) SetupEncoder(parameters *CParameters, img *image.Image, mgr *event.Manager) error {
 	if parameters == nil || img == nil {
 		return ErrEncodeSetup
+	}
+
+	// Single validation choke point. OpenJPEG relied on opj_compress's CLI layer
+	// to reject out-of-range counts and degenerate geometry before they reached
+	// the trusting internals; this port dropped that layer, so validate the
+	// assembled parameters and image here (covers both the J2K and JP2 paths,
+	// which both funnel through SetupEncoder) instead of panicking downstream.
+	if err := validateEncodeInputs(parameters, img, mgr); err != nil {
+		return err
 	}
 
 	if parameters.NumResolution <= 0 || parameters.NumResolution > cparams.MaxRLvls {
@@ -328,6 +396,14 @@ func (e *Encoder) SetupEncoder(parameters *CParameters, img *image.Image, mgr *e
 		}
 		cp.Tw = opjmath.UintCeildiv(img.X1-cp.Tx0, cp.Tdx)
 		cp.Th = opjmath.UintCeildiv(img.Y1-cp.Ty0, cp.Tdy)
+		// A tile origin at or beyond the image extent yields a zero tile count,
+		// which then divides by zero in the 65535 check below and leaves Tcps
+		// empty for every later stage (C5).
+		if cp.Tw == 0 || cp.Th == 0 {
+			mgr.Errorf("Invalid number of tiles : %d x %d (tile grid does not cover the image)\n",
+				cp.Tw, cp.Th)
+			return ErrEncodeSetup
+		}
 		if cp.Tw > 65535/cp.Th {
 			mgr.Errorf("Invalid number of tiles : %u x %u (maximum fixed by jpeg2000 norm is 65535 tiles)\n",
 				cp.Tw, cp.Th)

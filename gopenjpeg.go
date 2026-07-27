@@ -249,6 +249,14 @@ func Decode(r io.Reader, opts ...Option) (*Image, error) {
 		fn(&o)
 	}
 
+	// A tile index is truncated through a uint32 cast at the get-decoded-tile
+	// call; reject anything that would not survive the round-trip rather than
+	// silently decode the wrong tile (C43).
+	if o.tile > 0xFFFFFFFF {
+		return nil, fmt.Errorf("gopenjpeg: decode: tile index %d exceeds the maximum of %d",
+			o.tile, uint32(0xFFFFFFFF))
+	}
+
 	stream, magic, cleanup, err := openStream(r)
 	if err != nil {
 		return nil, err

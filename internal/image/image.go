@@ -7,6 +7,7 @@ package image
 
 import (
 	"errors"
+	"fmt"
 	"math"
 
 	"github.com/mgilbir/gopenjpeg/internal/opjmath"
@@ -29,6 +30,50 @@ const (
 // ErrImageAlloc mirrors the NULL-return failure path of opj_image_create /
 // opj_image_tile_create (allocation-size overflow or out-of-memory in C).
 var ErrImageAlloc = errors.New("image: allocation size overflow")
+
+// maxEncodePrec bounds the per-component precision the encoder accepts. It
+// mirrors the decode-side SIZ guard (opj_j2k_read_siz rejects prec>31), keeping
+// the library from emitting a codestream its own reader would refuse.
+const maxEncodePrec = 31
+
+// ValidateForEncode checks the invariants the encode path relies on before any
+// codestream is written, returning a descriptive error instead of letting a
+// later stage panic (divide-by-zero, out-of-range index) or silently emit a
+// corrupt SIZ marker. OpenJPEG relied on its CLI to reject these; this port
+// funnels every public encode entry point through here instead.
+//
+// It verifies: at least one component; the component slice actually holds
+// Numcomps entries; and for every component non-zero dimensions, sub-sampling
+// factors in [1,255] (XRsiz/YRsiz are one SIZ byte each), precision in
+// [1,maxEncodePrec], and enough sample data to cover W*H.
+func (image *Image) ValidateForEncode() error {
+	if image.Numcomps == 0 {
+		return fmt.Errorf("image: no components")
+	}
+	if uint32(len(image.Comps)) < image.Numcomps {
+		return fmt.Errorf("image: %d components declared but only %d present",
+			image.Numcomps, len(image.Comps))
+	}
+	for i := uint32(0); i < image.Numcomps; i++ {
+		c := &image.Comps[i]
+		if c.W == 0 || c.H == 0 {
+			return fmt.Errorf("image: component %d has a zero dimension (%dx%d)", i, c.W, c.H)
+		}
+		if c.Dx < 1 || c.Dx > 255 || c.Dy < 1 || c.Dy > 255 {
+			return fmt.Errorf("image: component %d sub-sampling out of range: dx=%d dy=%d (must be in [1,255])",
+				i, c.Dx, c.Dy)
+		}
+		if c.Prec < 1 || c.Prec > maxEncodePrec {
+			return fmt.Errorf("image: component %d precision %d out of range [1,%d]",
+				i, c.Prec, maxEncodePrec)
+		}
+		if uint64(len(c.Data)) < uint64(c.W)*uint64(c.H) {
+			return fmt.Errorf("image: component %d data too short: have %d samples, need %d (%dx%d)",
+				i, len(c.Data), uint64(c.W)*uint64(c.H), c.W, c.H)
+		}
+	}
+	return nil
+}
 
 // Comp is a port of opj_image_comp_t: the per-component geometry and data of an
 // image.
