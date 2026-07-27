@@ -236,6 +236,19 @@ func (im *Image) ToStandard() (stdimage.Image, error) {
 		}
 		return dst, nil
 	case 3, 4:
+		// C45: a 4-component image whose colour space is CMYK or (s/e)YCC is not
+		// an RGB(+alpha) image — rendering it as NRGBA would silently treat the
+		// K / chroma plane as alpha and produce wrong colours. Require the caller
+		// to run ConvertToRGB first (which collapses CMYK to 3 sRGB components and
+		// converts sYCC/eYCC to sRGB). The genuine RGBA / alpha case (sRGB or an
+		// unlabelled 4-component image) is unaffected.
+		if nc == 4 {
+			switch im.ColorSpace() {
+			case ColorSpaceCMYK, ColorSpaceSYCC, ColorSpaceEYCC:
+				return nil, fmt.Errorf("gopenjpeg: ToStandard: %s image has 4 components; "+
+					"call ConvertToRGB first", im.ColorSpace())
+			}
+		}
 		c1, c2 := im.Component(1), im.Component(2)
 		var ca Component
 		hasAlpha := nc == 4

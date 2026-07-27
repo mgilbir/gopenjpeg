@@ -31,11 +31,24 @@ var ErrColorConvert = errors.New("gopenjpeg: cannot convert colour space")
 // already sRGB or greyscale with no profile.
 //
 // It returns ErrColorConvert when the component layout is not one the built-in
-// transforms handle, or ErrICCApply when an embedded ICC profile cannot be
-// applied (a malformed profile or one whose transform cannot be built); like
-// opj_decompress those are best-effort and leave the components untouched.
+// transforms handle (including an image with zero components), or ErrICCApply
+// when an embedded ICC profile cannot be applied (a malformed profile or one
+// whose transform cannot be built); like opj_decompress those are best-effort.
+// "Leave the components untouched" holds for a layout the built-in transforms
+// reject outright, but note the ordering: sYCC/eYCC/CMYK conversion runs first
+// and mutates the components in place, so if a subsequent ICC step then fails
+// with ErrICCApply the image already reflects that earlier conversion (this
+// matches opj_decompress, which likewise applies the colour transform before
+// color_apply_icc_profile and does not roll it back).
 func (im *Image) ConvertToRGB() error {
 	img := im.img
+
+	// C4 (colour side): a zero-component image has nothing to convert and must
+	// not reach the Comps[0]/Comps[1] dereferences in the heuristic below or in
+	// the transforms. Return a clean error rather than panicking.
+	if img.Numcomps == 0 || len(img.Comps) == 0 {
+		return ErrColorConvert
+	}
 
 	// Colour-space normalisation heuristic (opj_decompress.c). A 3-component
 	// image whose chroma planes are sub-sampled is treated as sYCC; a 1- or
@@ -169,6 +182,35 @@ func sycc422ToRGB(img *image.Image) {
 	g := make([]int32, max)
 	b := make([]int32, max)
 
+	// Bound the chroma index before every read. The C walker (color.c) advances
+	// cb/cr with the luma walk and dereferences them unconditionally; when the
+	// chroma component is short of ceil(luma/2) samples/rows (possible under a
+	// resolution reduction, since reduce does not touch dx/dy) the C read runs
+	// off the end of the heap buffer (undefined behaviour). Go would panic. We
+	// clamp to the last valid chroma sample, which is a no-op for every layout
+	// the oracle also converts (chroma is not short there, so the index never
+	// exceeds len) and merely keeps the degenerate reduced case panic-free with
+	// a sane value. len==0 cannot happen for a dispatched 3-component sYCC image,
+	// but we still return the neutral chroma (offset) rather than index [-1].
+	cbAt := func(i int) int {
+		if i >= len(cb) {
+			if len(cb) == 0 {
+				return offset
+			}
+			i = len(cb) - 1
+		}
+		return int(cb[i])
+	}
+	crAt := func(i int) int {
+		if i >= len(cr) {
+			if len(cr) == 0 {
+				return offset
+			}
+			i = len(cr) - 1
+		}
+		return int(cr[i])
+	}
+
 	yi, cbi, cri, oi := 0, 0, 0, 0
 	set := func(yy, ccb, ccr int) {
 		rr, gg, bb := syccToRGBsample(offset, upb, yy, ccb, ccr)
@@ -185,9 +227,9 @@ func sycc422ToRGB(img *image.Image) {
 		}
 		var j int
 		for j = 0; j < (loopmaxw &^ 1); j += 2 {
-			set(int(y[yi]), int(cb[cbi]), int(cr[cri]))
+			set(int(y[yi]), cbAt(cbi), crAt(cri))
 			yi++
-			set(int(y[yi]), int(cb[cbi]), int(cr[cri]))
+			set(int(y[yi]), cbAt(cbi), crAt(cri))
 			yi++
 			cbi++
 			cri++
@@ -196,7 +238,7 @@ func sycc422ToRGB(img *image.Image) {
 			if j/2 == comp12w {
 				set(int(y[yi]), 0, 0)
 			} else {
-				set(int(y[yi]), int(cb[cbi]), int(cr[cri]))
+				set(int(y[yi]), cbAt(cbi), crAt(cri))
 			}
 			yi++
 			if j/2 < comp12w {
@@ -230,6 +272,33 @@ func sycc420ToRGB(img *image.Image) {
 	g := make([]int32, max)
 	b := make([]int32, max)
 
+	// Bound the chroma index before every read. See sycc422ToRGB for the full
+	// rationale: under a resolution reduction the double-ceil dimension math can
+	// leave the chroma component one ROW short of ceil(luma_h/2); the odd-
+	// trailing-row branch then reads a chroma row that does not exist (the
+	// j/2==comp12w guard only substitutes for the last COLUMN). The C code
+	// over-reads the heap; Go would panic. Clamping to the last valid chroma
+	// sample is a no-op wherever the oracle also converts (chroma is not short,
+	// so the index stays in range) and keeps the degenerate reduced case sane.
+	cbAt := func(i int) int {
+		if i >= len(cb) {
+			if len(cb) == 0 {
+				return offset
+			}
+			i = len(cb) - 1
+		}
+		return int(cb[i])
+	}
+	crAt := func(i int) int {
+		if i >= len(cr) {
+			if len(cr) == 0 {
+				return offset
+			}
+			i = len(cr) - 1
+		}
+		return int(cr[i])
+	}
+
 	// Absolute-index helpers into r/g/b and y (the C code walks two rows at a
 	// time with "next" pointers nr/ng/nb/ny offset by maxw).
 	setAt := func(o, yy, ccb, ccr int) {
@@ -262,22 +331,22 @@ func sycc420ToRGB(img *image.Image) {
 			setAt(oi, int(y[yi]), 0, 0)
 			yi++
 			oi++
-			setAt(noi, int(y[nyi]), int(cb[cbi]), int(cr[cri]))
+			setAt(noi, int(y[nyi]), cbAt(cbi), crAt(cri))
 			nyi++
 			noi++
 		}
 		var j int
 		for j = 0; j < (loopmaxw &^ 1); j += 2 {
-			setAt(oi, int(y[yi]), int(cb[cbi]), int(cr[cri]))
+			setAt(oi, int(y[yi]), cbAt(cbi), crAt(cri))
 			yi++
 			oi++
-			setAt(oi, int(y[yi]), int(cb[cbi]), int(cr[cri]))
+			setAt(oi, int(y[yi]), cbAt(cbi), crAt(cri))
 			yi++
 			oi++
-			setAt(noi, int(y[nyi]), int(cb[cbi]), int(cr[cri]))
+			setAt(noi, int(y[nyi]), cbAt(cbi), crAt(cri))
 			nyi++
 			noi++
-			setAt(noi, int(y[nyi]), int(cb[cbi]), int(cr[cri]))
+			setAt(noi, int(y[nyi]), cbAt(cbi), crAt(cri))
 			nyi++
 			noi++
 			cbi++
@@ -287,14 +356,14 @@ func sycc420ToRGB(img *image.Image) {
 			if j/2 == comp12w {
 				setAt(oi, int(y[yi]), 0, 0)
 			} else {
-				setAt(oi, int(y[yi]), int(cb[cbi]), int(cr[cri]))
+				setAt(oi, int(y[yi]), cbAt(cbi), crAt(cri))
 			}
 			yi++
 			oi++
 			if j/2 == comp12w {
 				setAt(noi, int(y[nyi]), 0, 0)
 			} else {
-				setAt(noi, int(y[nyi]), int(cb[cbi]), int(cr[cri]))
+				setAt(noi, int(y[nyi]), cbAt(cbi), crAt(cri))
 			}
 			nyi++
 			noi++
@@ -315,10 +384,10 @@ func sycc420ToRGB(img *image.Image) {
 		}
 		var j int
 		for j = 0; j < (loopmaxw &^ 1); j += 2 {
-			setAt(oi, int(y[yi]), int(cb[cbi]), int(cr[cri]))
+			setAt(oi, int(y[yi]), cbAt(cbi), crAt(cri))
 			yi++
 			oi++
-			setAt(oi, int(y[yi]), int(cb[cbi]), int(cr[cri]))
+			setAt(oi, int(y[yi]), cbAt(cbi), crAt(cri))
 			yi++
 			oi++
 			cbi++
@@ -328,7 +397,7 @@ func sycc420ToRGB(img *image.Image) {
 			if j/2 == comp12w {
 				setAt(oi, int(y[yi]), 0, 0)
 			} else {
-				setAt(oi, int(y[yi]), int(cb[cbi]), int(cr[cri]))
+				setAt(oi, int(y[yi]), cbAt(cbi), crAt(cri))
 			}
 		}
 	}
