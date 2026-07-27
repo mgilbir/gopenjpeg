@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/mgilbir/gopenjpeg/internal/cio"
-	"github.com/mgilbir/gopenjpeg/internal/event"
 	"github.com/mgilbir/gopenjpeg/internal/image"
 	"github.com/mgilbir/gopenjpeg/internal/j2k"
 )
@@ -298,7 +297,11 @@ func decodeGoStrict(t *testing.T, path string) (*image.Image, error) {
 		return nil, err
 	}
 	s := cio.NewMemoryInputStream(data)
-	var mgr *event.Manager
+	// Collecting manager (C61): see decodeGo. Strict mode is the noisiest decode
+	// configuration, so this is where the emission path gets the most exercise.
+	var ec EventCollector
+	mgr := ec.Manager()
+	defer func() { ec.Check(t, "decodeGoStrict "+filepath.Base(path)) }()
 	d := j2k.CreateDecompress()
 	d.SetupDecoder(0, 0)
 	d.SetStrictMode(true)

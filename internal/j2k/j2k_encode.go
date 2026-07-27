@@ -212,6 +212,86 @@ func validateEncodeInputs(parameters *CParameters, img *image.Image, mgr *event.
 			ErrEncodeSetup, parameters.CpTx0, parameters.CpTy0)
 	}
 
+	// Multi-component transform applicability. opj_tcd_mct_encode reads every
+	// component with COMPONENT 0's sample count and, for mct==1, dereferences
+	// comps[1]/comps[2] unconditionally — undefined behaviour in C for a
+	// sub-sampled or short component array, an index-out-of-range panic here.
+	// OpenJPEG caught both at its CLI (opj_compress.c: "RGB->YCC conversion
+	// cannot be used"), which this port replaced with options that cannot fail;
+	// so the check belongs at this choke point (T1).
+	if parameters.TcpMct == 1 && img.Numcomps < 3 {
+		mgr.Errorf("RGB->YCC conversion cannot be used:\nInput image has less than 3 components\n")
+		return fmt.Errorf("%w: MCT requires at least 3 components, image has %d",
+			ErrEncodeSetup, img.Numcomps)
+	}
+	if parameters.TcpMct == 2 {
+		if len(parameters.MctData) == 0 {
+			mgr.Errorf("Custom MCT has been set but no array-based MCT has been provided.\n")
+			return fmt.Errorf("%w: custom MCT selected without a coding matrix", ErrEncodeSetup)
+		}
+		// The custom transform walks all components with comp 0's sample count,
+		// so they must all have the same geometry (the mct==1 path warns and
+		// disables instead; a custom matrix cannot be silently dropped, since
+		// the MCC/MCT marker records are already sized from it).
+		for i := uint32(1); i < img.Numcomps; i++ {
+			if img.Comps[i].Dx != img.Comps[0].Dx || img.Comps[i].Dy != img.Comps[0].Dy {
+				mgr.Errorf("Cannot perform custom MCT on components with different sizes.\n")
+				return fmt.Errorf("%w: custom MCT requires equally sized components "+
+					"(component %d has dx=%d dy=%d, component 0 has dx=%d dy=%d)",
+					ErrEncodeSetup, i, img.Comps[i].Dx, img.Comps[i].Dy,
+					img.Comps[0].Dx, img.Comps[0].Dy)
+			}
+		}
+	}
+
+	// Tile-part grouping. opj_compress accepts only R, L or C for -TP, so any
+	// other byte is outside the envelope C ever encodes: get_num_tp then never
+	// matches the progression string, the tile-part count degenerates to the
+	// full packet product with tp_pos left unset, and the packet iterator
+	// re-visits packets until cblk->numpasses walks past the passes array (a
+	// heap over-read in C, a panic here).
+	if parameters.TpOn != 0 {
+		switch parameters.TpFlag {
+		case 'R', 'L', 'C':
+		default:
+			mgr.Errorf("Invalid tile-part grouping %q: must be R, L or C\n", parameters.TpFlag)
+			return fmt.Errorf("%w: invalid tile-part grouping %q (want 'R', 'L' or 'C')",
+				ErrEncodeSetup, parameters.TpFlag)
+		}
+	}
+
+	// Progression order: opj_j2k_convert_progression_order returns the empty
+	// sentinel string for an unrecognised order, and the tile-part / POC
+	// iterators then index it positionally (pi.CreateEncode walks prog[0..3]).
+	// C reads past the terminator of a static ""; Go panics on the empty string.
+	// Both the tile's order and every POC record's order have to be real.
+	if cparams.ConvertProgressionOrder(parameters.ProgOrder) == "" {
+		mgr.Errorf("Invalid progression order: %d\n", parameters.ProgOrder)
+		return fmt.Errorf("%w: invalid progression order %d",
+			ErrEncodeSetup, parameters.ProgOrder)
+	}
+	for i := uint32(0); i < parameters.Numpocs && int(i) < len(parameters.POC); i++ {
+		if cparams.ConvertProgressionOrder(parameters.POC[i].Prg1) == "" {
+			mgr.Errorf("Invalid progression order in POC %d: %d\n", i, parameters.POC[i].Prg1)
+			return fmt.Errorf("%w: invalid progression order %d in POC record %d",
+				ErrEncodeSetup, parameters.POC[i].Prg1, i)
+		}
+		// A progression-order change whose end bounds are zero describes an
+		// empty progression volume. opj_j2k_get_num_tp multiplies those bounds
+		// into the tile-part count, so the count comes out 0 while the encoder
+		// still writes a tile part — in C that overflows the TLM offsets buffer
+		// (opj_malloc(0)); here it panicked. opj_compress's -POC syntax cannot
+		// express it; reject it explicitly.
+		poc := &parameters.POC[i]
+		if poc.Layno1 == 0 || poc.Resno1 == 0 || poc.Compno1 == 0 {
+			mgr.Errorf("Invalid POC %d: layer/resolution/component end must be non-zero "+
+				"(got layno1=%d resno1=%d compno1=%d)\n", i, poc.Layno1, poc.Resno1, poc.Compno1)
+			return fmt.Errorf("%w: POC record %d has an empty progression volume "+
+				"(layno1=%d resno1=%d compno1=%d)",
+				ErrEncodeSetup, i, poc.Layno1, poc.Resno1, poc.Compno1)
+		}
+	}
+
 	return nil
 }
 
@@ -464,6 +544,18 @@ func (e *Encoder) SetupEncoder(parameters *CParameters, img *image.Image, mgr *e
 	} else {
 		comment := "Created by OpenJPEG version " + OpenJPEGVersion
 		cp.Comment = &comment
+	}
+
+	// The tiling origin must lie inside the image. Past it, img.X1-cp.Tx0
+	// underflows in uint32: with an explicit tile size that yields an absurd
+	// tile count (caught below), but WITHOUT one it becomes the tile width
+	// itself (~4e9), and the tile-component buffers are then sized from it —
+	// a 4 GiB allocation reachable from two option calls. C computes the same
+	// garbage; bound it here, at the single encode validation choke point.
+	if cp.Tx0 >= img.X1 || cp.Ty0 >= img.Y1 {
+		mgr.Errorf("Invalid tile origin: %d,%d is outside the image (%d,%d)-(%d,%d)\n",
+			cp.Tx0, cp.Ty0, img.X0, img.Y0, img.X1, img.Y1)
+		return ErrEncodeSetup
 	}
 
 	if parameters.TileSizeOn {

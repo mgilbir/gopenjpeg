@@ -311,10 +311,28 @@ func DecodeTile(tc *TileComponent, numres uint32, numThreads int) bool {
 // and off the row start (C: aj = tiledp + j*w); the kernel indexes data[off+k],
 // so that for an empty (width 0) resolution the tail block that reads the
 // neighbouring coefficient behaves exactly as the C code relying on the row
-// buffer's over-allocation.
+// buffer's over-allocation (the checked-in whole-tile vectors pin that value).
+//
+// Accesses past the END of the tile buffer are bounded rather than faithful:
+// there C reads uninitialised heap (a real out-of-bounds read, e.g. for a 1x1
+// tile whose buffer has no slack at all), so there is no defined value to
+// reproduce and a Go index would panic. Reads outside the buffer yield 0 and
+// writes are dropped.
 func encodeAndDeinterleaveHOneRow(data []int32, off int, tmp []int32, width uint32, even bool) {
-	row := func(k int32) int32 { return data[off+int(k)] }
-	setRow := func(k, v int32) { data[off+int(k)] = v }
+	row := func(k int32) int32 {
+		i := off + int(k)
+		if i < 0 || i >= len(data) {
+			return 0
+		}
+		return data[i]
+	}
+	setRow := func(k, v int32) {
+		i := off + int(k)
+		if i < 0 || i >= len(data) {
+			return
+		}
+		data[i] = v
+	}
 	var sn, dn int32
 	if even {
 		sn = int32((width + 1) >> 1)
@@ -403,6 +421,13 @@ func deinterleaveVCols(src, dst []int32, dstOff int, dn, sn int32, strideWidth u
 // encodeAndDeinterleaveV is a port of opj_dwt_encode_and_deinterleave_v (5/3,
 // scalar path).
 func encodeAndDeinterleaveV(arr []int32, arrOff int, tmp []int32, height uint32, even bool, strideWidth, cols uint32) {
+	// See encodeAndDeinterleaveHOneRow: opj_dwt_encode_procedure runs the
+	// vertical pass for every resolution, including ones whose height is 0, and
+	// the odd-length branches then read tmp[1*NB_ELTS_V8...] out of a scratch
+	// buffer sized from the largest resolution (which can itself be 1).
+	if height == 0 || cols == 0 {
+		return
+	}
 	var sn uint32
 	if even {
 		sn = (height + 1) >> 1

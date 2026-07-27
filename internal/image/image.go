@@ -71,8 +71,52 @@ func (image *Image) ValidateForEncode() error {
 			return fmt.Errorf("image: component %d data too short: have %d samples, need %d (%dx%d)",
 				i, len(c.Data), uint64(c.W)*uint64(c.H), c.W, c.H)
 		}
+		// The encoder never reads W/H: every tile component's geometry is
+		// re-derived from the reference grid as ceildiv(x1,dx)-ceildiv(x0,dx),
+		// and the sample buffer is then walked with THOSE dimensions. A declared
+		// W/H that disagrees with the grid therefore either reads past the
+		// component's own data or, when the derived size is zero (e.g. a
+		// 1-pixel-wide image with dx=2), hands a zero-length row to the DWT,
+		// which indexes [0] and panics. OpenJPEG's image loaders always build the
+		// two consistently — nothing validates it because nothing could produce a
+		// mismatch; a public NewImage can (C21).
+		gw := ceilDivU32(image.X1, c.Dx) - ceilDivU32(image.X0, c.Dx)
+		gh := ceilDivU32(image.Y1, c.Dy) - ceilDivU32(image.Y0, c.Dy)
+		if image.X1 < image.X0 || image.Y1 < image.Y0 || gw == 0 || gh == 0 {
+			return fmt.Errorf("image: component %d has an empty extent on the reference grid "+
+				"(%d,%d)-(%d,%d) with dx=%d dy=%d", i, image.X0, image.Y0, image.X1, image.Y1, c.Dx, c.Dy)
+		}
+		if gw != c.W || gh != c.H {
+			return fmt.Errorf("image: component %d is %dx%d but the reference grid "+
+				"(%d,%d)-(%d,%d) with dx=%d dy=%d implies %dx%d",
+				i, c.W, c.H, image.X0, image.Y0, image.X1, image.Y1, c.Dx, c.Dy, gw, gh)
+		}
+		// The encode path derives the component's geometry twice, from two
+		// formulas that only agree when the image offset is compatible with the
+		// sub-sampling: tcd sizes the tile component as ceildiv(x1,dx)-ceildiv(x0,dx)
+		// (checked above) but strides the source buffer with ceildiv(x1-x0,dx)
+		// (opj_tcd_get_tile_data). Where they disagree the encoder reads past the
+		// component data — in C an out-of-bounds read producing a corrupt
+		// codestream, here a panic. OpenJPEG's own loaders never produce such an
+		// image (they derive the offset from the sub-sampling); reject it rather
+		// than encode from out-of-bounds memory.
+		if sw, sh := ceilDivU32(image.X1-image.X0, c.Dx), ceilDivU32(image.Y1-image.Y0, c.Dy); sw != c.W || sh != c.H {
+			return fmt.Errorf("image: component %d (%dx%d, dx=%d dy=%d) is not compatible with the "+
+				"image offset (%d,%d): the sub-sampled extent of the offset image is %dx%d "+
+				"(offset must be a multiple of the sub-sampling factors)",
+				i, c.W, c.H, c.Dx, c.Dy, image.X0, image.Y0, sw, sh)
+		}
 	}
 	return nil
+}
+
+// ceilDivU32 is ceil(a/b) for the reference-grid arithmetic above (b >= 1 is
+// guaranteed by the sub-sampling range check).
+func ceilDivU32(a, b uint32) uint32 {
+	if b == 0 {
+		return 0
+	}
+	return (a + b - 1) / b
 }
 
 // Comp is a port of opj_image_comp_t: the per-component geometry and data of an

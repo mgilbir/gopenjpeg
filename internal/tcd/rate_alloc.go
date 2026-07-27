@@ -190,6 +190,15 @@ func (t *TCD) makelayerFixed(layno uint32, final uint32) {
 						} else {
 							n = 3*uint32(value) + cblk.Numpassesinlayers
 						}
+						// A -M matrix may request more passes than tier-1
+						// produced; C walks its calloc'd passes array past the
+						// end (a heap over-read, both here via passes[n-1] and
+						// in the packet writer). There is no defined value to
+						// reproduce, so bound the request by the passes that
+						// exist.
+						if n > cblk.Totalpasses {
+							n = cblk.Totalpasses
+						}
 
 						layer.Numpasses = n - cblk.Numpassesinlayers
 						if layer.Numpasses == 0 {

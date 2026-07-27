@@ -11,7 +11,6 @@ import (
 	gopenjpeg "github.com/mgilbir/gopenjpeg"
 	"github.com/mgilbir/gopenjpeg/internal/cio"
 	"github.com/mgilbir/gopenjpeg/internal/cparams"
-	"github.com/mgilbir/gopenjpeg/internal/event"
 	"github.com/mgilbir/gopenjpeg/internal/image"
 	"github.com/mgilbir/gopenjpeg/internal/j2k"
 )
@@ -110,8 +109,21 @@ func defaultCParams(numcomps uint32) j2k.CParameters {
 }
 
 // goEncode encodes img with the Go encoder and returns the codestream bytes.
-func goEncode(params *j2k.CParameters, img *image.Image) ([]byte, error) {
-	var mgr *event.Manager // nil: nil-safe throughout (see decode_test note)
+// A collecting event manager is installed (C61): the encoder's diagnostic
+// emission path is otherwise never executed by the harness, and the gate is the
+// only place it runs over the full settings matrix. Emitted messages are
+// shape-checked; a well-formed encode is expected to be silent, so anything the
+// encoder does emit is surfaced in the test log.
+func goEncode(t *testing.T, params *j2k.CParameters, img *image.Image) ([]byte, error) {
+	t.Helper()
+	var ec EventCollector
+	mgr := ec.Manager()
+	defer func() {
+		ec.Check(t, "goEncode")
+		for _, m := range ec.All() {
+			t.Logf("encoder diagnostic: %s", m)
+		}
+	}()
 	enc := j2k.CreateCompress()
 	if err := enc.SetupEncoder(params, img, mgr); err != nil {
 		return nil, fmt.Errorf("SetupEncoder: %w", err)
@@ -292,7 +304,7 @@ func TestEncodeGate(t *testing.T) {
 			if tc.mutate != nil {
 				tc.mutate(&params)
 			}
-			gbytes, err := goEncode(&params, tc.img.toImage())
+			gbytes, err := goEncode(t, &params, tc.img.toImage())
 			if err != nil {
 				t.Fatalf("goEncode: %v", err)
 			}
@@ -332,7 +344,7 @@ func TestEncodeRoundTrip(t *testing.T) {
 	Require(t)
 	for _, s := range []*synthImage{grayGradient(80, 48), rgb(64, 40)} {
 		params := defaultCParams(s.numcomps)
-		gbytes, err := goEncode(&params, s.toImage())
+		gbytes, err := goEncode(t, &params, s.toImage())
 		if err != nil {
 			t.Fatalf("goEncode: %v", err)
 		}
@@ -385,9 +397,9 @@ func gradient3(w, h, prec uint32) *synthImage2 {
 	return &synthImage2{w: w, h: h, numcomps: 3, prec: prec, data: d}
 }
 
-// noisy3 builds a w x h, prec-bit 3-component pseudo-random image (avoids
-// all-zero code-blocks, which trip a pre-existing mqc.Bytes panic on empty
-// blocks in the encode engine — see the W13 status note).
+// noisy3 builds a w x h, prec-bit 3-component pseudo-random image. Non-constant
+// content keeps the cinema/profile gates exercising real coding passes (the
+// all-zero code-block path is covered separately by t1's TestEncodeCblkAllZero).
 func noisy3(w, h, prec uint32, seed int64) *synthImage2 {
 	max := int32(1) << prec
 	s := int64(seed)

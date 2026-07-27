@@ -216,7 +216,10 @@ func FuzzDecodeCblk(f *testing.F) {
 		if w*h > 4096 {
 			return
 		}
-		orient := uint32(data[2]) & 3
+		// orient is deliberately NOT masked to 0..3: C39 made an out-of-range
+		// sub-band orientation an error rather than a LUT overrun, and this
+		// target is what keeps that true.
+		orient := uint32(data[2])
 		cblksty := uint32(data[3]) & 0x3f
 		numbps := uint32(data[4])%20 + 1
 		numpasses := uint32(data[5])%40 + 1

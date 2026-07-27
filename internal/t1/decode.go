@@ -576,16 +576,19 @@ func (t *T1) decClnpass(bpno int32, cblksty uint32) {
 // the code-block style bitmask, and checkPterm requests the predictable
 // termination warning checks (recorded in t1.PtermWarning).
 //
-// Returns ok=false with an error only for the unsupported bpno_plus_one>=31
-// case, mirroring the single hard failure of the C function; all other paths
-// return ok=true (a corrupted or empty code-block leaves Data() zeroed).
+// Returns ok=false with an error for the unsupported bpno_plus_one>=31 case,
+// mirroring the single hard failure of the C function, and for an out-of-range
+// orient (>3, which the 2048-entry zero-coding LUT cannot address); all other
+// paths return ok=true (a corrupted or empty code-block leaves Data() zeroed).
 //
 // SEAM: HTJ2K code-blocks (cblksty&CblkstyHT) are handled by a separate worker
 // (ht_dec.c / opj_t1_ht_decode_cblk). The C dispatch lives in
 // opj_t1_clbl_decode_processor, not here; callers must route HT blocks
 // elsewhere before reaching DecodeCblk.
 func (t *T1) DecodeCblk(cblk *CodeBlockDec, orient, roishift, cblksty uint32, checkPterm bool) (bool, error) {
-	t.lutCtxnoZCOrient = lutCtxnoZC[orient<<9:]
+	if err := t.setOrientLUT(orient); err != nil {
+		return false, err
+	}
 	t.PtermWarning = ""
 
 	t.allocateBuffers(uint32(cblk.X1-cblk.X0), uint32(cblk.Y1-cblk.Y0))

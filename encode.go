@@ -224,7 +224,8 @@ func WithCustomMCT(matrix []float32, dcShift []int32) EncodeOption {
 }
 
 // WithTileParts enables tile-part generation divided on the given flag: 'R'
-// (resolution), 'L' (layer), 'C' (component) — the -TP flag.
+// (resolution), 'L' (layer), 'C' (component) — the -TP flag. Any other byte is
+// rejected by Encode.
 func WithTileParts(flag byte) EncodeOption {
 	return func(o *encodeOptions) { o.params.TpOn = 1; o.params.TpFlag = flag }
 }

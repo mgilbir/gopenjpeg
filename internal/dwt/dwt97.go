@@ -181,6 +181,10 @@ func encodeV8Step2(tmp []float32, flOff, fwOff int, end, m uint32, cst float32) 
 // encodeAndDeinterleaveVReal is a port of
 // opj_dwt_encode_and_deinterleave_v_real (9/7).
 func encodeAndDeinterleaveVReal(arr []float32, arrOff int, tmp []float32, height uint32, even bool, strideWidth, cols uint32) {
+	// See the 5/3 variant: an empty resolution has nothing to transform.
+	if height == 0 || cols == 0 {
+		return
+	}
 	var sn int32
 	if even {
 		sn = int32((height + 1) >> 1)

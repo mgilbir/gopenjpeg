@@ -72,6 +72,19 @@ func applyICCProfile(img *image.Image) error {
 		// apply failure (leave the image untouched), matching the C void path.
 		return ErrICCApply
 	}
+	// The sample loops below walk Data[i] for i < W*H on comps 0 (grey) or 0..2
+	// (RGB/YCbCr) unbounded, exactly as color.c does. That is safe for a decoded
+	// image but not for one assembled through NewImage (C21), so reject a short
+	// or zero-precision component the same way C's "CAN NOT CONVERT" paths do:
+	// leave the image untouched and report ErrICCApply.
+	needed := 1
+	if img.Numcomps > 2 {
+		needed = 3
+	}
+	if !componentsSane(img, needed) {
+		return ErrICCApply
+	}
+
 	n := int(img.ICCProfileLen)
 	if n > len(img.ICCProfileBuf) {
 		n = len(img.ICCProfileBuf)

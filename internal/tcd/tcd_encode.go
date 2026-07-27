@@ -404,14 +404,21 @@ func (t *TCD) encodeCblks(mctNorms []float64, mctNumcomps uint32) error {
 		state := t1.New(true)
 		for i := range jobs {
 			j := &jobs[i]
-			dist[i] = t.cblkEncodeProcessor(state, j.cblk, j.band, j.tilec, j.tccp,
+			d, err := t.cblkEncodeProcessor(state, j.cblk, j.band, j.tilec, j.tccp,
 				j.resno, j.compno, mctNorms, mctNumcomps)
+			if err != nil {
+				return err
+			}
+			dist[i] = d
 		}
 	} else {
 		var (
 			next int64
 			wg   sync.WaitGroup
+			mu   sync.Mutex
 		)
+		firstErrIdx := len(jobs)
+		var firstErr error
 		for k := 0; k < n; k++ {
 			wg.Add(1)
 			go func() {
@@ -423,12 +430,26 @@ func (t *TCD) encodeCblks(mctNorms []float64, mctNumcomps uint32) error {
 						return
 					}
 					j := &jobs[idx]
-					dist[idx] = t.cblkEncodeProcessor(state, j.cblk, j.band, j.tilec, j.tccp,
+					d, err := t.cblkEncodeProcessor(state, j.cblk, j.band, j.tilec, j.tccp,
 						j.resno, j.compno, mctNorms, mctNumcomps)
+					if err != nil {
+						// Deterministic error semantics: the lowest-indexed
+						// failing job wins, as on the decode side.
+						mu.Lock()
+						if idx < firstErrIdx {
+							firstErrIdx, firstErr = idx, err
+						}
+						mu.Unlock()
+						continue
+					}
+					dist[idx] = d
 				}
 			}()
 		}
 		wg.Wait()
+		if firstErr != nil {
+			return firstErr
+		}
 	}
 
 	// Sum in canonical code-block order for a scheduling-independent result.
@@ -441,9 +462,12 @@ func (t *TCD) encodeCblks(mctNorms []float64, mctNumcomps uint32) error {
 // cblkEncodeProcessor ports opj_t1_cblk_encode_processor: fill t1->data from
 // the tile buffer in "zigzag" (column-of-4) order with the fixed-point shift,
 // run the code-block encoder, and copy the result back into the tile CblkEnc.
+// It returns the code-block's weighted MSE contribution, and an error only when
+// the tier-1 encoder rejects the sub-band orientation (band numbers are 0..3 by
+// construction, so this is a corrupt-state guard, not an expected failure).
 func (t *TCD) cblkEncodeProcessor(state *t1.T1, cblk *tile.CblkEnc, band *tile.Band,
 	tilec *tile.TileComp, tccp *cparams.TCCP, resno, compno uint32,
-	mctNorms []float64, mctNumcomps uint32) float64 {
+	mctNorms []float64, mctNumcomps uint32) (float64, error) {
 
 	tileW := uint32(tilec.X1 - tilec.X0)
 	x := cblk.X0 - band.X0
@@ -529,8 +553,11 @@ func (t *TCD) cblkEncodeProcessor(state *t1.T1, cblk *tile.CblkEnc, band *tile.B
 		X0: cblk.X0, Y0: cblk.Y0, X1: cblk.X1, Y1: cblk.Y1,
 	}
 	level := tilec.Numresolutions - 1 - resno
-	cum := state.EncodeCblk(t1cblk, band.Bandno, compno, level, tccp.Qmfbid,
+	cum, err := state.EncodeCblk(t1cblk, band.Bandno, compno, level, tccp.Qmfbid,
 		float64(band.Stepsize), tccp.Cblksty, t.tile().Numcomps, mctNorms, mctNumcomps)
+	if err != nil {
+		return 0, err
+	}
 
 	// Copy the encode result back into the tile-owned CblkEnc.
 	cblk.Numbps = t1cblk.Numbps
@@ -548,7 +575,7 @@ func (t *TCD) cblkEncodeProcessor(state *t1.T1, cblk *tile.CblkEnc, band *tile.B
 			Term:          sp.Term != 0,
 		}
 	}
-	return cum
+	return cum, nil
 }
 
 // t2Encode ports opj_tcd_t2_encode: the tier-2 FINAL_PASS packet writer.

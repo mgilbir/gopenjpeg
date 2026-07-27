@@ -1142,6 +1142,14 @@ func InitialiseEncode(img *image.Image, cp *cparams.CP, tileno uint32, t2Mode cp
 func CreateEncode(pis []Iterator, cp *cparams.CP, tileno, pino, tpnum uint32, tppos int32, t2Mode cparams.T2Mode) {
 	tcp := &cp.Tcps[tileno].Pocs[pino]
 	prog := cparams.ConvertProgressionOrder(tcp.Prg)
+	// An unrecognised progression order yields the empty sentinel string, whose
+	// prog[0..3] reads are out of bounds. The encoder rejects such an order at
+	// setup (validateEncodeInputs), so this is unreachable from the public API;
+	// keep it a no-op rather than a panic for any internal caller, matching the
+	// C code's behaviour of leaving the iterator at its defaults.
+	if len(prog) < 4 {
+		prog = "\x00\x00\x00\x00"
+	}
 
 	pis[pino].first = true
 	pis[pino].poc.Prg = tcp.Prg

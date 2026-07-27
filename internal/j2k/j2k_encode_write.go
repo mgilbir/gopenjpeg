@@ -695,6 +695,13 @@ func (e *Encoder) getNumTP(pino, tileno uint32) uint32 {
 	} else {
 		tpnum = 1
 	}
+	if tpnum == 0 {
+		// A zero product (an empty POC volume) would size the TLM offsets buffer
+		// at zero while the encoder still emits one tile part. The setup
+		// validation rejects such POC records; keep the count self-consistent
+		// here too rather than under-allocate.
+		tpnum = 1
+	}
 	return tpnum
 }
 

@@ -90,6 +90,47 @@ func (im *Image) ConvertToRGB() error {
 	return nil
 }
 
+// componentsSane reports whether the first n components of img are safe to walk
+// with the C-faithful transforms below: a usable precision (1..31, the range
+// readSIZ already enforces for decoded images) and at least W*H samples.
+//
+// A decoded image always satisfies this. An Image built through the public
+// NewImage does not have to (it validates nothing — C21), and the C transforms
+// index Data[i] for i < W*H unconditionally, so without this check a caller-
+// supplied short slice or a zero precision turns into an index-out-of-range or
+// negative-shift panic instead of the documented ErrColorConvert.
+func componentsSane(img *image.Image, n int) bool {
+	if int(img.Numcomps) < n || len(img.Comps) < n {
+		return false
+	}
+	for i := 0; i < n; i++ {
+		c := &img.Comps[i]
+		if c.Prec == 0 || c.Prec > 31 {
+			return false
+		}
+		if uint64(len(c.Data)) < uint64(c.W)*uint64(c.H) {
+			return false
+		}
+	}
+	return true
+}
+
+// chromaAt reads chroma sample i, clamping to the last available sample (and
+// substituting neutral chroma for an empty plane). The sYCC walkers advance the
+// chroma index with the luma walk; when the chroma plane is short of
+// ceil(luma/2) — which a resolution reduction can produce, since reduce does not
+// touch dx/dy — the C code over-reads the heap and Go would panic. Clamping is a
+// no-op for every layout the oracle also converts.
+func chromaAt(data []int32, i, offset int) int {
+	if i >= len(data) {
+		if len(data) == 0 {
+			return offset
+		}
+		i = len(data) - 1
+	}
+	return int(data[i])
+}
+
 // syccToRGBsample ports the static sycc_to_rgb helper in color.c. The
 // multiplications use double precision to match the C code (the constants are
 // C double literals).
@@ -130,6 +171,12 @@ func syccToRGB(img *image.Image) error {
 		img.ColorSpace = image.ClrspcGray
 		return nil
 	}
+	// The luma plane is walked unbounded by all three sYCC variants (the C code
+	// does the same); a short or zero-precision comp 0 must be an error, not a
+	// panic. Short CHROMA stays supported (see chromaAt / C8).
+	if !componentsSane(img, 1) {
+		return ErrColorConvert
+	}
 	c := img.Comps
 	switch {
 	case c[0].Dx == 1 && c[1].Dx == 2 && c[2].Dx == 2 &&
@@ -163,7 +210,10 @@ func sycc444ToRGB(img *image.Image) {
 	g := make([]int32, max)
 	b := make([]int32, max)
 	for i := 0; i < max; i++ {
-		rr, gg, bb := syccToRGBsample(offset, upb, int(y[i]), int(cb[i]), int(cr[i]))
+		// chromaAt bounds the 1:1 chroma reads the same way the 4:2:0/4:2:2
+		// walkers do: a caller-built image may carry chroma planes shorter than
+		// the luma plane, which the C code would read past.
+		rr, gg, bb := syccToRGBsample(offset, upb, int(y[i]), chromaAt(cb, i, offset), chromaAt(cr, i, offset))
 		r[i], g[i], b[i] = int32(rr), int32(gg), int32(bb)
 	}
 	img.Comps[0].Data = r
@@ -199,24 +249,8 @@ func sycc422ToRGB(img *image.Image) {
 	// exceeds len) and merely keeps the degenerate reduced case panic-free with
 	// a sane value. len==0 cannot happen for a dispatched 3-component sYCC image,
 	// but we still return the neutral chroma (offset) rather than index [-1].
-	cbAt := func(i int) int {
-		if i >= len(cb) {
-			if len(cb) == 0 {
-				return offset
-			}
-			i = len(cb) - 1
-		}
-		return int(cb[i])
-	}
-	crAt := func(i int) int {
-		if i >= len(cr) {
-			if len(cr) == 0 {
-				return offset
-			}
-			i = len(cr) - 1
-		}
-		return int(cr[i])
-	}
+	cbAt := func(i int) int { return chromaAt(cb, i, offset) }
+	crAt := func(i int) int { return chromaAt(cr, i, offset) }
 
 	yi, cbi, cri, oi := 0, 0, 0, 0
 	set := func(yy, ccb, ccr int) {
@@ -226,6 +260,18 @@ func sycc422ToRGB(img *image.Image) {
 	}
 
 	offx := int(img.X0) & 1
+	// A zero-extent luma plane (a deep reduction can shrink a component to
+	// nothing) has no samples to walk, but the offx/trailing branches below
+	// still emit one sample per row and would index the empty planes; C reads
+	// past its buffer there.
+	if maxw == 0 || maxh == 0 {
+		img.Comps[0].Data = r
+		img.Comps[1].Data = g
+		img.Comps[2].Data = b
+		syncChroma(img)
+		img.ColorSpace = image.ClrspcSRGB
+		return
+	}
 	loopmaxw := maxw - offx
 	for i := 0; i < maxh; i++ {
 		if offx > 0 {
@@ -287,24 +333,8 @@ func sycc420ToRGB(img *image.Image) {
 	// over-reads the heap; Go would panic. Clamping to the last valid chroma
 	// sample is a no-op wherever the oracle also converts (chroma is not short,
 	// so the index stays in range) and keeps the degenerate reduced case sane.
-	cbAt := func(i int) int {
-		if i >= len(cb) {
-			if len(cb) == 0 {
-				return offset
-			}
-			i = len(cb) - 1
-		}
-		return int(cb[i])
-	}
-	crAt := func(i int) int {
-		if i >= len(cr) {
-			if len(cr) == 0 {
-				return offset
-			}
-			i = len(cr) - 1
-		}
-		return int(cr[i])
-	}
+	cbAt := func(i int) int { return chromaAt(cb, i, offset) }
+	crAt := func(i int) int { return chromaAt(cr, i, offset) }
 
 	// Absolute-index helpers into r/g/b and y (the C code walks two rows at a
 	// time with "next" pointers nr/ng/nb/ny offset by maxw).
@@ -314,6 +344,16 @@ func sycc420ToRGB(img *image.Image) {
 	}
 
 	offx := int(img.X0) & 1
+	// See sycc422ToRGB: a zero-extent luma plane has nothing to walk, but the
+	// offx/offy branches still emit samples and would index the empty planes.
+	if maxw == 0 || maxh == 0 {
+		img.Comps[0].Data = r
+		img.Comps[1].Data = g
+		img.Comps[2].Data = b
+		syncChroma(img)
+		img.ColorSpace = image.ClrspcSRGB
+		return
+	}
 	loopmaxw := maxw - offx
 	offy := int(img.Y0) & 1
 	loopmaxh := maxh - offy
@@ -447,6 +487,10 @@ func cmykToRGB(img *image.Image) error {
 		c[0].Dy != c[1].Dy || c[0].Dy != c[2].Dy || c[0].Dy != c[3].Dy {
 		return ErrColorConvert
 	}
+	// All four planes are walked to W*H unbounded (as in C).
+	if !componentsSane(img, 4) {
+		return ErrColorConvert
+	}
 	w := int(c[0].W)
 	h := int(c[0].H)
 	max := w * h
@@ -506,6 +550,10 @@ func esyccToRGB(img *image.Image) error {
 	if img.Numcomps < 3 ||
 		c[0].Dx != c[1].Dx || c[0].Dx != c[2].Dx ||
 		c[0].Dy != c[1].Dy || c[0].Dy != c[2].Dy {
+		return ErrColorConvert
+	}
+	// All three planes are walked to W*H unbounded, and Prec-1 is a shift count.
+	if !componentsSane(img, 3) {
 		return ErrColorConvert
 	}
 	flip := int32(1) << (c[0].Prec - 1)
@@ -627,6 +675,10 @@ func cielabToRGB(img *image.Image) error {
 		c[0].Dy != c[1].Dy || c[0].Dy != c[2].Dy ||
 		c[0].W != c[1].W || c[0].W != c[2].W ||
 		c[0].H != c[1].H || c[0].H != c[2].H {
+		return ErrColorConvert
+	}
+	// L*, a* and b* are walked to W*H unbounded and Prec feeds math.Pow/denoms.
+	if !componentsSane(img, 3) {
 		return ErrColorConvert
 	}
 	buf := img.ICCProfileBuf

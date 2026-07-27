@@ -18,7 +18,6 @@ import (
 	"testing"
 
 	"github.com/mgilbir/gopenjpeg/internal/cio"
-	"github.com/mgilbir/gopenjpeg/internal/event"
 	"github.com/mgilbir/gopenjpeg/internal/image"
 	"github.com/mgilbir/gopenjpeg/internal/j2k"
 
@@ -27,13 +26,19 @@ import (
 
 // decodeGoThreads decodes a raw codestream via the internal path with the given
 // worker count (0/1 == sequential).
-func decodeGoThreads(path string, reduce uint32, threads int) (*image.Image, error) {
+func decodeGoThreads(t *testing.T, path string, reduce uint32, threads int) (*image.Image, error) {
+	t.Helper()
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
 	s := cio.NewMemoryInputStream(data)
-	var mgr *event.Manager
+	// Collecting manager (C61): with threads>1 this is the only place the
+	// tier-1 locking event-manager shim (tcd.lockingManager) is exercised at
+	// all — a nil manager short-circuits it entirely.
+	var ec EventCollector
+	mgr := ec.Manager()
+	defer func() { ec.Check(t, "decodeGoThreads "+filepath.Base(path)) }()
 	d := j2k.CreateDecompress()
 	d.SetupDecoder(reduce, 0)
 	d.SetStrictMode(false)
@@ -104,11 +109,11 @@ func TestDecodeConcurrentMatchesSequential(t *testing.T) {
 	for _, in := range files {
 		in := in
 		t.Run(filepath.Base(in), func(t *testing.T) {
-			seq, err := decodeGoThreads(in, 0, 1)
+			seq, err := decodeGoThreads(t, in, 0, 1)
 			if err != nil {
 				t.Skipf("sequential decode failed (not a concurrency concern): %v", err)
 			}
-			par, err := decodeGoThreads(in, 0, n)
+			par, err := decodeGoThreads(t, in, 0, n)
 			if err != nil {
 				t.Fatalf("concurrent decode (n=%d) failed but sequential succeeded: %v", n, err)
 			}
