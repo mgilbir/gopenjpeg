@@ -319,6 +319,13 @@ func (d *Decoder) GetTile(s *cio.Stream, out *image.Image, tileIndex uint32, mgr
 		return ErrBadParams
 	}
 	d.mgr = mgr
+	// The codestream header must have been read first (it populates
+	// d.privateImage and d.CP). Guard against API misuse — calling GetTile
+	// before ReadHeader — rather than dereferencing a nil privateImage.
+	if d.privateImage == nil {
+		mgr.Errorf("Main header must be read before decoding a tile.\n")
+		return ErrHeaderNotRead
+	}
 	if out.Numcomps < d.privateImage.Numcomps {
 		mgr.Errorf("Image has less components than codestream.\n")
 		return ErrBadParams

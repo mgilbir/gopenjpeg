@@ -19,9 +19,10 @@ func (d *Decoder) SetAllowDifferentBitDepthSign(allow bool) {
 //	jp2->j2k->ihdr_w = jp2->w
 //	jp2->j2k->ihdr_h = jp2->h
 //
-// in opj_jp2_read_ihdr. The decode path records these for parity with the C
-// reference; the current marker parsers do not additionally validate SIZ
-// against them, so the values are informational.
+// in opj_jp2_read_ihdr. The decode path records these so that readSIZ can
+// enforce the JP2 IHDR-vs-SIZ dimension check: when both are non-zero, a SIZ
+// image size that disagrees with the IHDR width/height is rejected with
+// ErrBadSIZ (mirroring opj_j2k_read_siz's IHDR consistency check).
 func (d *Decoder) SetIHDRDimensions(w, h uint32) {
 	d.ihdrW = w
 	d.ihdrH = h

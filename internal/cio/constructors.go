@@ -114,9 +114,13 @@ func (s *Stream) Bytes() []byte {
 	return nil
 }
 
-// rsReader backs an input stream over an io.ReadSeeker (e.g. *os.File).
+// rsReader backs an input stream over an io.ReadSeeker (e.g. *os.File). origin
+// is the absolute file offset that the stream treats as logical position 0, so
+// a reader positioned mid-file is decoded from its current position rather than
+// from absolute offset 0.
 type rsReader struct {
-	rs io.ReadSeeker
+	rs     io.ReadSeeker
+	origin int64
 }
 
 // rsRead ports opj_read_from_file: read up to len(buf) bytes, looping to fill
@@ -150,35 +154,44 @@ func rsSkip(nb int64, userData any) int64 {
 	return nb
 }
 
-// rsSeek ports opj_seek_from_file: fseek to an absolute position.
+// rsSeek ports opj_seek_from_file: fseek to an absolute position. The stream's
+// logical position 0 maps to the reader's origin, so a logical offset nb seeks
+// to the absolute file offset origin+nb.
 func rsSeek(nb int64, userData any) bool {
 	r := userData.(*rsReader)
-	if _, err := r.rs.Seek(nb, io.SeekStart); err != nil {
+	if _, err := r.rs.Seek(r.origin+nb, io.SeekStart); err != nil {
 		return false
 	}
 	return true
 }
 
 // NewReadSeekerInputStream constructs an input Stream over an io.ReadSeeker.
+// The reader's current position becomes the stream's origin (logical position
+// 0): a reader positioned mid-file is decoded from there rather than from
+// absolute offset 0, matching stdlib image.Decode's use of the reader as-is.
 // It determines the user data length the way opj_get_data_length_from_file
-// does — seek to end, record the offset, seek back to start — and installs the
-// read/skip/seek functions. It returns an error if the initial length probe
+// does — record the origin, seek to end, then seek back to the origin — and
+// installs the read/skip/seek functions. It returns an error if any probe seek
 // fails.
 func NewReadSeekerInputStream(rs io.ReadSeeker) (*Stream, error) {
+	origin, err := rs.Seek(0, io.SeekCurrent)
+	if err != nil {
+		return nil, err
+	}
 	end, err := rs.Seek(0, io.SeekEnd)
 	if err != nil {
 		return nil, err
 	}
-	if _, err := rs.Seek(0, io.SeekStart); err != nil {
+	if _, err := rs.Seek(origin, io.SeekStart); err != nil {
 		return nil, err
 	}
 
 	s := newStream(ChunkSize, true)
-	s.userData = &rsReader{rs: rs}
+	s.userData = &rsReader{rs: rs, origin: origin}
 	s.readFnPtr = rsRead
 	s.skipFnPtr = rsSkip
 	s.seekFnPtr = rsSeek
 	s.seekable = true
-	s.SetUserDataLength(uint64(end))
+	s.SetUserDataLength(uint64(end - origin))
 	return s, nil
 }
