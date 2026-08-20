@@ -84,8 +84,19 @@ jobs:
         run: go test -run 'Fuzz' ./...
 
   arm64:
-    name: test (arm64 native)
-    runs-on: ubuntu-24.04-arm
+    name: test (arm64 native, ${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        # Both native arm64 runners. No test accommodations are needed off
+        # linux/amd64: the differential gates self-skip without a local
+        # oracle/ build, and everything else is pure Go with no platform
+        # assumptions. Note the C oracle itself is NOT architecture-stable on
+        # the irreversible 9/7 path (README "Bit-exactness across
+        # architectures") — one more reason these jobs replay the frozen
+        # amd64-generated vectors instead of building a native C oracle.
+        os: [ubuntu-24.04-arm, macos-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
 

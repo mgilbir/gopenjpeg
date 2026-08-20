@@ -5,6 +5,10 @@ JPEG 2000 reference codec. Both directions are complete and gated against the C
 reference: decoded samples are bit-exact with `opj_decompress`, and encoded
 codestreams are byte-identical to `opj_compress`, across the conformance and
 non-regression corpora (see `oracletest/`). There are no documented exclusions.
+The reference the gates compare against is an amd64 build of OpenJPEG; on the
+irreversible 9/7 path the C library's own output is not architecture-stable, so
+that qualifier matters — see
+[Bit-exactness across architectures](#bit-exactness-across-architectures).
 
 No cgo, no C toolchain, no `unsafe`. The only dependency is
 [golittlecms](https://github.com/mgilbir/golittlecms), a pure-Go Little CMS port
@@ -318,5 +322,19 @@ conversion, which the spec defines as a rounding step and hence an FMA barrier.
 The barriers forbid fusion only — operand order and associativity are unchanged,
 and the amd64 code generation is identical, so the byte-identical gate results
 are unaffected. Compiling for each fusing `GOARCH` confirms no FMA instruction
-remains in those kernels, and CI replays the float vectors on a native arm64
-runner.
+remains in those kernels, and CI replays the float vectors on native arm64
+runners (Linux and macOS).
+
+The C reference is not equally stable. Bit-exactness against `opj_decompress`
+is verified with an amd64 build of OpenJPEG; on the irreversible 9/7 path the C
+library's own results vary with the architecture it was compiled for. Measured
+on identical codestreams (issue #14): gopenjpeg matched libopenjp2 2.5.0 and a
+from-source 2.5.4 bit-for-bit on linux/amd64, while a darwin/arm64 build of
+2.5.4 differed from both by exactly one unit on roughly 1% of samples.
+gopenjpeg's output is unchanged across architectures — the same frozen digests
+are satisfied on amd64 and arm64 — so a downstream differential harness whose C
+side is not an amd64 build should compare the irreversible 9/7 path within a
+tolerance of one unit. The reversible 5/3 path is integer arithmetic and is
+bit-exact against every C build measured, including rate-limited (lossy 5/3)
+cases; ecCodes/GRIB2 archives use 5/3, so the unqualified guarantee is the one
+that applies there.

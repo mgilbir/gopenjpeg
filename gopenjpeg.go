@@ -29,7 +29,12 @@
 // Both directions are gated bit-for-bit against the C reference: decoded samples
 // are identical to opj_decompress and encoded codestreams are byte-identical to
 // opj_compress on the corpus the oracletest gates cover, with no documented
-// exclusions. Colour post-processing that opj_decompress applies before writing
+// exclusions. The reference is an amd64 build of OpenJPEG: on the irreversible
+// 9/7 path the C library's own output varies with the architecture it was built
+// for (an arm64 build differs by one unit on ~1% of samples), while gopenjpeg's
+// output is identical on every GOARCH — see the README section "Bit-exactness
+// across architectures" before comparing against a non-amd64 C build. Colour
+// post-processing that opj_decompress applies before writing
 // a file (sYCC/eYCC/CMYK/CIELab and embedded ICC profiles to sRGB) is available
 // via Image.ConvertToRGB; the core Decode returns the library-level components
 // unchanged.
