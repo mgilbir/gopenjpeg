@@ -330,11 +330,16 @@ is verified with an amd64 build of OpenJPEG; on the irreversible 9/7 path the C
 library's own results vary with the architecture it was compiled for. Measured
 on identical codestreams (issue #14): gopenjpeg matched libopenjp2 2.5.0 and a
 from-source 2.5.4 bit-for-bit on linux/amd64, while a darwin/arm64 build of
-2.5.4 differed from both by exactly one unit on roughly 1% of samples.
-gopenjpeg's output is unchanged across architectures — the same frozen digests
-are satisfied on amd64 and arm64 — so a downstream differential harness whose C
-side is not an amd64 build should compare the irreversible 9/7 path within a
-tolerance of one unit. The reversible 5/3 path is integer arithmetic and is
-bit-exact against every C build measured, including rate-limited (lossy 5/3)
-cases; ecCodes/GRIB2 archives use 5/3, so the unqualified guarantee is the one
-that applies there.
+2.5.4 differed from both by exactly one unit on roughly 1% of samples. The
+divergence is tightly bounded, not open-ended: differently-rounded float
+intermediates shift the final integer rounding by at most a unit, and this is
+exactly the error model the standard itself uses — ISO/IEC 15444-4 defines
+conformance for the irreversible path by maximum-error thresholds, not exact
+outputs. Exact equality on the 9/7 path is therefore a property of a specific
+build, which is why the gates pin one (amd64). gopenjpeg's own output is
+unchanged across architectures — the same frozen digests are satisfied on amd64
+and arm64 — so a downstream differential harness whose C side is not an amd64
+build should compare the irreversible 9/7 path within a tolerance of one unit.
+The reversible 5/3 path is integer arithmetic and is bit-exact against every C
+build measured, including rate-limited (lossy 5/3) cases; ecCodes/GRIB2
+archives use 5/3, so the unqualified guarantee is the one that applies there.

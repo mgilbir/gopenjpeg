@@ -51,9 +51,9 @@ jobs:
         # catches breakage from newer toolchains.
         go: ['1.25.x', 'stable']
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v7
         with:
           go-version: ${{ matrix.go }}
           check-latest: true
@@ -91,16 +91,19 @@ jobs:
         # Both native arm64 runners. No test accommodations are needed off
         # linux/amd64: the differential gates self-skip without a local
         # oracle/ build, and everything else is pure Go with no platform
-        # assumptions. Note the C oracle itself is NOT architecture-stable on
-        # the irreversible 9/7 path (README "Bit-exactness across
-        # architectures") — one more reason these jobs replay the frozen
-        # amd64-generated vectors instead of building a native C oracle.
+        # assumptions. The C oracle itself is not architecture-stable on the
+        # irreversible 9/7 path, but the divergence is bounded — ±1 unit,
+        # matching ISO/IEC 15444-4's maximum-error conformance model (README
+        # "Bit-exactness across architectures"). The exact-equality gates
+        # therefore pin an amd64 oracle and these jobs replay its frozen
+        # vectors; a native-oracle tier comparing the 9/7 path within one
+        # unit would be sound future work, just not an equality gate.
         os: [ubuntu-24.04-arm, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v7
         with:
           go-version: '1.25.x'
           check-latest: true
@@ -119,9 +122,9 @@ jobs:
     name: cross-compile checks
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v7
         with:
           go-version: '1.25.x'
           check-latest: true
