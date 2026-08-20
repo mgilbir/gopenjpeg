@@ -180,8 +180,13 @@ func (t *Tree) SetValue(leafno uint32, value int32) {
 // Encode ports opj_tgt_encode: emit, into bio, the bits needed to code the
 // value of leaf leafno up to (but not including) threshold.
 func (t *Tree) Encode(b *bio.BIO, leafno uint32, threshold int32) {
-	// Stack of node indices from the leaf up to (excluding) the root.
-	var stk []int
+	// Stack of node indices from the leaf up to (excluding) the root. Each
+	// tree level halves both dimensions, so the chain is at most 31 nodes for
+	// any 2^31-leaf tree (the C reference uses a fixed 31-pointer stack); the
+	// array backing keeps every call allocation-free, and append would spill
+	// to the heap safely if a deeper tree ever existed.
+	var stkArr [31]int
+	stk := stkArr[:0]
 	idx := int(leafno)
 	for t.nodes[idx].parent != noParent {
 		stk = append(stk, idx)
@@ -221,7 +226,10 @@ func (t *Tree) Encode(b *bio.BIO, leafno uint32, threshold int32) {
 // threshold. It returns 1 if the decoded leaf value is < threshold, 0
 // otherwise, exactly matching the C return semantics.
 func (t *Tree) Decode(b *bio.BIO, leafno uint32, threshold int32) uint32 {
-	var stk []int
+	// See Encode: the ancestor chain is bounded by the 31 possible tree
+	// levels, so the stack lives on the Go stack and no call allocates.
+	var stkArr [31]int
+	stk := stkArr[:0]
 	idx := int(leafno)
 	for t.nodes[idx].parent != noParent {
 		stk = append(stk, idx)
