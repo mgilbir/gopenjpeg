@@ -173,9 +173,9 @@ func (m *MQC) Decode() uint32 {
 // DecState mirrors the DOWNLOAD_MQC_VARIABLES register block. The tier-1 hot
 // passes load it once (LoadDec), thread it by value through the pass — Go's
 // register ABI keeps the fields in registers because its address is never
-// taken — and store it back once (StoreDec). DecodeReg is the inlinable decode
-// fast path (the renorm loop is factored into renormDec, the only call), so it
-// expands into the pass loops exactly as opj_mqc_decode_macro does.
+// taken — and store it back once (StoreDec). DecodeReg is one call per
+// decision (it exceeds Go's inline budget); everything inside it, including
+// the renorm loop, is straight-line except the rare byteinDec refill.
 //
 // These produce bit-identical state transitions to Decode/renormd/bytein; the
 // method forms are retained for the mqc API, the RAW path and the vector tests.
@@ -207,45 +207,40 @@ func (m *MQC) StoreDec(s DecState) {
 // into mqc->ctxs); mutations remain visible to ResetStates/SetState.
 func (m *MQC) Ctxs() *[numCtxs]int32 { return &m.ctxs }
 
-// renormDec is the register-resident port of opj_mqc_renormd_macro with
-// opj_mqc_bytein_macro inlined; it owns the loop that blocks inlining of the
-// decode, so DecodeReg (its only caller besides itself) stays inlinable.
-func (m *MQC) renormDec(s DecState) DecState {
-	buf := m.buf
-	for {
-		if s.Ct == 0 {
-			// opj_mqc_bytein_macro
-			lc := buf[s.Bp+1]
-			if buf[s.Bp] == 0xff {
-				if lc > 0x8f {
-					s.C += 0xff00
-					s.Ct = 8
-					m.endOfByteStreamCounter++
-				} else {
-					s.Bp++
-					s.C += uint32(lc) << 9
-					s.Ct = 7
-				}
-			} else {
-				s.Bp++
-				s.C += uint32(lc) << 8
-				s.Ct = 8
-			}
+// byteinDec is the register-resident port of opj_mqc_bytein_macro: refill the
+// code register from the byte stream, honouring the 0xFF stuffing rule. Kept
+// out of line so DecodeReg's renorm loop stays branch-light; it runs only once
+// per ~8 renorm shifts.
+//
+//go:noinline
+func (m *MQC) byteinDec(s DecState) DecState {
+	lc := m.buf[s.Bp+1]
+	if m.buf[s.Bp] == 0xff {
+		if lc > 0x8f {
+			s.C += 0xff00
+			s.Ct = 8
+			m.endOfByteStreamCounter++
+		} else {
+			s.Bp++
+			s.C += uint32(lc) << 9
+			s.Ct = 7
 		}
-		s.A <<= 1
-		s.C <<= 1
-		s.Ct--
-		if s.A >= 0x8000 {
-			return s
-		}
+	} else {
+		s.Bp++
+		s.C += uint32(lc) << 8
+		s.Ct = 8
 	}
+	return s
 }
 
 // DecodeReg is the register-resident port of opj_mqc_decode_macro: it decodes
 // one decision against ctxs[curctx] using the register block s, updates the
 // context in place, and returns the decoded symbol plus the advanced registers.
-// It is inlinable (the renorm loop lives in renormDec), so it expands into the
-// tier-1 pass loops the way the C macro does.
+// It is too large for Go's inliner (cost ~178 vs budget 80), so unlike the C
+// macro it is one real call per decision; to keep that call as cheap as
+// possible the renorm loop (opj_mqc_renormd_macro) is written inline in its
+// tail rather than called, and only the rare byte-refill (byteinDec, ~one in
+// eight renorm shifts) leaves the function.
 func (m *MQC) DecodeReg(s DecState, ctxs *[numCtxs]int32, curctx int) (uint32, DecState) {
 	var d uint32
 	st := &states[ctxs[curctx]]
@@ -276,9 +271,20 @@ func (m *MQC) DecodeReg(s DecState, ctxs *[numCtxs]int32, curctx int) (uint32, D
 			ctxs[curctx] = st.nmps
 		}
 	}
-	// Single renormalization site (the only remaining call) keeps DecodeReg
-	// small enough for the inliner, so it expands into the tier-1 pass loops.
-	return d, m.renormDec(s)
+	// opj_mqc_renormd_macro, inline: loop until the interval register
+	// re-normalizes, refilling the code register via byteinDec when the bit
+	// counter runs dry.
+	for {
+		if s.Ct == 0 {
+			s = m.byteinDec(s)
+		}
+		s.A <<= 1
+		s.C <<= 1
+		s.Ct--
+		if s.A >= 0x8000 {
+			return d, s
+		}
+	}
 }
 
 // RawDecode is the port of opj_mqc_raw_decode: decode a single bit using the
