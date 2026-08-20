@@ -45,6 +45,11 @@ func TestShortBlockRoundTrip(t *testing.T) {
 			{"plain", nil},
 			{"vsc", []EncodeOption{WithModeSwitches(8)}},
 			{"lazy_termall", []EncodeOption{WithModeSwitches(1 | 4)}},
+			// Multi-layer: each block's segments/chunks accumulate across
+			// packets, exercising the seg/chunk growth and the arena-carve
+			// disjointness that single-layer streams never touch.
+			{"layers", []EncodeOption{WithRates(6, 3, 1)}},
+			{"layers_termall", []EncodeOption{WithRates(6, 3, 1), WithModeSwitches(4)}},
 		} {
 			t.Run(fmt.Sprintf("h%d_%s", h, v.name), func(t *testing.T) {
 				w := 16384 / h

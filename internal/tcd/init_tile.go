@@ -305,7 +305,7 @@ func (t *TCD) initTile(tileNo uint32, isEncoder bool, mgr *event.Manager) error 
 							}
 						} else {
 							cb := &prc.CblksDec[cblkno]
-							decCblkAllocate(cb)
+							t.decCblkAllocate(cb)
 							cb.X0 = opjmath.IntMax(cblkxstart, prc.X0)
 							cb.Y0 = opjmath.IntMax(cblkystart, prc.Y0)
 							cb.X1 = opjmath.IntMin(cblkxend, prc.X1)
@@ -321,15 +321,28 @@ func (t *TCD) initTile(tileNo uint32, isEncoder bool, mgr *event.Manager) error 
 }
 
 // decCblkAllocate ports opj_tcd_code_block_dec_allocate: reset a decode
-// code-block, keeping any previously-allocated segment/chunk backing.
-func decCblkAllocate(cb *tile.CblkDec) {
+// code-block, keeping any previously-allocated segment/chunk backing. New
+// blocks draw their Segs and initial Chunks backing from the TCD arenas (see
+// the field comment) instead of allocating per block.
+func (t *TCD) decCblkAllocate(cb *tile.CblkDec) {
 	segs := cb.Segs
 	maxSegs := cb.MCurrentMaxSegs
 	chunks := cb.Chunks
 	numchunksalloc := cb.Numchunksalloc
 	if segs == nil {
-		cb.Segs = make([]tile.Seg, cparamsDefaultNbSegs)
+		if len(t.segArena) < cparamsDefaultNbSegs {
+			t.segArena = make([]tile.Seg, cparamsDefaultNbSegs*arenaBlockBatch)
+		}
+		cb.Segs = t.segArena[:cparamsDefaultNbSegs:cparamsDefaultNbSegs]
+		t.segArena = t.segArena[cparamsDefaultNbSegs:]
 		cb.MCurrentMaxSegs = cparamsDefaultNbSegs
+		if len(t.chunkArena) < chunkCarve {
+			t.chunkArena = make([]tile.SegDataChunk, chunkCarve*arenaBlockBatch)
+		}
+		// Zero-length, capped carve: readPacketData's append fills it in
+		// place up to chunkCarve and reallocates privately past that.
+		cb.Chunks = t.chunkArena[:0:chunkCarve]
+		t.chunkArena = t.chunkArena[chunkCarve:]
 		return
 	}
 	*cb = tile.CblkDec{}
@@ -341,6 +354,14 @@ func decCblkAllocate(cb *tile.CblkDec) {
 	cb.Chunks = chunks
 	cb.Numchunksalloc = numchunksalloc
 }
+
+// arenaBlockBatch is how many code-blocks' worth of backing one arena
+// allocation covers; chunkCarve is the chunk capacity carved per block (one
+// chunk per contributing layer — one or two covers the common cases).
+const (
+	arenaBlockBatch = 256
+	chunkCarve      = 2
+)
 
 const cparamsDefaultNbSegs = 10 // OPJ_J2K_DEFAULT_NB_SEGS
 

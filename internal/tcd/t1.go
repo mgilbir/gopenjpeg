@@ -32,6 +32,11 @@ type t1Job struct {
 type t1Worker struct {
 	t1 *t1.T1
 	ht *ht.Decoder
+	// cblk is the reusable mapCblkDec target: one worker maps exactly one
+	// code-block at a time and nothing retains the struct past t1DecodeBlock,
+	// so reusing it (with grow-only Chunks/Segs backing) avoids three heap
+	// allocations per code-block.
+	cblk t1.CodeBlockDec
 }
 
 // t1Decode ports opj_tcd_t1_decode: decode all code-blocks of the tile via
@@ -212,7 +217,7 @@ func (t *TCD) t1DecodeBlock(w *t1Worker, job t1Job, checkPterm bool, mgr *event.
 	tileW := uint32(tilec.Resolutions[tilec.MinimumNumResolutions-1].X1 -
 		tilec.Resolutions[tilec.MinimumNumResolutions-1].X0)
 
-	t1cblk := mapCblkDec(cblk)
+	t1cblk := w.mapCblkDec(cblk)
 
 	roishift := uint32(tccp.Roishift)
 	// srcData/srcW/srcH mirror the C convention of reading the decoder
@@ -300,31 +305,25 @@ func (t *TCD) t1DecodeBlock(w *t1Worker, job t1Job, checkPterm bool, mgr *event.
 	return nil
 }
 
-// mapCblkDec maps a tile.CblkDec (tcd's data model) to the t1.CodeBlockDec type
-// that package t1 consumes, aliasing the chunk/segment/decoded backing slices.
-func mapCblkDec(cblk *tile.CblkDec) *t1.CodeBlockDec {
-	out := &t1.CodeBlockDec{
-		X0:          cblk.X0,
-		Y0:          cblk.Y0,
-		X1:          cblk.X1,
-		Y1:          cblk.Y1,
-		Numbps:      cblk.Numbps,
-		NumChunks:   cblk.Numchunks,
-		RealNumSegs: cblk.RealNumSegs,
-		Corrupted:   cblk.Corrupted,
-		DecodedData: cblk.DecodedData,
+// mapCblkDec maps a tile.CblkDec (tcd's data model) into the worker's reusable
+// t1.CodeBlockDec, aliasing the chunk/decoded backing slices. Every field is
+// (re)assigned, so a previous block's values never leak into the next; the
+// Chunks/Segs slice backings are reused grow-only.
+func (w *t1Worker) mapCblkDec(cblk *tile.CblkDec) *t1.CodeBlockDec {
+	out := &w.cblk
+	out.X0, out.Y0, out.X1, out.Y1 = cblk.X0, cblk.Y0, cblk.X1, cblk.Y1
+	out.Numbps = cblk.Numbps
+	out.NumChunks = cblk.Numchunks
+	out.RealNumSegs = cblk.RealNumSegs
+	out.Corrupted = cblk.Corrupted
+	out.DecodedData = cblk.DecodedData
+	out.Chunks = out.Chunks[:0]
+	for i := uint32(0); i < cblk.Numchunks; i++ {
+		out.Chunks = append(out.Chunks, t1.Chunk{Data: cblk.Chunks[i].Data, Len: cblk.Chunks[i].Len})
 	}
-	if cblk.Numchunks > 0 {
-		out.Chunks = make([]t1.Chunk, cblk.Numchunks)
-		for i := uint32(0); i < cblk.Numchunks; i++ {
-			out.Chunks[i] = t1.Chunk{Data: cblk.Chunks[i].Data, Len: cblk.Chunks[i].Len}
-		}
-	}
-	if cblk.RealNumSegs > 0 {
-		out.Segs = make([]t1.Seg, cblk.RealNumSegs)
-		for i := uint32(0); i < cblk.RealNumSegs; i++ {
-			out.Segs[i] = t1.Seg{Len: cblk.Segs[i].Len, RealNumPasses: cblk.Segs[i].RealNumPasses}
-		}
+	out.Segs = out.Segs[:0]
+	for i := uint32(0); i < cblk.RealNumSegs; i++ {
+		out.Segs = append(out.Segs, t1.Seg{Len: cblk.Segs[i].Len, RealNumPasses: cblk.Segs[i].RealNumPasses})
 	}
 	return out
 }

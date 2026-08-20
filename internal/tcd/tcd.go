@@ -62,6 +62,16 @@ type TCD struct {
 	// state, writing to disjoint output regions so the result is bit-identical
 	// to the sequential decode regardless of scheduling.
 	NumThreads int
+
+	// segArena / chunkArena batch the per-code-block Segs/Chunks backing so
+	// tile init makes one allocation per ~hundreds of code-blocks instead of
+	// one per block (GC pressure at N x 1 GRIB geometries, where a decode has
+	// tens of thousands of 64-coefficient blocks). Carving uses capped
+	// three-index slices, so a block that outgrows its carve reallocates
+	// privately (initSeg's make+copy, readPacketData's append) and can never
+	// touch a neighbour's backing. Only initTile (single-threaded) carves.
+	segArena   []tile.Seg
+	chunkArena []tile.SegDataChunk
 }
 
 // SetNumThreads sets the worker count for parallel decode stages. n<=1 keeps
