@@ -143,20 +143,34 @@ jobs:
         uses: actions/cache@v6
         with:
           path: oracle-ci/openjpeg/build/bin
-          key: openjpeg-2.5.4-${{ runner.os }}-${{ runner.arch }}
+          key: openjpeg-2.5.4-hermetic-${{ runner.os }}-${{ runner.arch }}
 
       - name: build OpenJPEG 2.5.4 from source
         if: steps.oracle-cache.outputs.cache-hit != 'true'
         # A plain native Release build — deliberately NOT the -ffast-math
         # amd64 build the byte-identity gates pin. The bounds gate asserts
         # the documented tolerance, so any conforming build is a valid
-        # reference; static linking avoids library-path differences between
-        # the runners.
+        # reference. Static linking and disabling the optional third-party
+        # image formats (TIFF/PNG/zlib/LCMS — the gate only speaks PGM/PGX)
+        # keep the build hermetic: otherwise cmake picks up whatever
+        # Homebrew/apt headers a runner image ships and the link breaks
+        # (macos-latest: "ld: library 'tiff' not found").
         run: |
           curl -sSL https://github.com/uclouvain/openjpeg/archive/refs/tags/v2.5.4.tar.gz | tar xz
           cmake -S openjpeg-2.5.4 -B oracle-ci/openjpeg/build \
-            -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DBUILD_TESTING=OFF
+            -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DBUILD_TESTING=OFF \
+            -DCMAKE_DISABLE_FIND_PACKAGE_TIFF=ON -DCMAKE_DISABLE_FIND_PACKAGE_PNG=ON \
+            -DCMAKE_DISABLE_FIND_PACKAGE_ZLIB=ON -DCMAKE_DISABLE_FIND_PACKAGE_LCMS2=ON \
+            -DCMAKE_DISABLE_FIND_PACKAGE_LCMS=ON
           cmake --build oracle-ci/openjpeg/build --target opj_compress opj_decompress -j 4
+
+      - name: verify oracle binaries
+        # RequireBins would SKIP the gate if the binaries were missing — e.g.
+        # a partial bin/ cached from a failed build — and a skipped gate looks
+        # green. Fail the job instead.
+        run: |
+          test -x oracle-ci/openjpeg/build/bin/opj_compress
+          test -x oracle-ci/openjpeg/build/bin/opj_decompress
 
       - name: bounds gate
         # Exact agreement on the reversible 5/3 path, within one unit on the
