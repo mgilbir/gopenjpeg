@@ -20,23 +20,24 @@ permissions:
 # the float vectors are replayed by a compiler that contracts x*y+z into an
 # FMA unless the rounding barriers hold.
 #
-# NOT covered: the differential gates in oracletest/. They need a locally built
-# OpenJPEG ("the oracle") plus the openjpeg-data corpus under oracle/, which is
-# gitignored, so oracletest.Require() skips them here. `go test ./...` below
-# therefore passes with the entire differential surface skipped — treat a green
-# CI as "the port is self-consistent", not as "parity with C is verified".
+# Also covered, by the oracle-bounds job: the documented error bound against a
+# from-source OpenJPEG 2.5.4 built natively on amd64 AND arm64 (Linux and
+# macOS). It generates codestreams with both encoders and requires the two
+# decoders to agree exactly on the reversible 5/3 path and within one unit on
+# the irreversible 9/7 path — the bound the README documents and issue #14
+# measured. No corpus is needed; the gate is self-generating.
 #
-# An oracle tier is deliberately NOT shipped rather than shipped broken. Parity
-# in this repo is defined against one specific C build: OpenJPEG is compiled
-# -O3 -ffast-math, and several byte-exactness results (the ICT green term in
-# internal/mct, the forward-ICT grouping and hoisted quantizer division on the
-# encode side) depend on how *that* gcc reassociates those expressions in the
-# shipped libopenjp2.so. A CI-built oracle would use a different compiler
-# version and could reassociate differently, so a from-source oracle job would
-# produce spurious 1-ULP failures on the very files those fixes target. Pinning
-# the corpus revision has the same problem: the curated pass/error lists in
-# oracletest/ are tied to the exact corpus contents. Running the gates remains a
-# maintainer step on a machine with oracle/ built:
+# NOT covered: the byte-identity gates in oracletest/. They need a locally
+# built OpenJPEG ("the oracle") plus the openjpeg-data corpus under oracle/,
+# which is gitignored, so oracletest.Require() skips them here. Byte-for-byte
+# parity is defined against one specific C build: OpenJPEG compiled
+# -O3 -ffast-math, whose gcc reassociations several exactness results (the ICT
+# green term in internal/mct, the forward-ICT grouping and hoisted quantizer
+# division on the encode side) deliberately reproduce. A CI-built oracle can
+# round 1 ULP differently — which is exactly why the oracle-bounds job asserts
+# the bounded comparison instead of equality. The curated pass/error lists are
+# likewise tied to the exact corpus contents. Running the byte-identity gates
+# remains a maintainer step on a machine with oracle/ built:
 #     go test ./oracletest/
 # and it is required before merging anything that touches the codec.
 
@@ -96,8 +97,8 @@ jobs:
         # matching ISO/IEC 15444-4's maximum-error conformance model (README
         # "Bit-exactness across architectures"). The exact-equality gates
         # therefore pin an amd64 oracle and these jobs replay its frozen
-        # vectors; a native-oracle tier comparing the 9/7 path within one
-        # unit would be sound future work, just not an equality gate.
+        # vectors; the oracle-bounds job below enforces the ±1 bound against
+        # natively built oracles on every platform.
         os: [ubuntu-24.04-arm, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
@@ -117,6 +118,53 @@ jobs:
         # rounding barriers in the 9/7 DWT, the MCT and the colour conversions
         # still reproduce the C vectors bit-for-bit off amd64.
         run: go test ./...
+
+  oracle-bounds:
+    name: oracle bounds (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        # amd64 plus both arm64 runners: the arm64 legs are where the C
+        # library's own 9/7 rounding diverges from amd64 builds (issue #14),
+        # so they are the ones that make the ±1 bound load-bearing rather
+        # than trivially satisfied.
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version: '1.25.x'
+          check-latest: true
+
+      - name: cache oracle build
+        id: oracle-cache
+        uses: actions/cache@v6
+        with:
+          path: oracle-ci/openjpeg/build/bin
+          key: openjpeg-2.5.4-${{ runner.os }}-${{ runner.arch }}
+
+      - name: build OpenJPEG 2.5.4 from source
+        if: steps.oracle-cache.outputs.cache-hit != 'true'
+        # A plain native Release build — deliberately NOT the -ffast-math
+        # amd64 build the byte-identity gates pin. The bounds gate asserts
+        # the documented tolerance, so any conforming build is a valid
+        # reference; static linking avoids library-path differences between
+        # the runners.
+        run: |
+          curl -sSL https://github.com/uclouvain/openjpeg/archive/refs/tags/v2.5.4.tar.gz | tar xz
+          cmake -S openjpeg-2.5.4 -B oracle-ci/openjpeg/build \
+            -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DBUILD_TESTING=OFF
+          cmake --build oracle-ci/openjpeg/build --target opj_compress opj_decompress -j 4
+
+      - name: bounds gate
+        # Exact agreement on the reversible 5/3 path, within one unit on the
+        # irreversible 9/7 path, over streams from both encoders. See
+        # oracletest/bounds_gate_test.go.
+        run: |
+          GOPENJPEG_ORACLE="$PWD/oracle-ci" \
+            go test ./oracletest/ -run 'TestOracleDecodeBounds' -count=1 -v
 
   cross:
     name: cross-compile checks

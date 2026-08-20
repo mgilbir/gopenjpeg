@@ -63,6 +63,21 @@ func Require(t *testing.T) {
 	}
 }
 
+// RequireBins skips the test if the oracle binaries are not present. Unlike
+// Require it does not demand the conformance corpus: the bounds gate generates
+// its own codestreams, so a from-source OpenJPEG build (GOPENJPEG_ORACLE
+// pointing at a directory holding openjpeg/build/bin) is sufficient — which is
+// exactly what the CI oracle-bounds job provides. The absence-only skip rule of
+// Require applies here too.
+func RequireBins(t *testing.T) {
+	t.Helper()
+	for _, bin := range []string{"opj_decompress", "opj_compress"} {
+		if _, err := os.Stat(Bin(bin)); err != nil {
+			t.Skipf("oracle binaries not available: %v", err)
+		}
+	}
+}
+
 // EventCollector is an event sink for the gates. Every gate that drives the
 // pure-Go codec installs one (C61: the gates used to pass a nil *event.Manager,
 // which meant the entire error/warning/info emission path — format strings,
